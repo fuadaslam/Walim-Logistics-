@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:last_mile_fleet/core/theme/app_theme.dart';
 import 'package:last_mile_fleet/l10n/app_localizations.dart';
+import 'package:provider/provider.dart' as provider_pkg;
+import 'package:last_mile_fleet/features/tracking/services/tracking_provider.dart';
+import 'package:last_mile_fleet/features/tracking/screens/home_screen.dart' as walim_tracking;
+import 'package:last_mile_fleet/features/tracking/theme/app_theme.dart' as tracking_theme;
 
 class DashboardScaffold extends ConsumerWidget {
   final String title;
@@ -27,6 +31,7 @@ class DashboardScaffold extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: !isDesktop ? _buildMobileAppBar(context) : null,
+      drawer: !isDesktop ? Drawer(child: _buildSidebar(context)) : null,
       body: Row(
         children: [
           if (isDesktop) _buildSidebar(context),
@@ -109,7 +114,17 @@ class DashboardScaffold extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           _buildSidebarItem(context, Icons.dashboard_rounded, 'Dashboard', true),
-          _buildSidebarItem(context, Icons.map_rounded, 'Live Map', false),
+          _buildSidebarItem(context, Icons.map_rounded, 'Live Ops', false, onTap: () {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (_) => provider_pkg.ChangeNotifierProvider(
+                create: (_) => TrackingProvider(),
+                child: Theme(
+                  data: tracking_theme.AppTheme.theme,
+                  child: const walim_tracking.HomeScreen(),
+                ),
+              ),
+            ));
+          }),
           _buildSidebarItem(context, Icons.people_rounded, 'Riders', false),
           _buildSidebarItem(context, Icons.inventory_2_rounded, 'Assets', false),
           _buildSidebarItem(context, Icons.payments_rounded, 'Finance', false),
@@ -121,7 +136,7 @@ class DashboardScaffold extends ConsumerWidget {
     );
   }
 
-  Widget _buildSidebarItem(BuildContext context, IconData icon, String label, bool isActive) {
+  Widget _buildSidebarItem(BuildContext context, IconData icon, String label, bool isActive, {VoidCallback? onTap}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
@@ -140,7 +155,7 @@ class DashboardScaffold extends ConsumerWidget {
             color: isActive ? AppColors.primary : AppColors.textPrimary,
           ),
         ),
-        onTap: () {},
+        onTap: onTap,
       ),
     );
   }

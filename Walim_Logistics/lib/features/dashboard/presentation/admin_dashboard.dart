@@ -4,11 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:last_mile_fleet/core/theme/app_theme.dart';
 import 'package:last_mile_fleet/features/auth/presentation/auth_notifier.dart';
 import 'package:last_mile_fleet/l10n/app_localizations.dart';
-import 'package:last_mile_fleet/features/fleet/presentation/live_tracking_screen.dart';
+
 import 'package:last_mile_fleet/features/finance/presentation/reconciliation_dashboard.dart';
 import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-
+import 'package:provider/provider.dart' as provider_pkg;
+import 'package:last_mile_fleet/features/tracking/services/tracking_provider.dart';
+import 'package:last_mile_fleet/features/tracking/screens/home_screen.dart' as walim_tracking;
+import 'package:last_mile_fleet/features/tracking/theme/app_theme.dart' as tracking_theme;
 class AdminDashboard extends ConsumerWidget {
   const AdminDashboard({super.key});
 
@@ -39,8 +42,6 @@ class AdminDashboard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-
     return DashboardScaffold(
       title: 'CONTROL TOWER',
       subtitle: 'Real-time metrics across all zones and platforms',
@@ -118,7 +119,15 @@ class AdminDashboard extends ConsumerWidget {
                   subtitle: 'Monitor all active riders and deliveries',
                   icon: Icons.map_outlined,
                   color: AppColors.primary,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveTrackingScreen())),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => provider_pkg.ChangeNotifierProvider(
+                      create: (_) => TrackingProvider(),
+                      child: Theme(
+                        data: tracking_theme.AppTheme.theme,
+                        child: const walim_tracking.HomeScreen(),
+                      ),
+                    ),
+                  )),
                 ),
                 DashboardActionCard(
                   title: 'Financial Reconciliation',
