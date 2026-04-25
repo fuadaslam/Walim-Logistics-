@@ -84,6 +84,24 @@ class ApiService {
     return all;
   }
 
+  Future<String> reverseGeocode(double lat, double lng) async {
+    try {
+      // Use Nominatim for free reverse geocoding
+      final uri = Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&zoom=18&addressdetails=1');
+      final res = await _client.get(uri, headers: {
+        'Accept-Language': 'en',
+        'User-Agent': 'WalimTrackingApp/1.0',
+      });
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return data['display_name']?.toString() ?? 'Unknown Address';
+      }
+      return 'Address Unavailable';
+    } catch (e) {
+      return 'Geocoding Failed';
+    }
+  }
+
   bool get isAuthenticated => true;
   String get lastError => _lastError;
   void logout() {}

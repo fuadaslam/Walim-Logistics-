@@ -17,10 +17,17 @@ class VehicleCard extends StatelessWidget {
     final speed = pos?.speed ?? 0;
     final address = pos?.address ?? 'No address available';
 
-    Color statusColor = AppTheme.statusColor(vehicle.status, moving: isMoving, ignition: hasIgnition);
-    IconData statusIcon = isMoving 
+    String displayStatus = vehicle.status;
+    if (displayStatus == 'offline' && pos != null) {
+      if (DateTime.now().difference(pos.timestamp).inHours <= 48) {
+        displayStatus = 'stopped';
+      }
+    }
+
+    Color statusColor = AppTheme.statusColor(vehicle.status, moving: isMoving, ignition: hasIgnition, timestamp: pos?.timestamp);
+    IconData statusIcon = displayStatus == 'moving'
       ? Icons.local_shipping_rounded 
-      : (hasIgnition ? Icons.pause_circle_rounded : Icons.stop_circle_rounded);
+      : (displayStatus == 'idle' ? Icons.pause_circle_rounded : (displayStatus == 'stopped' ? Icons.stop_circle_rounded : Icons.wifi_off_rounded));
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -72,7 +79,7 @@ class VehicleCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      _StatusBadge(label: isMoving ? 'Moving' : (hasIgnition ? 'Idle' : 'Offline'), color: statusColor),
+                      _StatusBadge(label: displayStatus, color: statusColor),
                     ],
                   ),
                   const SizedBox(height: 20),

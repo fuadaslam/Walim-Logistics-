@@ -109,9 +109,25 @@ class AppTheme {
     ),
   );
 
-  static Color statusColor(String status, {bool moving = false, bool ignition = false}) {
-    if (moving) return onlineColor;
-    if (ignition) return idleColor;
-    return offlineColor;
+  static Color statusColor(String status, {bool moving = false, bool ignition = false, DateTime? timestamp}) {
+    switch (status) {
+      case 'moving':
+        return success;
+      case 'idle':
+        return warning;
+      case 'stopped':
+        return danger;
+      case 'offline':
+        if (timestamp != null) {
+          final diff = DateTime.now().difference(timestamp);
+          if (diff.inHours <= 48) return danger; // Show as stopped if recent
+        }
+        return offlineColor;
+      default:
+        // Fallback to moving/ignition if status is unknown
+        if (moving) return success;
+        if (ignition) return warning;
+        return offlineColor;
+    }
   }
 }

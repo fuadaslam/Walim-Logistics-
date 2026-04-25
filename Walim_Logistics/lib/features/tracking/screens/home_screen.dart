@@ -621,7 +621,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 message: v.name,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: AppTheme.statusColor(v.status, moving: p.moving, ignition: p.ignition),
+                                    color: AppTheme.statusColor(v.status, moving: p.moving, ignition: p.ignition, timestamp: p.timestamp),
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: _selectedVehicle?.id == v.id ? Colors.black : Colors.white,

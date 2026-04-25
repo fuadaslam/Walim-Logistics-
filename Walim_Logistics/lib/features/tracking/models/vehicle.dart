@@ -28,11 +28,26 @@ class Vehicle {
     final imei = json['imei']?.toString() ?? '';
     final hasLocation =
         json['latitude'] != null && json['longitude'] != null;
+    
+    final rawName = json['name']?.toString() ?? imei;
+    String plate = json['plate_number']?.toString() ?? '';
+
+    // If plate_number is missing, try extracting it from the name
+    if (plate.isEmpty || plate == 'null') {
+      final parts = rawName.split(' ');
+      if (parts.length >= 2) {
+        // Common pattern: "1234 ABC Rider Name"
+        if (RegExp(r'^\d{1,4}$').hasMatch(parts[0]) && 
+            RegExp(r'^[A-Za-z]{1,3}$').hasMatch(parts[1])) {
+          plate = '${parts[0]} ${parts[1]}';
+        }
+      }
+    }
 
     return Vehicle(
       id: imei,
-      name: json['name']?.toString() ?? imei,
-      plateNumber: json['plate_number']?.toString() ?? '',
+      name: rawName,
+      plateNumber: plate,
       protocol: json['protocol']?.toString() ?? '',
       status: _normalizeStatus(json['status']?.toString() ?? ''),
       active: true,
@@ -75,6 +90,10 @@ class VehiclePosition {
   final double odometer;
   final double battery;
   final double power;
+  final double altitude;
+  final DateTime? serverTimestamp;
+  final String? nearestMarker;
+  final String? nearestZone;
 
   VehiclePosition({
     required this.lat,
@@ -85,9 +104,13 @@ class VehiclePosition {
     this.odometer = 0,
     this.battery = 0,
     this.power = 0,
+    this.altitude = 0,
     this.address = '',
     this.ignition = false,
     this.moving = false,
+    this.serverTimestamp,
+    this.nearestMarker,
+    this.nearestZone,
   });
 
   factory VehiclePosition.fromDeviceJson(Map<String, dynamic> json) {
@@ -103,16 +126,27 @@ class VehiclePosition {
       timestamp = DateTime.tryParse(serverAt.toString()) ?? DateTime.now();
     }
 
+    DateTime? serverTimestamp;
+    if (serverAt != null) {
+      serverTimestamp = DateTime.tryParse(serverAt.toString());
+    }
+
     return VehiclePosition(
       lat: _parseD(json['latitude']),
       lng: _parseD(json['longitude']),
       speed: speed,
       heading: _parseD(json['angle']),
       timestamp: timestamp,
+      serverTimestamp: serverTimestamp,
       ignition: ignitionStr == 'on',
       moving: speed > 0,
       battery: _parseD(json['internal_voltage']),
       power: _parseD(json['external_voltage']),
+      odometer: _parseD(json['odometer'] ?? json['total_distance']),
+      altitude: _parseD(json['altitude']),
+      address: json['address']?.toString() ?? '',
+      nearestMarker: json['nearest_marker']?.toString(),
+      nearestZone: json['nearest_zone']?.toString(),
     );
   }
 

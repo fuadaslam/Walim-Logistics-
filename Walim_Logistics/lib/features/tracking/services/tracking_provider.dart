@@ -76,23 +76,24 @@ class TrackingProvider extends ChangeNotifier {
 
   int get totalCount => _vehicles.length;
   int get movingCount =>
-      _vehicles.where((v) => v.position?.moving == true).length;
+      _vehicles.where((v) => v.status == 'moving').length;
   int get idleCount => _vehicles
-      .where((v) =>
-          v.position?.ignition == true && v.position?.moving == false)
-      .length;
-  int get stoppedCount => _vehicles
-      .where((v) =>
-          v.position?.ignition == false && v.position?.moving == false)
-      .length;
-  int get offlineCount => _vehicles
-      .where((v) =>
-          v.position != null &&
-          DateTime.now()
-                  .difference(v.position!.timestamp)
-                  .inMinutes >
-              60)
-      .length;
+      .where((v) => v.status == 'idle').length;
+  int get stoppedCount => _vehicles.where((v) {
+        if (v.status == 'stopped') return true;
+        if (v.status == 'offline') {
+          if (v.position == null) return true;
+          final diff = DateTime.now().difference(v.position!.timestamp);
+          return diff.inHours <= 48;
+        }
+        return false;
+      }).length;
+  int get offlineCount => _vehicles.where((v) {
+        if (v.status != 'offline') return false;
+        if (v.position == null) return false;
+        final diff = DateTime.now().difference(v.position!.timestamp);
+        return diff.inHours > 48;
+      }).length;
   int get noDataCount =>
       _vehicles.where((v) => v.position == null).length;
 

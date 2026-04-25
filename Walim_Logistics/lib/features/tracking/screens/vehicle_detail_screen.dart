@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
-import '../models/vehicle.dart';
+import '../services/geocoding_provider.dart';
 import '../theme/app_theme.dart';
+import '../models/vehicle.dart';
+import '../services/api_service.dart';
 
-class VehicleDetailScreen extends StatelessWidget {
+class VehicleDetailScreen extends ConsumerWidget {
   final Vehicle vehicle;
 
   const VehicleDetailScreen({super.key, required this.vehicle});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final pos = vehicle.position;
 
     return Scaffold(
@@ -50,17 +53,18 @@ class VehicleDetailScreen extends StatelessWidget {
                       const SizedBox(height: 32),
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          if (constraints.maxWidth > 700) {
+                          if (constraints.maxWidth > 850) {
                             return Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
+                                SizedBox(
+                                  width: 320,
                                   child: _buildModernSection(
                                     title: 'Vehicle Information',
                                     icon: Icons.info_outline_rounded,
                                     children: [
-                                      _buildInfoTile('Unit Name', vehicle.name, Icons.label_rounded),
-                                      _buildInfoTile('Identity Plate', vehicle.fullPlate, Icons.badge_rounded),
+                                      _buildInfoTile('Unit Name', vehicle.name, Icons.label_rounded, color: Colors.orange),
+                                      _buildInfoTile('Identity Plate', vehicle.fullPlate, Icons.badge_rounded, color: Colors.orange),
                                       if (vehicle.model.isNotEmpty) _buildInfoTile('Hardware', vehicle.model, Icons.memory_rounded),
                                       if (vehicle.vin.isNotEmpty) _buildInfoTile('VIN / Serial', vehicle.vin, Icons.fingerprint_rounded),
                                     ],
@@ -72,26 +76,22 @@ class VehicleDetailScreen extends StatelessWidget {
                                     children: [
                                       if (pos != null)
                                         _buildModernSection(
-                                          title: 'Live Telemetry',
-                                          icon: Icons.sensors_rounded,
+                                          title: 'Detailed Telemetry',
+                                          icon: Icons.analytics_outlined,
                                           children: [
-                                            _buildInfoTile('Current Speed', '${pos.speed.toStringAsFixed(1)} km/h', Icons.speed_rounded),
-                                            _buildInfoTile('Ignition State', pos.ignition ? 'Active' : 'Standby', Icons.power_rounded),
-                                            _buildInfoTile('Update Frequency', '${DateTime.now().difference(pos.timestamp).inSeconds}s ago', Icons.timer_rounded),
-                                            if (pos.address.isNotEmpty) _buildInfoTile('Current Address', pos.address, Icons.location_on_rounded),
+                                            _buildInfoTile('Odometer', '${(pos.odometer > 0 ? (pos.odometer / 1000).toStringAsFixed(0) : '0')} km', Icons.route_rounded, color: AppTheme.primary),
+                                            _buildInfoTile('Status', vehicle.status.toUpperCase(), Icons.info_outline_rounded, color: AppTheme.primary),
+                                            _buildAddressTile(ref, pos),
+                                            _buildInfoTile('Altitude', '${pos.altitude.toStringAsFixed(0)} m', Icons.height_rounded, color: AppTheme.primary),
+                                            _buildInfoTile('Angle', '${pos.heading.toStringAsFixed(0)} °', Icons.explore_rounded, color: AppTheme.primary),
+                                            _buildInfoTile('Position', '${pos.lat.toStringAsFixed(6)} °, ${pos.lng.toStringAsFixed(6)} °', Icons.my_location_rounded, color: AppTheme.primary),
+                                            _buildInfoTile('Speed', '${pos.speed.toStringAsFixed(0)} kph', Icons.speed_rounded, color: AppTheme.primary),
+                                            _buildInfoTile('Time (position)', DateFormat('yyyy-MM-dd HH:mm:ss').format(pos.timestamp), Icons.access_time_rounded, color: AppTheme.primary),
+                                            _buildInfoTile('Time (server)', pos.serverTimestamp != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(pos.serverTimestamp!) : '-', Icons.dns_rounded, color: AppTheme.primary),
+                                            _buildInfoTile('External Power', '${pos.power.toStringAsFixed(2)} V', Icons.battery_charging_full_rounded, color: AppTheme.primary),
+                                            _buildInfoTile('Ignition', pos.ignition ? 'on' : 'off', Icons.power_settings_new_rounded, color: AppTheme.primary),
                                           ],
                                         ),
-                                      const SizedBox(height: 24),
-                                      _buildModernSection(
-                                        title: 'Fleet Metrics',
-                                        icon: Icons.analytics_outlined,
-                                        children: [
-                                          if (pos != null && pos.odometer > 0)
-                                            _buildInfoTile('Odometer', '${(pos.odometer / 1000).toStringAsFixed(1)} km', Icons.route_rounded),
-                                          _buildInfoTile('Engine Hours', '${vehicle.engineHours.toStringAsFixed(1)} h', Icons.access_time_filled_rounded),
-                                          _buildInfoTile('Communication', vehicle.protocol.isEmpty ? 'TCP/IP Standard' : vehicle.protocol, Icons.wifi_tethering_rounded),
-                                        ],
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -111,28 +111,24 @@ class VehicleDetailScreen extends StatelessWidget {
                                 ],
                               ),
                               const SizedBox(height: 24),
-                              if (pos != null)
-                                _buildModernSection(
-                                  title: 'Live Telemetry',
-                                  icon: Icons.sensors_rounded,
-                                  children: [
-                                    _buildInfoTile('Current Speed', '${pos.speed.toStringAsFixed(1)} km/h', Icons.speed_rounded),
-                                    _buildInfoTile('Ignition State', pos.ignition ? 'Active' : 'Standby', Icons.power_rounded),
-                                    _buildInfoTile('Update Frequency', '${DateTime.now().difference(pos.timestamp).inSeconds}s ago', Icons.timer_rounded),
-                                    if (pos.address.isNotEmpty) _buildInfoTile('Current Address', pos.address, Icons.location_on_rounded),
-                                  ],
-                                ),
-                              const SizedBox(height: 24),
-                              _buildModernSection(
-                                title: 'Fleet Metrics',
-                                icon: Icons.analytics_outlined,
-                                children: [
-                                  if (pos != null && pos.odometer > 0)
-                                    _buildInfoTile('Odometer', '${(pos.odometer / 1000).toStringAsFixed(1)} km', Icons.route_rounded),
-                                  _buildInfoTile('Engine Hours', '${vehicle.engineHours.toStringAsFixed(1)} h', Icons.access_time_filled_rounded),
-                                  _buildInfoTile('Communication', vehicle.protocol.isEmpty ? 'TCP/IP Standard' : vehicle.protocol, Icons.wifi_tethering_rounded),
-                                ],
-                              ),
+                                  if (pos != null)
+                                    _buildModernSection(
+                                      title: 'Detailed Telemetry',
+                                      icon: Icons.analytics_outlined,
+                                      children: [
+                                        _buildInfoTile('Odometer', '${(pos.odometer > 0 ? (pos.odometer / 1000).toStringAsFixed(0) : '0')} km', Icons.route_rounded, color: AppTheme.primary),
+                                        _buildInfoTile('Status', vehicle.status.toUpperCase(), Icons.info_outline_rounded, color: AppTheme.primary),
+                                        _buildAddressTile(ref, pos),
+                                        _buildInfoTile('Altitude', '${pos.altitude.toStringAsFixed(0)} m', Icons.height_rounded, color: AppTheme.primary),
+                                        _buildInfoTile('Angle', '${pos.heading.toStringAsFixed(0)} °', Icons.explore_rounded, color: AppTheme.primary),
+                                        _buildInfoTile('Position', '${pos.lat.toStringAsFixed(6)} °, ${pos.lng.toStringAsFixed(6)} °', Icons.my_location_rounded, color: AppTheme.primary),
+                                        _buildInfoTile('Speed', '${pos.speed.toStringAsFixed(0)} kph', Icons.speed_rounded, color: AppTheme.primary),
+                                        _buildInfoTile('Time (position)', DateFormat('yyyy-MM-dd HH:mm:ss').format(pos.timestamp), Icons.access_time_rounded, color: AppTheme.primary),
+                                        _buildInfoTile('Time (server)', pos.serverTimestamp != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(pos.serverTimestamp!) : '-', Icons.dns_rounded, color: AppTheme.primary),
+                                        _buildInfoTile('External Power', '${pos.power.toStringAsFixed(2)} V', Icons.battery_charging_full_rounded, color: AppTheme.primary),
+                                        _buildInfoTile('Ignition', pos.ignition ? 'on' : 'off', Icons.power_settings_new_rounded, color: AppTheme.primary),
+                                      ],
+                                    ),
                             ],
                           );
                         },
@@ -183,7 +179,7 @@ class VehicleDetailScreen extends StatelessWidget {
                       child: _VehicleMarker(
                         moving: pos.moving,
                         heading: pos.heading,
-                        color: AppTheme.statusColor(vehicle.status, moving: pos.moving, ignition: pos.ignition),
+                        color: AppTheme.statusColor(vehicle.status, moving: pos.moving, ignition: pos.ignition, timestamp: pos.timestamp),
                       ),
                     ),
                   ],
@@ -208,7 +204,13 @@ class VehicleDetailScreen extends StatelessWidget {
   Widget _buildStatusHighlight(VehiclePosition? pos) {
     final isMoving = pos?.moving ?? false;
     final hasIgnition = pos?.ignition ?? false;
-    final color = AppTheme.statusColor(vehicle.status, moving: isMoving, ignition: hasIgnition);
+    String displayStatus = vehicle.status;
+    if (displayStatus == 'offline' && pos != null) {
+      if (DateTime.now().difference(pos.timestamp).inHours <= 48) {
+        displayStatus = 'stopped';
+      }
+    }
+    final color = AppTheme.statusColor(vehicle.status, moving: isMoving, ignition: hasIgnition, timestamp: pos?.timestamp);
     
     return Container(
       padding: const EdgeInsets.all(24),
@@ -223,7 +225,7 @@ class VehicleDetailScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(16)),
             child: Icon(
-              isMoving ? Icons.local_shipping_rounded : (hasIgnition ? Icons.pause_circle_rounded : Icons.stop_circle_rounded),
+              displayStatus == 'moving' ? Icons.local_shipping_rounded : (displayStatus == 'idle' ? Icons.pause_circle_rounded : (displayStatus == 'stopped' ? Icons.stop_circle_outlined : Icons.wifi_off_rounded)),
               color: Colors.white,
               size: 28,
             ),
@@ -234,7 +236,7 @@ class VehicleDetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isMoving ? 'MOVING NOW' : (hasIgnition ? 'IDLING' : 'OFFLINE'),
+                  displayStatus.toUpperCase(),
                   style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5),
                 ),
                 const SizedBox(height: 2),
@@ -274,35 +276,67 @@ class VehicleDetailScreen extends StatelessWidget {
             boxShadow: AppTheme.cardShadow,
             border: Border.all(color: const Color(0xFFF1F5F9)),
           ),
-          child: Column(children: children),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = constraints.maxWidth > 850 ? 2 : (constraints.maxWidth > 600 ? 3 : (constraints.maxWidth > 400 ? 2 : 1));
+              final itemWidth = (constraints.maxWidth / crossAxisCount).floorToDouble();
+              
+              return Wrap(
+                children: children.map((child) => SizedBox(
+                  width: itemWidth,
+                  child: child,
+                )).toList(),
+              );
+            },
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoTile(String label, String value, IconData icon) {
+  Widget _buildInfoTile(String label, String value, IconData icon, {Color? color}) {
+    final themeColor = color ?? AppTheme.primary;
+    
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, size: 18, color: AppTheme.primary),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: themeColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20, color: themeColor),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(label, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 2),
-                Text(value, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFF1E293B))),
+                Text(label, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B))),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAddressTile(WidgetRef ref, VehiclePosition pos) {
+    if (pos.address.isNotEmpty && pos.address != 'false') {
+      return _buildInfoTile('Address', pos.address, Icons.location_on_rounded, color: AppTheme.primary);
+    }
+
+    final addressAsync = ref.watch(geocodingProvider((lat: pos.lat, lng: pos.lng)));
+    
+    return addressAsync.when(
+      data: (address) => _buildInfoTile('Address', address, Icons.location_on_rounded, color: AppTheme.primary),
+      loading: () => _buildInfoTile('Address', 'Fetching address...', Icons.location_on_rounded, color: AppTheme.primary),
+      error: (err, stack) => _buildInfoTile('Address', 'Address Unavailable', Icons.location_on_rounded, color: AppTheme.primary),
     );
   }
 
@@ -343,7 +377,7 @@ class _FullMapScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppTheme.statusColor(vehicle.status, moving: position.moving, ignition: position.ignition);
+    final color = AppTheme.statusColor(vehicle.status, moving: position.moving, ignition: position.ignition, timestamp: position.timestamp);
     return Scaffold(
       appBar: AppBar(title: Text(vehicle.name)),
       body: FlutterMap(
