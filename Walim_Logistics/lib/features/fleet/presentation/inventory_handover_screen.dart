@@ -3,8 +3,11 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:last_mile_fleet/core/theme/app_theme.dart';
 
+import '../../dashboard/presentation/widgets/dashboard_scaffold.dart';
+
 class InventoryHandoverScreen extends ConsumerStatefulWidget {
-  const InventoryHandoverScreen({super.key});
+  final bool showScaffold;
+  const InventoryHandoverScreen({super.key, this.showScaffold = true});
 
   @override
   ConsumerState<InventoryHandoverScreen> createState() => _InventoryHandoverScreenState();
@@ -89,15 +92,44 @@ class _InventoryHandoverScreenState extends ConsumerState<InventoryHandoverScree
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Inventory Handover')),
-      body: Stack(
+    if (!widget.showScaffold) {
+      return CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildContent(),
+              ]),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return DashboardScaffold(
+      title: 'INVENTORY HANDOVER',
+      subtitle: 'Scan QR codes to assign assets to riders',
+      activeItem: 'Assets',
+      children: [
+        _buildContent(),
+      ],
+    );
+  }
+
+  Widget _buildContent() {
+    return SizedBox(
+      height: 500,
+      child: Stack(
         children: [
-          MobileScanner(
-            onDetect: _onDetect,
-            controller: MobileScannerController(
-              facing: CameraFacing.back,
-              torchEnabled: false,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: MobileScanner(
+              onDetect: _onDetect,
+              controller: MobileScannerController(
+                facing: CameraFacing.back,
+                torchEnabled: false,
+              ),
             ),
           ),
           // Scanner Overlay
@@ -112,7 +144,7 @@ class _InventoryHandoverScreenState extends ConsumerState<InventoryHandoverScree
             ),
           ),
           const Positioned(
-            bottom: 48,
+            bottom: 24,
             left: 0,
             right: 0,
             child: Text(

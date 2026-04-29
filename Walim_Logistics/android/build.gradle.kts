@@ -14,6 +14,31 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+
+    val project = this
+    fun applyNamespaceFix() {
+        if (project.plugins.hasPlugin("com.android.library") || project.plugins.hasPlugin("com.android.application")) {
+            val android = project.extensions.findByName("android")
+            if (android != null) {
+                try {
+                    val getNamespace = android.javaClass.getMethod("getNamespace")
+                    if (getNamespace.invoke(android) == null) {
+                        val setNamespace = android.javaClass.getMethod("setNamespace", String::class.java)
+                        val packageName = project.group.toString().takeIf { it.isNotEmpty() } ?: "dev.isar.isar_flutter_libs"
+                        setNamespace.invoke(android, packageName)
+                    }
+                } catch (e: Exception) {
+                    // Method not found or other issue
+                }
+            }
+        }
+    }
+
+    if (project.state.executed) {
+        applyNamespaceFix()
+    } else {
+        project.afterEvaluate { applyNamespaceFix() }
+    }
 }
 
 tasks.register<Delete>("clean") {

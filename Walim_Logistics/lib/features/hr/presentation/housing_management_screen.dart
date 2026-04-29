@@ -1,65 +1,94 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:last_mile_fleet/core/theme/app_theme.dart';
+import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 
 class HousingManagementScreen extends StatelessWidget {
   const HousingManagementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Housing Management')),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          _buildHousingCard('Riyadh North Sakan', '124 Riders', '85% Full'),
-          const SizedBox(height: 16),
-          _buildHousingCard('Jeddah Port Sakan', '92 Riders', '60% Full'),
-          const SizedBox(height: 16),
-          _buildHousingCard('Taif Hub Sakan', '45 Riders', '40% Full'),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add),
-      ),
+    final List<Map<String, dynamic>> _accommodations = [
+      {'name': 'Sakan Al-Malaz', 'location': 'Riyadh East', 'capacity': 40, 'occupied': 38, 'type': 'Rider Housing'},
+      {'name': 'Batha Camp', 'location': 'Riyadh Central', 'capacity': 100, 'occupied': 85, 'type': 'Rider Housing'},
+      {'name': 'Exit 28 Apartments', 'location': 'Riyadh West', 'capacity': 20, 'occupied': 12, 'type': 'Staff Housing'},
+    ];
+
+    return DashboardScaffold(
+      title: 'HOUSING & MAWAQI',
+      subtitle: 'Manage laborer accommodation and assignments',
+      showBackButton: true,
+      children: [
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _accommodations.length,
+          itemBuilder: (context, index) {
+            final s = _accommodations[index];
+            final occupancy = s['occupied'] / s['capacity'];
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.divider),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(s['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      _buildTypeTag(s['type']),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(s['location'], style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Occupancy: ${s['occupied']}/${s['capacity']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text('${(occupancy * 100).toInt()}% Full', style: TextStyle(color: occupancy > 0.9 ? AppColors.error : Colors.green)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(
+                    value: occupancy,
+                    backgroundColor: AppColors.background,
+                    color: occupancy > 0.9 ? AppColors.error : AppColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                    minHeight: 8,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
+                    child: const Text('Manage Assignments'),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildHousingCard(String name, String occupancy, String capacity) {
+  Widget _buildTypeTag(String type) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(occupancy, style: const TextStyle(color: AppColors.textSecondary)),
-              Text(capacity, style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          LinearProgressIndicator(
-            value: 0.85, // Example
-            backgroundColor: AppColors.divider,
-            color: AppColors.primaryLight,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () {},
-            child: const Text('Manage Assignments'),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(6)),
+      child: Text(type, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
     );
   }
 }

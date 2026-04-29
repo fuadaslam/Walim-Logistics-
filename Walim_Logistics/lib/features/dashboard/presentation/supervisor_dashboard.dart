@@ -3,210 +3,216 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:last_mile_fleet/core/theme/app_theme.dart';
 import 'package:last_mile_fleet/features/auth/presentation/auth_notifier.dart';
-import 'package:last_mile_fleet/l10n/app_localizations.dart';
 import 'package:last_mile_fleet/features/fleet/presentation/live_tracking_screen.dart';
 import 'package:last_mile_fleet/features/incidents/presentation/incident_approval_screen.dart';
 import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:last_mile_fleet/features/dashboard/presentation/matching_data_screen.dart';
 
 class SupervisorDashboard extends ConsumerWidget {
-  const SupervisorDashboard({super.key});
-
-  Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.logout),
-        content: Text(l10n.logoutConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.logout, style: const TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await ref.read(authProvider.notifier).signOut();
-    }
-  }
+  final bool showScaffold;
+  const SupervisorDashboard({super.key, this.showScaffold = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!showScaffold) {
+      return CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildContent(context),
+              ]),
+            ),
+          ),
+        ],
+      );
+    }
+
     return DashboardScaffold(
       title: 'PERFORMANCE HUB',
       subtitle: 'Oversee operations and resolve blockers',
-      actions: [
-        IconButton(
-          onPressed: () => _handleLogout(context, ref),
-          icon: const Icon(Icons.logout),
-        ),
-      ],
       children: [
-        // KPI Section
+        _buildContent(context),
+      ],
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Performance Stats
+        _buildSectionHeader('Fleet Performance Metrics'),
+        const SizedBox(height: 24),
         ResponsiveGrid(
           children: const [
             DashboardStatCard(
-              label: 'Avg. Delivery',
-              value: '18m',
+              label: 'Avg. Time/Deliv',
+              value: '18.4m',
               icon: Icons.timer_outlined,
               color: AppColors.accent,
-              trend: '-2m',
+              trend: '-2.1m (Improving)',
               isPositive: true,
+              sparklineData: [22, 21, 20, 19, 18.5, 18.4],
             ),
             DashboardStatCard(
-              label: 'Success Rate',
+              label: 'Delivery Success',
               value: '98.2%',
               icon: Icons.check_circle_outline,
               color: Colors.green,
-              trend: '+0.5%',
-              isPositive: true,
+              trend: 'Above benchmark',
+              sparklineData: [95, 96, 97, 97.5, 98, 98.2],
             ),
             DashboardStatCard(
-              label: 'Fleet Utilization',
-              value: '84%',
-              icon: Icons.local_shipping_outlined,
-              color: Colors.blue,
-              trend: '+5%',
-              isPositive: true,
-            ),
-            DashboardStatCard(
-              label: 'Open Incidents',
+              label: 'Live Incidents',
               value: '4',
               icon: Icons.warning_amber_rounded,
-              color: AppColors.warning,
-              trend: 'Action required',
+              color: AppColors.error,
+              trend: 'Action Required',
               isPositive: false,
+            ),
+            DashboardStatCard(
+              label: 'Active Riders',
+              value: '142',
+              icon: Icons.motorcycle_rounded,
+              color: Colors.blue,
+              trend: 'Across all zones',
             ),
           ],
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 48),
 
-        // Live Tracking Preview
-        Text(
-          'Real-time Operations',
-          style: GoogleFonts.outfit(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 20),
-        
-        DashboardActionCard(
-          title: 'Live Tracking Map',
-          subtitle: 'Currently monitoring 42 active riders in Riyadh South',
-          icon: Icons.map_outlined,
-          color: AppColors.primary,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const LiveTrackingScreen()),
-            );
-          },
-        ),
-
-        const SizedBox(height: 32),
-
-        Text(
-          'Incident Management',
-          style: GoogleFonts.outfit(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        _buildIncidentCard(
-          rider: 'Khalid Mansour',
-          type: 'Delay Justification',
-          time: '10 mins ago',
-          status: 'Awaiting Review',
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const IncidentApprovalScreen()),
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-        _buildIncidentCard(
-          rider: 'Youssef Ali',
-          type: 'Accident Report',
-          time: '1 hour ago',
-          status: 'Investigating',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIncidentCard({
-    required String rider,
-    required String type,
-    required String time,
-    required String status,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Row(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const CircleAvatar(
-              radius: 24,
-              backgroundColor: AppColors.background,
-              child: Icon(Icons.person_outline, color: AppColors.textSecondary),
-            ),
-            const SizedBox(width: 16),
             Expanded(
+              flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    rider,
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  Text(
-                    '$type • $time',
-                    style: GoogleFonts.outfit(fontSize: 14, color: AppColors.textSecondary),
+                  _buildSectionHeader('Operations & Incident Hub'),
+                  const SizedBox(height: 24),
+                  ResponsiveGrid(
+                    mobileCrossAxisCount: 1,
+                    tabletCrossAxisCount: 2,
+                    desktopCrossAxisCount: 2,
+                    childAspectRatio: 2.2,
+                    children: [
+                      DashboardActionCard(
+                        title: 'Live Heatmaps',
+                        subtitle: 'Rider concentration vs Demand',
+                        icon: Icons.layers_outlined,
+                        color: Colors.orange,
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LiveTrackingScreen()));
+                        },
+                      ),
+                      DashboardActionCard(
+                        title: 'Incident Approvals',
+                        subtitle: 'Approve delay & accident justifications',
+                        icon: Icons.fact_check_outlined,
+                        color: Colors.red,
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const IncidentApprovalScreen()));
+                        },
+                      ),
+                      DashboardActionCard(
+                        title: 'Matching Data reports',
+                        subtitle: 'Daily/Weekly platform reconciliation',
+                        icon: Icons.analytics_outlined,
+                        color: Colors.indigo,
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MatchingDataScreen()));
+                        },
+                      ),
+                      DashboardActionCard(
+                        title: 'Shift Cluster Manager',
+                        subtitle: 'Assign riders to high-demand zones',
+                        icon: Icons.grid_view_rounded,
+                        color: Colors.blue,
+                        onTap: () {},
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                status,
-                style: GoogleFonts.outfit(
-                  color: AppColors.warning,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
+            const SizedBox(width: 32),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionHeader('Platform Distribution'),
+                  const SizedBox(height: 24),
+                  _buildPlatformShare('Noon Food', 0.45, Colors.amber),
+                  const SizedBox(height: 12),
+                  _buildPlatformShare('Keeta (Meituan)', 0.35, Colors.teal),
+                  const SizedBox(height: 12),
+                  _buildPlatformShare('Amazon SA', 0.20, Colors.orange),
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('Open Incidents'),
+                  const SizedBox(height: 24),
+                  _buildSmallIncidentItem('Khalid M.', 'Delay justification', '10m ago'),
+                  const Divider(height: 24),
+                  _buildSmallIncidentItem('Youssef A.', 'Accident report', '1h ago'),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            const Icon(Icons.chevron_right, color: AppColors.divider),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildPlatformShare(String name, double share, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(
+        children: [
+          Container(width: 4, height: 24, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(width: 16),
+          Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold))),
+          Text('${(share * 100).toInt()}%', style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSmallIncidentItem(String rider, String type, String time) {
+    return Row(
+      children: [
+        const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 18),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(rider, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(type, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            ],
+          ),
+        ),
+        Text(time, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.outfit(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: AppColors.textPrimary,
       ),
     );
   }
 }
-

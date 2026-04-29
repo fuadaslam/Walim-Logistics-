@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
+import '../../dashboard/presentation/widgets/dashboard_scaffold.dart';
 import '../services/geocoding_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/vehicle.dart';
-import '../services/api_service.dart';
 
 class VehicleDetailScreen extends ConsumerWidget {
   final Vehicle vehicle;
@@ -17,29 +17,22 @@ class VehicleDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pos = vehicle.position;
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(vehicle.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-            Text(vehicle.fullPlate, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
-          ],
+    return DashboardScaffold(
+      title: vehicle.name,
+      subtitle: vehicle.fullPlate,
+      showBackButton: true,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.share_location_rounded),
+          onPressed: () {},
+          tooltip: 'Share Live Location',
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_location_rounded),
-            onPressed: () {},
-            tooltip: 'Share Live Location',
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000),
-          child: SingleChildScrollView(
+        const SizedBox(width: 8),
+      ],
+      children: [
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -141,7 +134,7 @@ class VehicleDetailScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 

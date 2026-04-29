@@ -48,9 +48,12 @@ class AppTheme {
     ),
   ];
 
-  static ThemeData get theme => ThemeData(
+  static ThemeData get theme => lightTheme;
+
+  static ThemeData get lightTheme => ThemeData(
     useMaterial3: true,
     fontFamily: 'Inter',
+    brightness: Brightness.light,
     colorScheme: ColorScheme.fromSeed(
       seedColor: primary,
       primary: primary,
@@ -106,6 +109,69 @@ class AppTheme {
       bodyLarge: TextStyle(fontSize: 14, color: Color(0xFF334155), fontWeight: FontWeight.w500),
       bodyMedium: TextStyle(fontSize: 13, color: textBody),
       labelLarge: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textBody, letterSpacing: 0.5),
+    ),
+  );
+
+  static ThemeData get darkTheme => ThemeData(
+    useMaterial3: true,
+    fontFamily: 'Inter',
+    brightness: Brightness.dark,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primary,
+      brightness: Brightness.dark,
+      primary: primary,
+      onPrimary: Colors.white,
+      secondary: Colors.white70,
+      surface: const Color(0xFF0F172A),
+      onSurface: Colors.white,
+    ),
+    scaffoldBackgroundColor: const Color(0xFF0F172A),
+    dividerTheme: const DividerThemeData(color: Colors.white10, thickness: 1),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF1E293B),
+      foregroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: false,
+      titleTextStyle: TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.5,
+      ),
+    ),
+    cardTheme: CardThemeData(
+      color: const Color(0xFF1E293B),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Colors.white10, width: 1),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.white10),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.white10),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: primary, width: 1.5),
+      ),
+      filled: true,
+      fillColor: const Color(0xFF1E293B),
+      hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    ),
+    textTheme: const TextTheme(
+      headlineLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5),
+      headlineMedium: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.5),
+      titleLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+      bodyLarge: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500),
+      bodyMedium: TextStyle(fontSize: 13, color: Colors.white60),
+      labelLarge: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white54, letterSpacing: 0.5),
     ),
   );
 

@@ -36,6 +36,7 @@ class TrackingProvider extends ChangeNotifier {
   String? _error;
   Timer? _refreshTimer;
   String _filter = '';
+  String _statusFilter = '';
   final Set<String> _resolvedIncidentIds = {};
 
   TrackingProvider() {
@@ -55,9 +56,39 @@ class TrackingProvider extends ChangeNotifier {
   String _lastUpdate = 'Just now';
 
   List<Vehicle> get vehicles {
-    if (_filter.isEmpty) return _vehicles;
+    List<Vehicle> filtered = _vehicles;
+
+    if (_statusFilter.isNotEmpty && _statusFilter != 'total') {
+      filtered = filtered.where((v) {
+        switch (_statusFilter) {
+          case 'moving':
+            return v.status == 'moving';
+          case 'idle':
+            return v.status == 'idle';
+          case 'stopped':
+            if (v.status == 'stopped') return true;
+            if (v.status == 'offline') {
+              if (v.position == null) return true;
+              final diff = DateTime.now().difference(v.position!.timestamp);
+              return diff.inHours <= 48;
+            }
+            return false;
+          case 'offline':
+            if (v.status != 'offline') return false;
+            if (v.position == null) return false;
+            final diff = DateTime.now().difference(v.position!.timestamp);
+            return diff.inHours > 48;
+          case 'no_data':
+            return v.position == null;
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    if (_filter.isEmpty) return filtered;
     final q = _filter.toLowerCase();
-    return _vehicles
+    return filtered
         .where((v) =>
             v.name.toLowerCase().contains(q) ||
             v.fullPlate.toLowerCase().contains(q) ||
@@ -70,6 +101,7 @@ class TrackingProvider extends ChangeNotifier {
   bool get isAuthenticated => _api.isAuthenticated;
   String? get error => _error;
   String get filter => _filter;
+  String get statusFilter => _statusFilter;
   String get userName => _userName;
   String get userBranch => _userBranch;
   String get lastUpdate => _lastUpdate;
@@ -200,6 +232,11 @@ class TrackingProvider extends ChangeNotifier {
 
   void setFilter(String value) {
     _filter = value;
+    notifyListeners();
+  }
+
+  void setStatusFilter(String value) {
+    _statusFilter = value;
     notifyListeners();
   }
 

@@ -2,38 +2,52 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:last_mile_fleet/core/theme/app_theme.dart';
 
+import '../../dashboard/presentation/widgets/dashboard_scaffold.dart';
+
 class ReconciliationDashboard extends StatelessWidget {
-  const ReconciliationDashboard({super.key});
+  final bool showScaffold;
+  const ReconciliationDashboard({super.key, this.showScaffold = true});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('COD Reconciliation'),
-        actions: [
-          TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.upload_file, size: 18),
-            label: const Text('Import Reports'),
+    if (!showScaffold) {
+      return CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildContent(context),
+              ]),
+            ),
           ),
         ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildSummaryCards(),
-            const SizedBox(height: 32),
-            const Text(
-              'Recent Collections',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            _buildReconciliationTable(context),
-          ],
+      );
+    }
+
+    return DashboardScaffold(
+      title: 'COD RECONCILIATION',
+      subtitle: 'Audit COD collections and platform reports',
+      activeItem: 'Finance',
+      children: [
+        _buildContent(context),
+      ],
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSummaryCards(),
+        const SizedBox(height: 32),
+        const Text(
+          'Recent Collections',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-      ),
+        const SizedBox(height: 16),
+        _buildReconciliationTable(context),
+      ],
     );
   }
 

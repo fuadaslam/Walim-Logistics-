@@ -3,13 +3,15 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../../dashboard/presentation/widgets/dashboard_scaffold.dart';
 import '../services/tracking_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/vehicle.dart';
 import 'vehicle_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool showScaffold;
+  const HomeScreen({super.key, this.showScaffold = true});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -21,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Vehicle? _selectedVehicle;
   bool _hasInitiallyCentered = false;
   bool _mapReady = false;
+  bool _showTrackingSidebar = true;
 
   static const _cities = {
     'All':    LatLng(23.8859, 45.0792),
@@ -57,26 +60,89 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: Row(
+    final provider = Provider.of<TrackingProvider>(context);
+    
+    if (!widget.showScaffold) {
+      return _buildContent(provider);
+    }
+
+    return DashboardScaffold(
+      activeItem: 'Live Ops',
+      title: 'Operations Control',
+      subtitle: '${DateFormat('EEEE • d MMM yyyy • HH:mm').format(DateTime.now())} • Live sync ${provider.lastUpdate}',
+      actions: [
+        _buildSearchField(),
+        const SizedBox(width: 16),
+        _buildLanguageToggle(),
+        const SizedBox(width: 12),
+        _buildLiveStatus(provider),
+        const SizedBox(width: 16),
+        _buildUserAvatar(provider),
+        const SizedBox(width: 16),
+      ],
+      children: [
+        _buildContent(provider),
+      ],
+    );
+  }
+
+  Widget _buildContent(TrackingProvider provider) {
+    return SizedBox(
+      height: MediaQuery.of(context).size.height - 110,
+      child: Stack(
         children: [
-          _buildSidebar(),
-          Expanded(
-            child: Column(
-              children: [
-                _buildTopBar(),
-                Expanded(
-                  child: Consumer<TrackingProvider>(
-                    builder: (context, provider, _) {
-                      if (!_hasInitiallyCentered && _mapReady && provider.vehicles.isNotEmpty) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) => _checkInitialCentering());
-                      }
-                      return _buildActiveView(provider);
-                    },
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                width: _showTrackingSidebar ? 240 : 0,
+                child: ClipRect(
+                  child: OverflowBox(
+                    minWidth: 240,
+                    maxWidth: 240,
+                    alignment: Alignment.centerLeft,
+                    child: _buildSidebar(),
                   ),
                 ),
-              ],
+              ),
+              Expanded(
+                child: provider.isInitialLoad 
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildActiveView(provider),
+              ),
+            ],
+          ),
+          // Floating Toggle Button
+          Positioned(
+            left: _showTrackingSidebar ? 220 : 0,
+            top: 12,
+            child: GestureDetector(
+              onTap: () => setState(() => _showTrackingSidebar = !_showTrackingSidebar),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  borderRadius: const BorderRadius.horizontal(
+                    right: Radius.circular(12),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(2, 0),
+                    )
+                  ],
+                ),
+                child: Icon(
+                  _showTrackingSidebar ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
             ),
           ),
         ],
@@ -236,34 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTopBar() {
-    return Consumer<TrackingProvider>(
-      builder: (context, provider, _) => Container(
-        height: 72,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: AppTheme.border)),
-        ),
-        child: Row(
-          children: [
-            Text(
-              '${_activeMenu.toUpperCase()} DASHBOARD',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textBody, letterSpacing: 0.5),
-            ),
-            const Spacer(),
-            _buildSearchField(),
-            const SizedBox(width: 24),
-            _buildLanguageToggle(),
-            const SizedBox(width: 12),
-            _buildLiveStatus(provider),
-            const SizedBox(width: 24),
-            _buildUserAvatar(provider),
-          ],
-        ),
-      ),
-    );
-  }
+  // Removed _buildTopBar as it is merged into DashboardScaffold actions
 
   Widget _buildSearchField() {
     return Container(
@@ -500,64 +539,81 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStatGrid(TrackingProvider provider) {
     return Row(
       children: [
-        _buildStatusCard('MOVING', provider.movingCount.toString(), AppTheme.onlineColor, Icons.directions_run_rounded),
-        _buildStatusCard('IDLE', provider.idleCount.toString(), Colors.amber, Icons.pause_circle_outline_rounded),
-        _buildStatusCard('STOPPED', provider.stoppedCount.toString(), AppTheme.danger, Icons.stop_circle_outlined),
-        _buildStatusCard('OFFLINE', provider.offlineCount.toString(), Colors.grey, Icons.wifi_off_rounded),
-        _buildStatusCard('NO DATA', provider.noDataCount.toString(), Colors.indigo, Icons.data_usage_rounded),
-        _buildStatusCard('TOTAL FLEET', provider.totalCount.toString(), AppTheme.info, Icons.group_rounded),
+        _buildStatusCard('MOVING', provider.movingCount.toString(), AppTheme.onlineColor, Icons.directions_run_rounded, 'moving', provider),
+        _buildStatusCard('IDLE', provider.idleCount.toString(), Colors.amber, Icons.pause_circle_outline_rounded, 'idle', provider),
+        _buildStatusCard('STOPPED', provider.stoppedCount.toString(), AppTheme.danger, Icons.stop_circle_outlined, 'stopped', provider),
+        _buildStatusCard('OFFLINE', provider.offlineCount.toString(), Colors.grey, Icons.wifi_off_rounded, 'offline', provider),
+        _buildStatusCard('NO DATA', provider.noDataCount.toString(), Colors.indigo, Icons.data_usage_rounded, 'no_data', provider),
+        _buildStatusCard('TOTAL FLEET', provider.totalCount.toString(), AppTheme.info, Icons.group_rounded, 'total', provider),
       ],
     );
   }
 
-  Widget _buildStatusCard(String label, String value, Color color, IconData icon) {
+  Widget _buildStatusCard(String label, String value, Color color, IconData icon, String statusKey, TrackingProvider provider) {
+    final isActive = provider.statusFilter == statusKey || (statusKey == 'total' && provider.statusFilter == '');
+    
     return Expanded(
-      child: Container(
-        margin: const EdgeInsets.only(right: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 16),
+        child: InkWell(
+          onTap: () => provider.setStatusFilter(statusKey == 'total' ? '' : statusKey),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.border),
-          boxShadow: [
-             BoxShadow(
-               color: color.withValues(alpha: 0.05),
-               offset: const Offset(0, 4),
-               blurRadius: 10,
-             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isActive ? color : AppTheme.border, 
+                width: isActive ? 2 : 1
+              ),
+              boxShadow: [
+                 BoxShadow(
+                   color: color.withValues(alpha: isActive ? 0.1 : 0.05),
+                   offset: const Offset(0, 4),
+                   blurRadius: 10,
+                 ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                  child: Icon(icon, size: 16, color: color),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                      child: Icon(icon, size: 16, color: color),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
+                    if (isActive && statusKey != 'total') ...[
+                      const Spacer(),
+                      Icon(Icons.filter_alt_rounded, size: 12, color: color),
+                    ],
+                  ],
                 ),
-                const SizedBox(width: 10),
-                Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+                    const SizedBox(width: 4),
+                    const Text('units', style: TextStyle(fontSize: 12, color: AppTheme.textBody, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 3,
+                  width: isActive ? 48 : 32,
+                  decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+                ),
               ],
             ),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
-                const SizedBox(width: 4),
-                const Text('units', style: TextStyle(fontSize: 12, color: AppTheme.textBody, fontWeight: FontWeight.w600)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Container(
-              height: 3,
-              width: 32,
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
-            ),
-          ],
+          ),
         ),
       ),
     );

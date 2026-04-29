@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:last_mile_fleet/l10n/app_localizations.dart';
 import 'core/constants/constants.dart';
 import 'package:last_mile_fleet/core/theme/app_theme.dart';
+import 'package:last_mile_fleet/core/theme/theme_provider.dart';
 import 'package:last_mile_fleet/core/localization/locale_provider.dart';
 import 'features/auth/presentation/auth_gate.dart';
 
@@ -29,13 +30,14 @@ class LastMileFleetApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentLocale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeProvider);
 
     return MaterialApp(
       title: 'Last Mile Fleet',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: themeMode,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
