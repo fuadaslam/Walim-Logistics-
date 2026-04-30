@@ -1,31 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:last_mile_fleet/features/auth/presentation/auth_notifier.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/providers/navigation_provider.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 
 // Import dashboards
-import 'package:last_mile_fleet/features/dashboard/presentation/admin_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/hr_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/finance_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/ops_manager_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/supervisor_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/it_dev_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/leader_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/rider_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/biz_dev_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/admin_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/hr_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/finance_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/ops_manager_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/supervisor_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/it_dev_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/leader_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/rider_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/biz_dev_dashboard.dart';
 
 // Import other screens
-import 'package:last_mile_fleet/features/tracking/screens/home_screen.dart' as walim_tracking;
-import 'package:last_mile_fleet/features/tracking/services/tracking_provider.dart';
-import 'package:last_mile_fleet/features/tracking/theme/app_theme.dart' as tracking_theme;
-import 'package:last_mile_fleet/features/fleet/presentation/inventory_handover_screen.dart';
-import 'package:last_mile_fleet/features/finance/presentation/reconciliation_dashboard.dart';
-import 'package:last_mile_fleet/features/inspections/presentation/inspection_screen.dart';
-import 'package:last_mile_fleet/features/support/presentation/support_tickets_screen.dart';
-import 'package:last_mile_fleet/features/hr/presentation/document_vault_screen.dart';
-import 'package:last_mile_fleet/features/requests/presentation/leave_request_screen.dart' as rider_requests;
-import 'package:provider/provider.dart' as provider_pkg;
+import 'package:walim_logistics/features/tracking/screens/home_screen.dart' as walim_tracking;
+import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
+import 'package:walim_logistics/features/tracking/theme/app_theme.dart' as tracking_theme;
+import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
+import 'package:walim_logistics/features/finance/presentation/reconciliation_dashboard.dart';
+import 'package:walim_logistics/features/inspections/presentation/inspection_screen.dart';
+import 'package:walim_logistics/features/support/presentation/support_tickets_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/document_vault_screen.dart';
+import 'package:walim_logistics/features/requests/presentation/leave_request_screen.dart' as rider_requests;
 
 class MainDashboardShell extends ConsumerWidget {
   const MainDashboardShell({super.key});
@@ -36,33 +35,41 @@ class MainDashboardShell extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final role = authState.profile?.role ?? 'Rider';
 
-    final config = _getTabConfig(context, navState.activeTab, role);
+    final config = _getTabConfig(context, ref, navState.activeTab, role);
 
     return DashboardScaffold(
       title: config.title,
       subtitle: config.subtitle,
       body: config.body,
       activeItem: config.activeItem,
+      onSearchChanged: config.onSearchChanged,
+      searchHint: config.searchHint,
+      headerActions: config.headerActions,
     );
   }
 
-  _TabConfig _getTabConfig(BuildContext context, DashboardTab tab, String role) {
+  _TabConfig _getTabConfig(BuildContext context, WidgetRef ref, DashboardTab tab, String role) {
     switch (tab) {
       case DashboardTab.dashboard:
         return _getDashboardConfig(role);
       case DashboardTab.liveOps:
+        final tracker = ref.watch(trackingProvider);
         return _TabConfig(
-          title: 'LIVE OPERATIONS',
+          title: tracker.selectedCity == 'All' 
+            ? 'LIVE OPERATIONS' 
+            : 'LIVE OPERATIONS - ${tracker.selectedCity.toUpperCase()}',
           subtitle: 'Real-time tracking and delivery monitoring',
           activeItem: 'Live Ops',
-          body: provider_pkg.ChangeNotifierProvider(
-            create: (_) => TrackingProvider(),
-            child: Theme(
-              data: Theme.of(context).brightness == Brightness.dark 
-                ? tracking_theme.AppTheme.darkTheme 
-                : tracking_theme.AppTheme.lightTheme,
-              child: const walim_tracking.HomeScreen(showScaffold: false),
-            ),
+          onSearchChanged: (v) => ref.read(trackingProvider.notifier).setFilter(v),
+          searchHint: 'Search riders, vehicles, orders...',
+          headerActions: [
+            _buildLiveStatusIndicator(tracker),
+          ],
+          body: Theme(
+            data: Theme.of(context).brightness == Brightness.dark 
+              ? tracking_theme.AppTheme.darkTheme 
+              : tracking_theme.AppTheme.lightTheme,
+            child: const walim_tracking.HomeScreen(showScaffold: false),
           ),
         );
       case DashboardTab.hr:
@@ -77,7 +84,7 @@ class MainDashboardShell extends ConsumerWidget {
           title: 'ASSET MANAGEMENT',
           subtitle: 'Track and assign fleet assets',
           activeItem: 'Assets',
-          body: const InventoryHandoverScreen(showScaffold: false),
+          body: const FleetAssetRegistryScreen(showScaffold: false),
         );
       case DashboardTab.finance:
         return _TabConfig(
@@ -85,13 +92,6 @@ class MainDashboardShell extends ConsumerWidget {
           subtitle: 'Audit COD collections and platform reports',
           activeItem: 'Finance',
           body: const ReconciliationDashboard(showScaffold: false),
-        );
-      case DashboardTab.inspections:
-        return _TabConfig(
-          title: 'INSPECTIONS',
-          subtitle: 'Daily vehicle and gear compliance checks',
-          activeItem: 'Inspections',
-          body: const InspectionScreen(showScaffold: false),
         );
       case DashboardTab.support:
         return _TabConfig(
@@ -194,7 +194,7 @@ class MainDashboardShell extends ConsumerWidget {
       default:
         return _TabConfig(
           title: 'DASHBOARD',
-          subtitle: 'Welcome to Last Mile Fleet',
+          subtitle: 'Welcome to Walim Logistics',
           activeItem: 'Dashboard',
           body: _getDashboardForRole(role),
         );
@@ -215,6 +215,43 @@ class MainDashboardShell extends ConsumerWidget {
       default: return const AdminDashboard(showScaffold: false);
     }
   }
+
+  Widget _buildLiveStatusIndicator(TrackingProvider provider) {
+    final isError = provider.error != null;
+    final dotColor = provider.loading
+        ? Colors.orange
+        : (isError ? Colors.red : Colors.green);
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: dotColor,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: dotColor.withOpacity(0.4),
+                blurRadius: 4,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          provider.loading ? 'Syncing...' : (isError ? 'Sync Error' : 'Live'),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: dotColor,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _TabConfig {
@@ -222,11 +259,17 @@ class _TabConfig {
   final String subtitle;
   final String activeItem;
   final Widget body;
+  final ValueChanged<String>? onSearchChanged;
+  final String? searchHint;
+  final List<Widget>? headerActions;
 
   _TabConfig({
     required this.title,
     required this.subtitle,
     required this.activeItem,
     required this.body,
+    this.onSearchChanged,
+    this.searchHint,
+    this.headerActions,
   });
 }

@@ -5,7 +5,6 @@ class FleetRepository {
 
   FleetRepository(this._supabase);
 
-  // Asset Management
   Future<void> assignAsset({
     required String assetId,
     required String profileId,
@@ -19,7 +18,6 @@ class FleetRepository {
       'condition_on_assign': condition,
     });
 
-    // Update asset status
     await _supabase.from('assets').update({
       'status': 'assigned',
     }).eq('id', assetId);
@@ -33,7 +31,6 @@ class FleetRepository {
         .filter('asset_assignments.returned_at', 'is', null);
   }
 
-  // Shift Management
   Future<void> assignToShift({
     required String profileId,
     required String zoneId,
@@ -51,5 +48,38 @@ class FleetRepository {
 
   Future<List<Map<String, dynamic>>> getZones() async {
     return await _supabase.from('zones').select();
+  }
+
+  Future<Map<String, dynamic>?> getRiderCurrentZone(String profileId) async {
+    try {
+      final now = DateTime.now().toIso8601String();
+      final response = await _supabase
+          .from('shifts')
+          .select('*, zones!inner(*)')
+          .eq('profile_id', profileId)
+          .or('status.eq.active,status.eq.scheduled')
+          .lte('start_time', now)
+          .gte('end_time', now)
+          .maybeSingle();
+      if (response != null && response['zones'] != null) {
+        return response['zones'] as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    try {
+      final today = DateTime.now();
+      final todayStr = DateTime(today.year, today.month, today.day).toIso8601String();
+      final response = await _supabase
+          .from('shifts')
+          .select('*, zones!inner(*)')
+          .eq('profile_id', profileId)
+          .gte('start_time', todayStr)
+          .order('start_time', ascending: true)
+          .limit(1)
+          .maybeSingle();
+      if (response != null && response['zones'] != null) {
+        return response['zones'] as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return null;
   }
 }

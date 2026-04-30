@@ -101,8 +101,14 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Last Mile Fleet'**
+  /// **'Walim Logistics'**
   String get appTitle;
+
+  /// No description provided for @subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Walim Logistics'**
+  String get subtitle;
 
   /// No description provided for @login.
   ///

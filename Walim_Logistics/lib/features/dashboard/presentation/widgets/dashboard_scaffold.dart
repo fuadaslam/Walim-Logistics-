@@ -2,29 +2,28 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/core/theme/theme_provider.dart';
-import 'package:provider/provider.dart' as provider_pkg;
-import 'package:last_mile_fleet/features/tracking/services/tracking_provider.dart';
-import 'package:last_mile_fleet/features/tracking/screens/home_screen.dart' as walim_tracking;
-import 'package:last_mile_fleet/features/dashboard/presentation/admin_dashboard.dart';
-import 'package:last_mile_fleet/features/finance/presentation/reconciliation_dashboard.dart';
-import 'package:last_mile_fleet/features/fleet/presentation/inventory_handover_screen.dart';
-import 'package:last_mile_fleet/features/notifications/presentation/notification_settings_screen.dart';
-import 'package:last_mile_fleet/features/tracking/theme/app_theme.dart' as tracking_theme;
-import 'package:last_mile_fleet/features/dashboard/presentation/hr_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/finance_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/ops_manager_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/supervisor_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/it_dev_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/leader_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/rider_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/biz_dev_dashboard.dart';
-import 'package:last_mile_fleet/features/auth/presentation/auth_notifier.dart';
-import 'package:last_mile_fleet/l10n/app_localizations.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/providers/navigation_provider.dart';
-import 'package:last_mile_fleet/features/hr/presentation/rider_detail_screen.dart';
-import 'package:last_mile_fleet/core/localization/locale_provider.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/core/theme/theme_provider.dart';
+import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
+import 'package:walim_logistics/features/tracking/screens/home_screen.dart' as walim_tracking;
+import 'package:walim_logistics/features/dashboard/presentation/admin_dashboard.dart';
+import 'package:walim_logistics/features/finance/presentation/reconciliation_dashboard.dart';
+import 'package:walim_logistics/features/fleet/presentation/inventory_handover_screen.dart';
+import 'package:walim_logistics/features/notifications/presentation/notification_settings_screen.dart';
+import 'package:walim_logistics/features/tracking/theme/app_theme.dart' as tracking_theme;
+import 'package:walim_logistics/features/dashboard/presentation/hr_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/finance_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/ops_manager_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/supervisor_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/it_dev_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/leader_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/rider_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/biz_dev_dashboard.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
+import 'package:walim_logistics/l10n/app_localizations.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
+import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
+import 'package:walim_logistics/core/localization/locale_provider.dart';
 
 class DashboardScaffold extends ConsumerStatefulWidget {
   final String title;
@@ -37,6 +36,9 @@ class DashboardScaffold extends ConsumerStatefulWidget {
   final String activeItem;
   final Widget? endDrawer;
   final Widget? body;
+  final ValueChanged<String>? onSearchChanged;
+  final String? searchHint;
+  final List<Widget>? headerActions;
 
   const DashboardScaffold({
     super.key,
@@ -50,6 +52,9 @@ class DashboardScaffold extends ConsumerStatefulWidget {
     this.activeItem = 'Dashboard',
     this.endDrawer,
     this.body,
+    this.onSearchChanged,
+    this.searchHint,
+    this.headerActions,
   });
 
   @override
@@ -106,8 +111,8 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                   child: widget.body != null 
                     ? Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 10 : 10,
-                          vertical: isDesktop ? 10 : 0,
+                          horizontal: isDesktop ? 10 : 20,
+                          vertical: 20,
                         ),
                         child: widget.body!,
                       )
@@ -115,8 +120,8 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                     slivers: [
                       SliverPadding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 10 : 10,
-                          vertical: isDesktop ? 10 : 10,
+                          horizontal: isDesktop ? 10 : 20,
+                          vertical: 20,
                         ),
                         sliver: SliverList(
                           delegate: SliverChildListDelegate([
@@ -166,15 +171,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
       ));
     }
 
-    // 2. Inspections (High Priority for Rider)
-    if (role == 'Rider' && items.length < 5) {
-      items.add(_BottomNavItem(
-        icon: Icons.assignment_turned_in_rounded,
-        label: 'Inspect',
-        tab: DashboardTab.inspections,
-        isActive: navState.activeTab == DashboardTab.inspections,
-      ));
-    }
+    // 2. Inspections removed (not required)
 
 
 
@@ -240,26 +237,26 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
 
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       decoration: BoxDecoration(
         color: theme.cardColor.withValues(alpha: isDark ? 0.8 : 0.9),
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.12),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
 
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            height: 76,
+            height: 68,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -297,7 +294,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                             item.label,
                             style: GoogleFonts.outfit(
                               fontSize: 10,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               color: isDark ? Colors.white.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.35),
                               letterSpacing: 0.2,
                             ),
@@ -336,31 +333,39 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     final isDark = theme.brightness == Brightness.dark;
     
     return AppBar(
-      backgroundColor: theme.cardColor,
+      backgroundColor: theme.cardColor.withValues(alpha: 0.8),
       elevation: 0,
       centerTitle: false,
+      titleSpacing: 12,
+      automaticallyImplyLeading: false,
+      flexibleSpace: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(color: Colors.transparent),
+        ),
+      ),
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Image.asset('assets/images/logo.png', height: 20),
+            child: Image.asset('assets/images/logo.png', height: 16),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Flexible(
             child: Text(
-              widget.title,
+              widget.title.toUpperCase(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.outfit(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
                 color: theme.textTheme.titleLarge?.color,
-                letterSpacing: 0.1,
+                letterSpacing: 0,
               ),
             ),
           ),
@@ -375,15 +380,20 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
       actions: [
         ...?widget.actions,
         IconButton(
-          icon: Icon(Icons.notifications_none_rounded, color: theme.textTheme.bodyLarge?.color),
+          padding: const EdgeInsets.all(8),
+          constraints: const BoxConstraints(),
+          icon: Icon(Icons.notifications_none_rounded, color: theme.textTheme.bodyLarge?.color, size: 22),
           onPressed: () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()));
           },
         ),
         IconButton(
+          padding: const EdgeInsets.all(8),
+          constraints: const BoxConstraints(),
           icon: Icon(
             isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
             color: theme.textTheme.bodyLarge?.color,
+            size: 22,
           ),
           onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
         ),
@@ -413,19 +423,27 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
       child: Column(
         children: [
           Padding(
-            padding: isSidebarCollapsed ? const EdgeInsets.symmetric(vertical: 32) : const EdgeInsets.all(32.0),
+            padding: isSidebarCollapsed 
+                ? const EdgeInsets.symmetric(vertical: 32) 
+                : const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
             child: Row(
               mainAxisAlignment: isSidebarCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
               children: [
                 Image.asset('assets/images/logo.png', height: 40),
                 if (!isSidebarCollapsed) ...[
-                  const SizedBox(width: 16),
-                  Text(
-                    'Logistics',
-                    style: GoogleFonts.outfit(
-                      fontSize: 24,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 1,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Walim Logistics',
+                        style: GoogleFonts.outfit(
+                          fontSize: 22,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 1,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -433,8 +451,11 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             ),
           ),
           const SizedBox(height: 20),
-          _buildSidebarItems(context, authState, navState, isSidebarCollapsed),
-          const Spacer(),
+          Expanded(
+            child: SingleChildScrollView(
+              child: _buildSidebarItems(context, authState, navState, isSidebarCollapsed),
+            ),
+          ),
           _buildSidebarItem(context, Icons.settings_rounded, 'Settings', widget.activeItem == 'Settings', isSidebarCollapsed, onTap: () {
             if (widget.activeItem == 'Settings') return;
             Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()));
@@ -538,9 +559,10 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
+                      onChanged: widget.onSearchChanged,
                       style: GoogleFonts.outfit(fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Search inventory, parts or vehicles (Cmd+K)',
+                        hintText: widget.searchHint ?? 'Search inventory, parts or vehicles (Cmd+K)',
                         hintStyle: GoogleFonts.outfit(
                           color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
                           fontSize: 14,
@@ -577,6 +599,10 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
               ),
             ),
           ),
+          if (widget.headerActions != null) ...[
+            const SizedBox(width: 24),
+            ...widget.headerActions!,
+          ],
           const SizedBox(width: 40),
           
           // 2. Language Selector
@@ -712,15 +738,6 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             onTap: () => navNotifier.setTab(DashboardTab.liveOps),
           ),
 
-        if (role == 'Rider')
-          _buildSidebarItem(
-            context, 
-            Icons.camera_alt, 
-            'Inspections', 
-            navState.activeTab == DashboardTab.inspections, 
-            isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.inspections),
-          ),
 
         if (role == 'Admin' || role == 'HR' || role == 'Operations Manager')
           _buildSidebarItem(
@@ -809,91 +826,20 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             .toUpperCase() ??
         'U';
 
-    return PopupMenuButton<String>(
-      offset: const Offset(0, 48),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      position: PopupMenuPosition.under,
-      onSelected: (value) {
-        if (value == 'profile') {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => RiderDetailScreen(profile: profile)));
-        } else if (value == 'theme') {
-          ref.read(themeProvider.notifier).toggleTheme();
-        } else if (value == 'logout') {
-          _handleLogout();
+    return InkWell(
+      onTap: () {
+        final currentRoute = ModalRoute.of(context)?.settings.name;
+        if (currentRoute != '/rider_detail') {
+          Navigator.push(
+            context, 
+            MaterialPageRoute(
+              settings: const RouteSettings(name: '/rider_detail'),
+              builder: (_) => RiderDetailScreen(profile: profile),
+            ),
+          );
         }
       },
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          enabled: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                profile?.fullName ?? 'User',
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              Text(
-                profile?.role ?? 'Role',
-                style: GoogleFonts.outfit(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const Divider(height: 24),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'theme',
-          child: Row(
-            children: [
-              Icon(
-                Theme.of(context).brightness == Brightness.dark 
-                  ? Icons.light_mode_rounded 
-                  : Icons.dark_mode_rounded,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                Theme.of(context).brightness == Brightness.dark 
-                  ? 'Light Mode' 
-                  : 'Dark Mode',
-                style: GoogleFonts.outfit(),
-              ),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'profile',
-          child: Row(
-            children: [
-              Icon(Icons.person_outline_rounded, color: Theme.of(context).textTheme.bodyLarge?.color, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                'My Profile',
-                style: GoogleFonts.outfit(),
-              ),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'logout',
-          child: Row(
-            children: [
-              const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                'Logout',
-                style: GoogleFonts.outfit(color: AppColors.error),
-              ),
-            ],
-          ),
-        ),
-      ],
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
@@ -912,7 +858,6 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           ),
         ),
       ),
-
     );
   }
 }

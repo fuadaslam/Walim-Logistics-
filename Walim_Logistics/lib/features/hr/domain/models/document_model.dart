@@ -23,6 +23,49 @@ class DigitalDocument {
     this.notes,
   });
 
+  factory DigitalDocument.fromJson(Map<String, dynamic> json) {
+    final type = json['type'] as String? ?? 'Custom Label';
+    final typeObj = standardDocumentTypes.firstWhere(
+      (t) => t.label == type,
+      orElse: () => standardDocumentTypes.last,
+    );
+    DateTime? expiryDate;
+    if (json['expiry_date'] != null) {
+      expiryDate = DateTime.tryParse(json['expiry_date'].toString());
+    }
+    String status = json['status'] as String? ?? 'Valid';
+    if (expiryDate != null) {
+      final days = expiryDate.difference(DateTime.now()).inDays;
+      if (days < 0) {
+        status = 'Expired';
+      } else if (days <= 30) {
+        status = 'Expiring Soon';
+      } else {
+        status = 'Valid';
+      }
+    }
+    return DigitalDocument(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      type: type,
+      expiryDate: expiryDate,
+      status: status,
+      icon: typeObj.icon,
+      color: typeObj.color,
+      fileUrl: json['file_url'] as String?,
+      notes: json['notes'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'type': type,
+        'status': status,
+        'expiry_date': expiryDate?.toIso8601String().split('T')[0],
+        'file_url': fileUrl,
+        'notes': notes,
+      };
+
   DigitalDocument copyWith({
     String? id,
     String? title,

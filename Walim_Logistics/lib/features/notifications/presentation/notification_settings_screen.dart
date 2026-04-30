@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});

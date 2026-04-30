@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
 
 import '../../dashboard/presentation/widgets/dashboard_scaffold.dart';
 

@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/l10n/app_localizations.dart';
-import 'package:last_mile_fleet/core/localization/locale_provider.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/attendance/presentation/attendance_notifier.dart';
-import 'package:last_mile_fleet/features/inspections/presentation/inspection_screen.dart';
-import 'package:last_mile_fleet/features/hr/presentation/document_vault_screen.dart';
-import 'package:last_mile_fleet/features/support/presentation/support_tickets_screen.dart';
-import 'package:last_mile_fleet/features/requests/presentation/leave_request_screen.dart' as rider_requests;
-import 'package:last_mile_fleet/features/auth/presentation/auth_notifier.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_widgets.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:last_mile_fleet/features/hr/presentation/rider_detail_screen.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/providers/navigation_provider.dart';
+import 'package:walim_logistics/l10n/app_localizations.dart';
+import 'package:walim_logistics/core/localization/locale_provider.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/attendance/presentation/attendance_notifier.dart';
+import 'package:walim_logistics/features/inspections/presentation/inspection_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/document_vault_screen.dart';
+import 'package:walim_logistics/features/support/presentation/support_tickets_screen.dart';
+import 'package:walim_logistics/features/requests/presentation/leave_request_screen.dart'
+    as rider_requests;
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
 
 class RiderDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -27,15 +30,29 @@ class RiderDashboard extends ConsumerWidget {
       if (permission == LocationPermission.denied) return;
     }
 
-    await ref.read(attendanceProvider.notifier).toggleShift(
-      centerLat: 24.7136,
-      centerLong: 46.6753,
-      radiusMeters: 500,
-    );
+    await ref
+        .read(attendanceProvider.notifier)
+        .toggleShift(
+          centerLat: 24.7136,
+          centerLong: 46.6753,
+          radiusMeters: 500,
+        );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<AttendanceState>(attendanceProvider, (previous, next) {
+      if (next.error != null && next.error != previous?.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.error!),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+
     final l10n = AppLocalizations.of(context)!;
     final attendanceState = ref.watch(attendanceProvider);
     final currentLocale = ref.watch(localeProvider);
@@ -51,12 +68,21 @@ class RiderDashboard extends ConsumerWidget {
         slivers: [
           SliverPadding(
             padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width < 900 ? 20 : 40,
-              vertical: 30,
+              horizontal: MediaQuery.of(context).size.width < 900 ? 0 : 40,
+              vertical: 0,
             ),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildContent(context, ref, attendanceState, l10n, userName, authState, greeting, weatherStatus),
+                _buildContent(
+                  context,
+                  ref,
+                  attendanceState,
+                  l10n,
+                  userName,
+                  authState,
+                  greeting,
+                  weatherStatus,
+                ),
               ]),
             ),
           ),
@@ -78,21 +104,45 @@ class RiderDashboard extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.wb_sunny_outlined, size: 16, color: Colors.orange),
+                const Icon(
+                  Icons.wb_sunny_outlined,
+                  size: 16,
+                  color: Colors.orange,
+                ),
                 const SizedBox(width: 8),
-                Text(weatherStatus, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                Text(
+                  weatherStatus,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
               ],
             ),
           ),
         if (!isMobile) const SizedBox(width: 12),
         IconButton(
+          padding: const EdgeInsets.all(8),
+          constraints: const BoxConstraints(),
           onPressed: () => ref.read(localeProvider.notifier).toggleLocale(),
-          icon: const Icon(Icons.language),
-          tooltip: currentLocale.languageCode == 'en' ? 'Switch to Arabic' : 'Switch to English',
+          icon: const Icon(Icons.language, size: 22),
+          tooltip: currentLocale.languageCode == 'en'
+              ? 'Switch to Arabic'
+              : 'Switch to English',
         ),
       ],
       children: [
-        _buildContent(context, ref, attendanceState, l10n, userName, authState, greeting, weatherStatus),
+        _buildContent(
+          context,
+          ref,
+          attendanceState,
+          l10n,
+          userName,
+          authState,
+          greeting,
+          weatherStatus,
+        ),
       ],
     );
   }
@@ -104,30 +154,39 @@ class RiderDashboard extends ConsumerWidget {
     return 'Good Evening';
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref, AttendanceState attendanceState, AppLocalizations l10n, String userName, AuthState authState, String greeting, String weather) {
+  Widget _buildContent(
+    BuildContext context,
+    WidgetRef ref,
+    AttendanceState attendanceState,
+    AppLocalizations l10n,
+    String userName,
+    AuthState authState,
+    String greeting,
+    String weather,
+  ) {
     final isMobile = MediaQuery.of(context).size.width < 900;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. Shift Control & Attendance
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildSectionHeader(context, 'Current Mission', Icons.track_changes_rounded),
-
-            if (attendanceState.hasActiveShift)
-              _buildLiveStatusIndicator(),
-          ],
-        ),
-        const SizedBox(height: 16),
+        if (attendanceState.todayCheckIns < 3 &&
+            !attendanceState.hasActiveShift)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _buildCheckInAlert(context, ref, attendanceState),
+          ),
+        if (attendanceState.hasActiveShift)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _buildLiveStatusIndicator(),
+          ),
         _buildShiftControlCard(context, ref, attendanceState, l10n, isMobile),
-        
-        const SizedBox(height: 32),
+
+        const SizedBox(height: 20),
 
         if (isMobile) ...[
           _buildMainContent(context, ref, attendanceState, l10n, isMobile),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
           _buildSidebarContent(context),
         ] else
           Row(
@@ -135,26 +194,119 @@ class RiderDashboard extends ConsumerWidget {
             children: [
               Expanded(
                 flex: 5,
-                child: _buildMainContent(context, ref, attendanceState, l10n, isMobile),
+                child: _buildMainContent(
+                  context,
+                  ref,
+                  attendanceState,
+                  l10n,
+                  isMobile,
+                ),
               ),
-              const SizedBox(width: 32),
-              Expanded(
-                flex: 3,
-                child: _buildSidebarContent(context),
-              ),
+              const SizedBox(width: 20),
+              Expanded(flex: 3, child: _buildSidebarContent(context)),
             ],
           ),
       ],
     );
   }
 
+  Widget _buildCheckInAlert(
+    BuildContext context,
+    WidgetRef ref,
+    AttendanceState state,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.error.withOpacity(0.3), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: AppColors.error),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'CHECK-IN REQUIRED (${state.todayCheckIns}/3)',
+                  style: GoogleFonts.outfit(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'You have not completed the required 3 check-ins today. Please check in, or report if you have an issue.',
+            style: GoogleFonts.outfit(
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    ref
+                        .read(navigationProvider.notifier)
+                        .setTab(DashboardTab.requests);
+                    // Could pre-fill a leave request
+                  },
+                  icon: const Icon(Icons.event_busy, size: 18),
+                  label: const Text('Mark Leave'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: BorderSide(color: AppColors.error.withOpacity(0.5)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    ref
+                        .read(navigationProvider.notifier)
+                        .setTab(DashboardTab.support);
+                  },
+                  icon: const Icon(Icons.report_problem, size: 18),
+                  label: const Text('Report Issue'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: BorderSide(color: AppColors.error.withOpacity(0.5)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildMainContent(BuildContext context, WidgetRef ref, AttendanceState attendanceState, AppLocalizations l10n, bool isMobile) {
+  Widget _buildMainContent(
+    BuildContext context,
+    WidgetRef ref,
+    AttendanceState attendanceState,
+    AppLocalizations l10n,
+    bool isMobile,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(context, 'Performance Insights', Icons.auto_graph_rounded),
-        const SizedBox(height: 16),
+        _buildSectionHeader(
+          context,
+          'Attendance & Shift',
+          Icons.fact_check_outlined,
+        ),
+        const SizedBox(height: 10),
         ResponsiveGrid(
           mobileCrossAxisCount: 3,
           tabletCrossAxisCount: 3,
@@ -162,37 +314,41 @@ class RiderDashboard extends ConsumerWidget {
           spacing: 8,
           childAspectRatio: isMobile ? 0.8 : 1.5,
 
-          children: const [
+          children: [
             DashboardStatCard(
-              label: 'Deliveries',
-              value: '24',
-              icon: Icons.local_shipping_outlined,
-              color: Color(0xFF3B82F6),
-              trend: 'Target: 30',
-              sparklineData: [15, 18, 12, 22, 20, 24],
+              label: 'Check-ins',
+              value: '${attendanceState.todayCheckIns} / 3',
+              icon: Icons.fact_check_outlined,
+              color: const Color(0xFF3B82F6),
+              trend: 'Today',
+              sparklineData: const [0, 1, 1, 2, 2, 3],
             ),
             DashboardStatCard(
-              label: 'Success',
-              value: '98%',
-              icon: Icons.verified_user_outlined,
-              color: Color(0xFF10B981),
-              trend: 'Excellent',
-              isPositive: true,
-              sparklineData: [90, 92, 88, 95, 97, 98],
+              label: 'Compliance',
+              value: attendanceState.todayCheckIns >= 3 ? '100%' : '${(attendanceState.todayCheckIns / 3 * 100).toInt()}%',
+              icon: Icons.health_and_safety_outlined,
+              color: const Color(0xFF10B981),
+              trend: 'Status',
+              isPositive: attendanceState.todayCheckIns >= 3,
+              sparklineData: const [80, 85, 90, 95, 100, 100],
             ),
             DashboardStatCard(
-              label: 'Earnings',
-              value: '﷼ 1,240',
-              icon: Icons.account_balance_wallet_outlined,
-              color: Color(0xFFF59E0B),
-              trend: 'To be deposited',
-              sparklineData: [800, 1000, 950, 1100, 1200, 1240],
+              label: 'Active Time',
+              value: attendanceState.hasActiveShift ? 'Active' : 'Offline',
+              icon: Icons.timer_outlined,
+              color: const Color(0xFFF59E0B),
+              trend: 'Shift',
+              sparklineData: const [0, 2, 4, 6, 8, 8],
             ),
           ],
         ),
-        const SizedBox(height: 40),
-        _buildSectionHeader(context, 'Required Actions', Icons.pending_actions_rounded),
-        const SizedBox(height: 20),
+        const SizedBox(height: 8),
+        _buildSectionHeader(
+          context,
+          'Required Actions',
+          Icons.pending_actions_rounded,
+        ),
+        const SizedBox(height: 12),
         ResponsiveGrid(
           mobileCrossAxisCount: 2,
           tabletCrossAxisCount: 2,
@@ -201,32 +357,14 @@ class RiderDashboard extends ConsumerWidget {
           childAspectRatio: isMobile ? 1.1 : 2.5,
           children: [
             DashboardActionCard(
-              title: 'Vehicle Inspection',
-              subtitle: 'Upload photos of your bike/van',
-              icon: Icons.camera_enhance_outlined,
-              color: const Color(0xFF6366F1),
-              badge: 'MANDATORY',
-              onTap: () {
-                ref.read(navigationProvider.notifier).setTab(DashboardTab.inspections);
-              },
-            ),
-            DashboardActionCard(
-              title: 'Safety Gear Check',
-              subtitle: 'Verify helmet and protectors',
-              icon: Icons.shield_outlined,
-              color: const Color(0xFFF59E0B),
-              badge: 'DUE NOW',
-              onTap: () {
-                ref.read(navigationProvider.notifier).setTab(DashboardTab.inspections);
-              },
-            ),
-            DashboardActionCard(
               title: 'Support Center',
               subtitle: 'Help with fuel, accidents, or app',
               icon: Icons.contact_support_outlined,
               color: const Color(0xFFEF4444),
               onTap: () {
-                ref.read(navigationProvider.notifier).setTab(DashboardTab.support);
+                ref
+                    .read(navigationProvider.notifier)
+                    .setTab(DashboardTab.support);
               },
             ),
             DashboardActionCard(
@@ -235,7 +373,9 @@ class RiderDashboard extends ConsumerWidget {
               icon: Icons.description_outlined,
               color: const Color(0xFF14B8A6),
               onTap: () {
-                ref.read(navigationProvider.notifier).setTab(DashboardTab.requests);
+                ref
+                    .read(navigationProvider.notifier)
+                    .setTab(DashboardTab.requests);
               },
             ),
             DashboardActionCard(
@@ -244,12 +384,14 @@ class RiderDashboard extends ConsumerWidget {
               icon: Icons.handshake_outlined,
               color: const Color(0xFF64748B),
               onTap: () {
-                ref.read(navigationProvider.notifier).setTab(DashboardTab.requests);
+                ref
+                    .read(navigationProvider.notifier)
+                    .setTab(DashboardTab.requests);
               },
             ),
           ],
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 24),
         _buildRequestStatusSection(context),
       ],
     );
@@ -257,12 +399,35 @@ class RiderDashboard extends ConsumerWidget {
 
   Widget _buildRequestStatusSection(BuildContext context) {
     final requests = [
-      {'type': 'Asset Handover', 'date': 'Today', 'status': 'Pending', 'icon': Icons.handshake_outlined, 'color': Colors.blueGrey},
-      {'type': 'Weekly Off', 'date': '02 May', 'status': 'Approved', 'icon': Icons.calendar_month_outlined, 'color': Colors.green},
-      {'type': 'Sick Leave', 'date': '28 Apr', 'status': 'Pending', 'icon': Icons.medical_services_outlined, 'color': Colors.orange},
-      {'type': 'Uniform Issue', 'date': '25 Apr', 'status': 'Resolved', 'icon': Icons.checkroom_outlined, 'color': Colors.blue},
+      {
+        'type': 'Asset Handover',
+        'date': 'Today',
+        'status': 'Pending',
+        'icon': Icons.handshake_outlined,
+        'color': Colors.blueGrey,
+      },
+      {
+        'type': 'Weekly Off',
+        'date': '02 May',
+        'status': 'Approved',
+        'icon': Icons.calendar_month_outlined,
+        'color': Colors.green,
+      },
+      {
+        'type': 'Sick Leave',
+        'date': '28 Apr',
+        'status': 'Pending',
+        'icon': Icons.medical_services_outlined,
+        'color': Colors.orange,
+      },
+      {
+        'type': 'Uniform Issue',
+        'date': '25 Apr',
+        'status': 'Resolved',
+        'icon': Icons.checkroom_outlined,
+        'color': Colors.blue,
+      },
     ];
-
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,8 +438,10 @@ class RiderDashboard extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withOpacity(0.5),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.02),
@@ -290,15 +457,18 @@ class RiderDashboard extends ConsumerWidget {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: requests.length,
             separatorBuilder: (context, index) => Divider(
-              height: 1, 
-              indent: 72, 
-              endIndent: 20, 
-              color: Theme.of(context).dividerColor.withOpacity(0.3)
+              height: 1,
+              indent: 72,
+              endIndent: 20,
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
             ),
             itemBuilder: (context, index) {
               final r = requests[index];
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -306,9 +476,13 @@ class RiderDashboard extends ConsumerWidget {
                       width: 44,
                       decoration: BoxDecoration(
                         color: (r['color'] as Color).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(r['icon'] as IconData, color: r['color'] as Color, size: 20),
+                      child: Icon(
+                        r['icon'] as IconData,
+                        color: r['color'] as Color,
+                        size: 18,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -317,22 +491,30 @@ class RiderDashboard extends ConsumerWidget {
                         children: [
                           Text(
                             r['type'] as String,
-                            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: -0.2),
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              letterSpacing: -0.2,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             r['date'] as String,
                             style: GoogleFonts.outfit(
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5), 
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.color?.withOpacity(0.5),
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-
                         ],
                       ),
                     ),
-                    _buildStatusBadge(r['status'] as String, r['color'] as Color),
+                    _buildStatusBadge(
+                      r['status'] as String,
+                      r['color'] as Color,
+                    ),
                   ],
                 ),
               );
@@ -341,7 +523,6 @@ class RiderDashboard extends ConsumerWidget {
         ),
       ],
     );
-
   }
 
   Widget _buildStatusBadge(String status, Color color) {
@@ -369,23 +550,49 @@ class RiderDashboard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(context, 'My Responsibility', Icons.inventory_2_rounded),
-        const SizedBox(height: 20),
-        _buildAssetCard(context, 'Yamaha TMAX #402', 'Plate: 1234 ABC', Icons.motorcycle, Colors.blue),
+        _buildSectionHeader(
+          context,
+          'My Responsibility',
+          Icons.inventory_2_rounded,
+        ),
         const SizedBox(height: 12),
-        _buildAssetCard(context, 'Company Uniform', 'Set of 3 (New)', Icons.person_outline, Colors.purple),
+        _buildAssetCard(
+          context,
+          'Yamaha TMAX #402',
+          'Plate: 1234 ABC',
+          Icons.motorcycle,
+          Colors.blue,
+        ),
         const SizedBox(height: 12),
-        _buildAssetCard(context, 'Thermal Delivery Bag', 'Keeta Branded', Icons.shopping_bag_outlined, Colors.orange),
-        const SizedBox(height: 32),
-        _buildSectionHeader(context, 'Recent Activity', Icons.notifications_active_rounded),
-        const SizedBox(height: 20),
+        _buildAssetCard(
+          context,
+          'Company Uniform',
+          'Set of 3 (New)',
+          Icons.person_outline,
+          Colors.purple,
+        ),
+        const SizedBox(height: 12),
+        _buildAssetCard(
+          context,
+          'Thermal Delivery Bag',
+          'Keeta Branded',
+          Icons.shopping_bag_outlined,
+          Colors.orange,
+        ),
+        const SizedBox(height: 24),
+        _buildSectionHeader(
+          context,
+          'Recent Activity',
+          Icons.notifications_active_rounded,
+        ),
+        const SizedBox(height: 12),
         ActivityFeed(
           items: [
             ActivityItem(
-              title: 'Delivery Successful',
-              subtitle: 'Order #8821 delivered to Malaz',
+              title: 'Shift Verified',
+              subtitle: 'Attendance synced with HR',
               time: '12 mins ago',
-              icon: Icons.check_circle_outline,
+              icon: Icons.sync_rounded,
               color: Colors.green,
             ),
             ActivityItem(
@@ -404,7 +611,7 @@ class RiderDashboard extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
         _buildComplianceAlert(context),
         const SizedBox(height: 24),
         _buildMapPreview(context),
@@ -417,14 +624,18 @@ class RiderDashboard extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.green.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.green.withOpacity(0.2)),
       ),
 
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.track_changes_rounded, color: Colors.green, size: 14),
+          const Icon(
+            Icons.track_changes_rounded,
+            color: Colors.green,
+            size: 14,
+          ),
           const SizedBox(width: 8),
           Text(
             'MISSION ACTIVE',
@@ -438,50 +649,90 @@ class RiderDashboard extends ConsumerWidget {
         ],
       ),
     );
-
   }
 
   Widget _buildMapPreview(BuildContext context) {
     return Container(
       height: 220,
       width: double.infinity,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(16),
         color: Theme.of(context).cardColor,
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
-        image: DecorationImage(
-
-          image: const NetworkImage('https://maps.googleapis.com/maps/api/staticmap?center=24.7136,46.6753&zoom=14&size=600x400&scale=2&style=feature:all|element:labels|visibility:off&style=feature:road|element:geometry|color:0xeeeeee&style=feature:water|element:geometry|color:0xcceeff'),
-          fit: BoxFit.cover,
-          opacity: Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.7,
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(0.5),
         ),
       ),
       child: Stack(
         children: [
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.my_location_rounded, color: AppColors.primary, size: 28),
+          Positioned.fill(
+            child: FlutterMap(
+              options: const MapOptions(
+                initialCenter: LatLng(24.7136, 46.6753),
+                initialZoom: 14.0,
+                interactionOptions: InteractionOptions(
+                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                 ),
-                const SizedBox(height: 12),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.walim.walim_logistics',
+                  retinaMode: true,
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: const LatLng(24.7136, 46.6753),
+                      width: 50,
+                      height: 50,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.my_location_rounded,
+                          color: AppColors.primary,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 60), // Push below the center marker
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, 5))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
-
                   child: Text(
                     'Riyadh Central Zone',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).textTheme.bodyLarge?.color),
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
                   ),
                 ),
               ],
@@ -504,23 +755,31 @@ class RiderDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildShiftControlCard(BuildContext context, WidgetRef ref, AttendanceState attendanceState, AppLocalizations l10n, bool isMobile) {
+  Widget _buildShiftControlCard(
+    BuildContext context,
+    WidgetRef ref,
+    AttendanceState attendanceState,
+    AppLocalizations l10n,
+    bool isMobile,
+  ) {
     final isActive = attendanceState.hasActiveShift;
-    
+
     return Container(
-      padding: EdgeInsets.all(isMobile ? 24 : 32),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isActive 
+          colors: isActive
               ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
               : [const Color(0xFF334155), const Color(0xFF0F172A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: (isActive ? AppColors.primary : Colors.black).withOpacity(0.3),
+            color: (isActive ? AppColors.primary : Colors.black).withOpacity(
+              0.3,
+            ),
             blurRadius: 25,
             offset: const Offset(0, 15),
           ),
@@ -528,171 +787,237 @@ class RiderDashboard extends ConsumerWidget {
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
       ),
 
-      child: isMobile 
-        ? Column(
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withOpacity(0.2)),
-                    ),
-                    child: Icon(
-                      isActive ? Icons.track_changes_rounded : Icons.location_searching_rounded, 
-                      color: isActive ? Colors.greenAccent : Colors.white70, 
-                      size: 24
-                    ),
-                  ),
-
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isActive ? 'MISSION STATUS: ACTIVE' : 'SYSTEM STATUS: STANDBY',
-                          style: GoogleFonts.outfit(
-                            color: Colors.white.withOpacity(0.6),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-
-                        Text(
-                          isActive ? 'Riyadh Central • 04h 22m' : 'Within Geo-fence Area',
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: attendanceState.isCheckingIn ? null : () => _handleAttendance(context, ref),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isActive ? Colors.redAccent.withOpacity(0.1) : Colors.white,
-                    foregroundColor: isActive ? Colors.redAccent : const Color(0xFF1E293B),
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: isActive ? Colors.redAccent.withOpacity(0.5) : Colors.transparent,
-                        width: 1.5,
-                      ),
-                    ),
-
-                    elevation: 0,
-                  ),
-                  child: attendanceState.isCheckingIn
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(isActive ? Icons.power_settings_new_rounded : Icons.bolt_rounded, size: 20),
-                            const SizedBox(width: 10),
-                            Text(
-                              isActive ? 'END MISSION' : 'START MISSION', 
-                              style: GoogleFonts.outfit(fontWeight: FontWeight.w900, letterSpacing: 1),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-            ],
-          )
-
-
-        : Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                  boxShadow: isActive ? [
-                    BoxShadow(color: Colors.white.withOpacity(0.4), blurRadius: 20, spreadRadius: 2)
-                  ] : [],
-                ),
-                child: Icon(
-                  isActive ? Icons.location_on : Icons.location_searching_rounded, 
-                  color: Colors.white, 
-                  size: 32
-                ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: isMobile
+          ? Column(
+              children: [
+                Row(
                   children: [
-                    Text(
-                      isActive ? 'ZONE: RIYADH CENTRAL' : 'NOT ON DUTY',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Icon(
+                        isActive
+                            ? Icons.track_changes_rounded
+                            : Icons.location_searching_rounded,
+                        color: isActive ? Colors.greenAccent : Colors.white70,
+                        size: 24,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isActive ? 'Active Shift • 04h 22m' : 'Within Geo-fence Area',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isActive
+                                ? 'MISSION STATUS: ACTIVE'
+                                : 'SYSTEM STATUS: STANDBY',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+
+                          Text(
+                            isActive
+                                ? 'Riyadh Central • 04h 22m'
+                                : 'Within Geo-fence Area',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 200),
-                child: ElevatedButton(
-                  onPressed: attendanceState.isCheckingIn ? null : () => _handleAttendance(context, ref),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: isActive ? AppColors.primary : const Color(0xFF1E293B),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                    minimumSize: const Size(120, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                  ),
-                  child: attendanceState.isCheckingIn
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(isActive ? Icons.logout_rounded : Icons.login_rounded, size: 18),
-                            const SizedBox(width: 8),
-                            Text(isActive ? 'CHECK OUT' : 'CHECK IN', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: attendanceState.isCheckingIn
+                        ? null
+                        : () => _handleAttendance(context, ref),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isActive
+                          ? Colors.redAccent.withOpacity(0.1)
+                          : Colors.white,
+                      foregroundColor: isActive
+                          ? Colors.redAccent
+                          : const Color(0xFF1E293B),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: isActive
+                              ? Colors.redAccent.withOpacity(0.5)
+                              : Colors.transparent,
+                          width: 1.5,
                         ),
+                      ),
 
+                      elevation: 0,
+                    ),
+                    child: attendanceState.isCheckingIn
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                isActive
+                                    ? Icons.power_settings_new_rounded
+                                    : Icons.bolt_rounded,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                isActive ? 'END MISSION' : 'START MISSION',
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            )
+          : Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                    boxShadow: isActive
+                        ? [
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.4),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Icon(
+                    isActive
+                        ? Icons.location_on
+                        : Icons.location_searching_rounded,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isActive ? 'ZONE: RIYADH CENTRAL' : 'NOT ON DUTY',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isActive
+                            ? 'Active Shift • 04h 22m'
+                            : 'Within Geo-fence Area',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 200),
+                  child: ElevatedButton(
+                    onPressed: attendanceState.isCheckingIn
+                        ? null
+                        : () => _handleAttendance(context, ref),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: isActive
+                          ? AppColors.primary
+                          : const Color(0xFF1E293B),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 18,
+                      ),
+                      minimumSize: const Size(120, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: attendanceState.isCheckingIn
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                isActive
+                                    ? Icons.logout_rounded
+                                    : Icons.login_rounded,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                isActive ? 'CHECK OUT' : 'CHECK IN',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
-  Widget _buildAssetCard(BuildContext context, String title, String subtitle, IconData icon, Color color) {
+  Widget _buildAssetCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(0.5),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -719,31 +1044,35 @@ class RiderDashboard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title, 
+                  title,
                   style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.bold, 
-                    fontSize: 14, 
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
                     color: Theme.of(context).textTheme.bodyLarge?.color,
                     letterSpacing: -0.2,
-                  )
+                  ),
                 ),
                 Text(
-                  subtitle, 
+                  subtitle,
                   style: GoogleFonts.outfit(
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5), 
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.5),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                  )
+                  ),
                 ),
-
               ],
             ),
           ),
-          Icon(Icons.chevron_right_rounded, size: 20, color: Theme.of(context).dividerColor),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: Theme.of(context).dividerColor,
+          ),
         ],
       ),
     );
-
   }
 
   Widget _buildComplianceAlert(BuildContext context) {
@@ -759,23 +1088,46 @@ class RiderDashboard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 18),
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: AppColors.warning,
+                size: 18,
+              ),
               const SizedBox(width: 8),
-              Text('IQAMA ALERT', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.warning, fontSize: 12)),
+              Text(
+                'IQAMA ALERT',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.warning,
+                  fontSize: 12,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          Text('Expires in 45 days. Renewal required soon.', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color)),
+          Text(
+            'Expires in 45 days. Renewal required soon.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
+          ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: TextButton(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DocumentVaultScreen())),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DocumentVaultScreen()),
+              ),
               style: TextButton.styleFrom(
                 backgroundColor: AppColors.warning.withOpacity(0.1),
                 padding: const EdgeInsets.symmetric(vertical: 8),
               ),
-              child: const Text('View Document Vault', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'View Document Vault',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
@@ -783,7 +1135,11 @@ class RiderDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, [IconData? icon]) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title, [
+    IconData? icon,
+  ]) {
     return Row(
       children: [
         if (icon != null) ...[
@@ -800,7 +1156,7 @@ class RiderDashboard extends ConsumerWidget {
         Text(
           title,
           style: GoogleFonts.outfit(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w900,
             color: Theme.of(context).textTheme.headlineMedium?.color,
             letterSpacing: -0.5,

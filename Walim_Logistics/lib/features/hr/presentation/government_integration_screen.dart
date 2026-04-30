@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
 
 class GovernmentIntegrationScreen extends StatelessWidget {
   const GovernmentIntegrationScreen({super.key});
@@ -118,6 +119,7 @@ class GovernmentIntegrationScreen extends StatelessWidget {
           DataTable(
             headingTextStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.textSecondary),
             dataRowMaxHeight: 70,
+            showCheckboxColumn: false,
             columns: const [
               DataColumn(label: Text('Staff Name')),
               DataColumn(label: Text('Iqama Number')),
@@ -128,7 +130,11 @@ class GovernmentIntegrationScreen extends StatelessWidget {
             ],
             rows: data.map((item) {
               final statusColor = _getStatusColor(item['status']);
-              return DataRow(cells: [
+              return DataRow(
+                onSelectChanged: (_) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderDetailScreen()));
+                },
+                cells: [
                 DataCell(Text(item['name'], style: const TextStyle(fontWeight: FontWeight.w600))),
                 DataCell(Text(item['iqama'])),
                 DataCell(Text(item['iqamaExpiry'])),

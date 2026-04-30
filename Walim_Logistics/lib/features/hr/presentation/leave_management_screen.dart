@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
 
 class LeaveManagementScreen extends StatelessWidget {
   const LeaveManagementScreen({super.key});
@@ -88,15 +89,20 @@ class LeaveManagementScreen extends StatelessWidget {
         final req = requests[index];
         final isPending = req['status'] == 'Pending';
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.divider),
-          ),
-          child: Column(
+        return InkWell(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderDetailScreen()));
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.divider),
+            ),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -154,6 +160,7 @@ class LeaveManagementScreen extends StatelessWidget {
                 ),
               ],
             ],
+          ),
           ),
         );
       },

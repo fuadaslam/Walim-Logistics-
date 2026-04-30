@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
 
 class AssetManagementScreen extends StatelessWidget {
   const AssetManagementScreen({super.key});
@@ -99,9 +100,14 @@ class AssetManagementScreen extends StatelessWidget {
           ),
           child: ExpansionTile(
             shape: const RoundedRectangleBorder(side: BorderSide.none),
-            leading: CircleAvatar(
-              backgroundColor: AppColors.background,
-              child: Text(staff['name'][0], style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+            leading: InkWell(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderDetailScreen()));
+              },
+              child: CircleAvatar(
+                backgroundColor: AppColors.background,
+                child: Text(staff['name'][0], style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+              ),
             ),
             title: Text(staff['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(staff['role'], style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),

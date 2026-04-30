@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:last_mile_fleet/l10n/app_localizations.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
+import 'package:walim_logistics/l10n/app_localizations.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
 import '../auth_notifier.dart';
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});

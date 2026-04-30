@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/vehicle.dart';
 import 'api_service.dart';
+
+final trackingProvider = ChangeNotifierProvider((ref) => TrackingProvider());
 
 class OperationalIncident {
   final String id;
@@ -37,6 +40,8 @@ class TrackingProvider extends ChangeNotifier {
   Timer? _refreshTimer;
   String _filter = '';
   String _statusFilter = '';
+  String _selectedCity = 'All';
+  String _activeMenu = 'Live Ops';
   final Set<String> _resolvedIncidentIds = {};
 
   TrackingProvider() {
@@ -52,7 +57,7 @@ class TrackingProvider extends ChangeNotifier {
   }
 
   String _userName = 'Supervisor';
-  String _userBranch = 'Default Branch';
+  String _userBranch = '';
   String _lastUpdate = 'Just now';
 
   List<Vehicle> get vehicles {
@@ -105,6 +110,8 @@ class TrackingProvider extends ChangeNotifier {
   String get userName => _userName;
   String get userBranch => _userBranch;
   String get lastUpdate => _lastUpdate;
+  String get selectedCity => _selectedCity;
+  String get activeMenu => _activeMenu;
 
   int get totalCount => _vehicles.length;
   int get movingCount =>
@@ -237,6 +244,16 @@ class TrackingProvider extends ChangeNotifier {
 
   void setStatusFilter(String value) {
     _statusFilter = value;
+    notifyListeners();
+  }
+
+  void setSelectedCity(String value) {
+    _selectedCity = value;
+    notifyListeners();
+  }
+
+  void setActiveMenu(String value) {
+    _activeMenu = value;
     notifyListeners();
   }
 

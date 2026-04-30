@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 
 class FleetAssetRegistryScreen extends StatelessWidget {
-  const FleetAssetRegistryScreen({super.key});
+  final bool showScaffold;
+  const FleetAssetRegistryScreen({super.key, this.showScaffold = true});
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +15,64 @@ class FleetAssetRegistryScreen extends StatelessWidget {
       {'id': 'VH-003', 'plate': '1029-KLM', 'type': 'Bike', 'status': 'Active', 'mvpi': 'Dec 2024', 'insurance': 'Feb 2025'},
     ];
 
+    final content = ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _vehicles.length,
+      itemBuilder: (context, index) {
+        final v = _vehicles[index];
+        final isAlert = v['status'] == 'Maintenance';
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: isAlert ? AppColors.error.withOpacity(0.3) : AppColors.divider),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Icon(v['type'] == 'Bike' ? Icons.motorcycle : Icons.local_shipping, color: AppColors.accent),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${v['type']} - ${v['plate']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                        Text('Asset ID: ${v['id']}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                  _buildStatusBadge(v['status']),
+                ],
+              ),
+              const Divider(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildInfoColumn('MVPI Expiry', v['mvpi']),
+                  _buildInfoColumn('Insurance Expiry', v['insurance']),
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(100, 40),
+                      backgroundColor: AppColors.accent,
+                    ),
+                    child: const Text('Update'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!showScaffold) return content;
+
     return DashboardScaffold(
       title: 'FLEET ASSET REGISTRY',
       subtitle: 'Track vehicle registrations, inspections, and insurance',
@@ -22,61 +81,7 @@ class FleetAssetRegistryScreen extends StatelessWidget {
         IconButton(onPressed: () {}, icon: const Icon(Icons.add_circle_outline, size: 28, color: AppColors.primary)),
       ],
       children: [
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _vehicles.length,
-          itemBuilder: (context, index) {
-            final v = _vehicles[index];
-            final isAlert = v['status'] == 'Maintenance';
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isAlert ? AppColors.error.withOpacity(0.3) : AppColors.divider),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Icon(v['type'] == 'Bike' ? Icons.motorcycle : Icons.local_shipping, color: AppColors.accent),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('${v['type']} - ${v['plate']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                            Text('Asset ID: ${v['id']}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                          ],
-                        ),
-                      ),
-                      _buildStatusBadge(v['status']),
-                    ],
-                  ),
-                  const Divider(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildInfoColumn('MVPI Expiry', v['mvpi']),
-                      _buildInfoColumn('Insurance Expiry', v['insurance']),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(100, 40),
-                          backgroundColor: AppColors.accent,
-                        ),
-                        child: const Text('Update'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+        content,
       ],
     );
   }

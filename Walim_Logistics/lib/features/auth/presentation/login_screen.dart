@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/l10n/app_localizations.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/core/localization/locale_provider.dart';
+import 'package:walim_logistics/l10n/app_localizations.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/core/localization/locale_provider.dart';
 import 'widgets/login_form.dart';
 
 class LoginScreen extends ConsumerWidget {

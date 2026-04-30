@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_widgets.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:last_mile_fleet/features/hr/presentation/housing_management_screen.dart';
-import 'package:last_mile_fleet/features/hr/presentation/government_integration_screen.dart';
-import 'package:last_mile_fleet/features/hr/presentation/onboarding_management_screen.dart';
-import 'package:last_mile_fleet/features/hr/presentation/leave_management_screen.dart';
-import 'package:last_mile_fleet/features/hr/presentation/asset_management_screen.dart';
-
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/hr/presentation/housing_management_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/government_integration_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/onboarding_management_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/leave_management_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/asset_management_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/staff_management_screen.dart';
 class HRDashboard extends ConsumerWidget {
   final bool showScaffold;
   const HRDashboard({super.key, this.showScaffold = true});
@@ -143,11 +144,11 @@ class HRDashboard extends ConsumerWidget {
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AssetManagementScreen())),
                           ),
                           DashboardActionCard(
-                            title: 'Staff Document Vault',
-                            subtitle: 'Central repository for staff records',
-                            icon: Icons.folder_shared_outlined,
+                            title: 'Staff Monitoring',
+                            subtitle: 'Monitor all roles: Riders, Managers, etc.',
+                            icon: Icons.people_outline_rounded,
                             color: Colors.teal,
-                            onTap: () {},
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
                           ),
                         ],
                       );
@@ -168,7 +169,7 @@ class HRDashboard extends ConsumerWidget {
                   const SizedBox(height: 48),
                   _buildSectionHeader('Recent Activity'),
                   const SizedBox(height: 24),
-                  _buildActivityFeed(),
+                  _buildActivityFeed(context),
                 ],
               ),
             ),
@@ -234,7 +235,7 @@ class HRDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildActivityFeed() {
+  Widget _buildActivityFeed(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -244,11 +245,11 @@ class HRDashboard extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          _buildActivityItem('Ahmed Ali', 'Requested Annual Leave', '10 mins ago', Icons.calendar_today, Colors.orange),
+          _buildActivityItem(context, 'Ahmed Ali', 'Requested Annual Leave', '10 mins ago', Icons.calendar_today, Colors.orange),
           const Divider(height: 32),
-          _buildActivityItem('James Wilson', 'Completed Safety Training', '2 hours ago', Icons.school, Colors.blue),
+          _buildActivityItem(context, 'James Wilson', 'Completed Safety Training', '2 hours ago', Icons.school, Colors.blue),
           const Divider(height: 32),
-          _buildActivityItem('New Asset', 'Vehicle #9021 assigned to M. Khan', 'Yesterday', Icons.motorcycle, Colors.green),
+          _buildActivityItem(context, 'New Asset', 'Vehicle #9021 assigned to M. Khan', 'Yesterday', Icons.motorcycle, Colors.green),
         ],
       ),
     );
@@ -268,29 +269,38 @@ class HRDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildActivityItem(String title, String subtitle, String time, IconData icon, Color color) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 20),
+  Widget _buildActivityItem(BuildContext context, String title, String subtitle, String time, IconData icon, Color color) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderDetailScreen()));
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                ],
+              ),
+            ),
+            Text(time, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-            ],
-          ),
-        ),
-        Text(time, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-      ],
+      ),
     );
   }
 }

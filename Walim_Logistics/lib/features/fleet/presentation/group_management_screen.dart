@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
 
 class GroupManagementScreen extends StatelessWidget {
   const GroupManagementScreen({super.key});
@@ -72,7 +73,9 @@ class GroupManagementScreen extends StatelessWidget {
                         _buildActionButton(Icons.phone_outlined, 'Call', () {}),
                         _buildActionButton(Icons.chat_bubble_outline, 'Message', () {}),
                         _buildActionButton(Icons.assignment_ind_outlined, 'Assign Task', () {}),
-                        _buildActionButton(Icons.info_outline, 'Details', () {}),
+                        _buildActionButton(Icons.info_outline, 'Details', () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderDetailScreen()));
+                        }),
                       ],
                     ),
                   ],

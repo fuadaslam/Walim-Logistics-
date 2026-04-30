@@ -1,6 +1,7 @@
 {
   "@@locale": "en",
-  "appTitle": "Last Mile Fleet",
+  "appTitle": "Walim Logistics",
+  "subtitle": "Welcome to Walim Logistics",
   "login": "Login",
   "email": "Email Address",
   "password": "Password",

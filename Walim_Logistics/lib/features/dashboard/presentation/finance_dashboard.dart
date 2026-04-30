@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_widgets.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:last_mile_fleet/features/finance/presentation/cod_reconciliation_screen.dart';
-import 'package:last_mile_fleet/features/finance/presentation/payroll_processing_screen.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/finance/presentation/cod_reconciliation_screen.dart';
+import 'package:walim_logistics/features/finance/presentation/payroll_processing_screen.dart';
 
 class FinanceDashboard extends ConsumerWidget {
   final bool showScaffold;

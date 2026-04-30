@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:last_mile_fleet/features/auth/presentation/auth_notifier.dart';
-import 'package:last_mile_fleet/features/auth/presentation/login_screen.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/main_dashboard_shell.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
+import 'package:walim_logistics/features/auth/presentation/login_screen.dart';
+import 'package:walim_logistics/features/dashboard/presentation/main_dashboard_shell.dart';
+import 'package:walim_logistics/core/widgets/loading_screen.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -33,11 +34,7 @@ class AuthGate extends ConsumerWidget {
     }
 
     if (authState.profile == null) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const AppLoadingScreen(message: 'Verifying session...');
     }
 
     // Now all authenticated users go through the MainDashboardShell

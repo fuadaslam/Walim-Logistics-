@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
 
 class IssueReportBottomSheet extends StatefulWidget {
   final String? initialItem;
@@ -41,7 +41,7 @@ class _IssueReportBottomSheetState extends State<IssueReportBottomSheet> {
       ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -77,13 +77,13 @@ class _IssueReportBottomSheetState extends State<IssueReportBottomSheet> {
                         children: [
                           Text(
                             'Report Issue',
-                            style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold),
+                            style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w600),
                           ),
                           Text(
                             widget.initialItem != null 
                                 ? 'Reporting issue for: ${widget.initialItem}' 
                                 : 'Tell us what is wrong',
-                            style: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 14),
+                            style: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 13),
                           ),
                         ],
                       ),
@@ -97,7 +97,7 @@ class _IssueReportBottomSheetState extends State<IssueReportBottomSheet> {
                 const SizedBox(height: 32),
                 Text(
                   'Priority Level',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -129,7 +129,8 @@ class _IssueReportBottomSheetState extends State<IssueReportBottomSheet> {
                                 priority,
                                 style: GoogleFonts.outfit(
                                   color: isSelected ? color : AppColors.textSecondary,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
@@ -142,7 +143,7 @@ class _IssueReportBottomSheetState extends State<IssueReportBottomSheet> {
                 const SizedBox(height: 24),
                 Text(
                   'Description',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -176,14 +177,14 @@ class _IssueReportBottomSheetState extends State<IssueReportBottomSheet> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 8,
-                    shadowColor: AppColors.primary.withValues(alpha: 0.3),
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
+                    shadowColor: AppColors.primary.withValues(alpha: 0.2),
                   ),
                   child: Text(
                     'SUBMIT REPORT',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1),
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 15, letterSpacing: 0.5),
                   ),
                 ),
                 const SizedBox(height: 24),

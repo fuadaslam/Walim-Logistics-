@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/shared/models/profile.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:flutter/services.dart';
+import 'package:walim_logistics/shared/models/profile.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/asset_management_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/document_vault_screen.dart';
+import 'package:walim_logistics/features/incidents/presentation/incident_report_screen.dart';
+import 'package:walim_logistics/features/fleet/presentation/shift_assignment_screen.dart';
+import 'package:walim_logistics/features/finance/presentation/cod_reconciliation_screen.dart';
 
 class RiderDetailScreen extends ConsumerWidget {
   final UserProfile? profile;
@@ -22,9 +29,9 @@ class RiderDetailScreen extends ConsumerWidget {
       showBackButton: true,
       children: [
         _buildHeader(context, name, riderId, isMobile),
-        const SizedBox(height: 32),
+        SizedBox(height: isMobile ? 16 : 32),
         _buildStatsGrid(context, isMobile),
-        const SizedBox(height: 32),
+        SizedBox(height: isMobile ? 16 : 32),
         if (isMobile)
           Column(
             children: [
@@ -58,14 +65,14 @@ class RiderDetailScreen extends ConsumerWidget {
           context: context,
           title: 'Personal & Legal Identity',
           icon: Icons.badge_outlined,
-          child: _buildIdentityDetails(),
+          child: _buildIdentityDetails(context),
         ),
         const SizedBox(height: 24),
         _buildSectionCard(
           context: context,
           title: 'Asset Assignments',
           icon: Icons.motorcycle_outlined,
-          child: _buildAssetDetails(),
+          child: _buildAssetDetails(context),
         ),
         const SizedBox(height: 24),
         _buildSectionCard(
@@ -85,7 +92,7 @@ class RiderDetailScreen extends ConsumerWidget {
           context: context,
           title: 'Compliance & Docs',
           icon: Icons.folder_shared_outlined,
-          child: _buildComplianceList(),
+          child: _buildComplianceList(context),
         ),
         const SizedBox(height: 24),
         _buildSectionCard(
@@ -99,177 +106,310 @@ class RiderDetailScreen extends ConsumerWidget {
           context: context,
           title: 'Financial Summary',
           icon: Icons.account_balance_wallet_outlined,
-          child: _buildFinancialSummary(),
+          child: _buildFinancialSummary(context),
         ),
       ],
     );
   }
-
   Widget _buildHeader(BuildContext context, String name, String id, bool isMobile) {
-    final headerContent = [
-      Stack(
-        children: [
-          Container(
-            width: isMobile ? 80 : 100,
-            height: isMobile ? 80 : 100,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withOpacity(0.2), width: isMobile ? 3 : 4),
-            ),
-            child: Center(
-              child: Text(
-                name.substring(0, 1).toUpperCase(),
-                style: GoogleFonts.outfit(
-                  fontSize: isMobile ? 32 : 40,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 2,
-            right: 2,
-            child: Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: Colors.green,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF0F172A), width: 3),
-              ),
-            ),
-          ),
-        ],
-      ),
-      SizedBox(width: isMobile ? 0 : 32, height: isMobile ? 24 : 0),
-      Expanded(
-        flex: isMobile ? 0 : 1,
-        child: Column(
-          crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              alignment: isMobile ? WrapAlignment.center : WrapAlignment.start,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  name,
-                  style: GoogleFonts.outfit(
-                    fontSize: isMobile ? 24 : 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.green.withOpacity(0.3)),
-                  ),
-                  child: const Text(
-                    'ACTIVE',
-                    style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
-                  ),
-                ),
+    final avatar = Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: isMobile ? 64 : 110,
+          height: isMobile ? 64 : 110,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withValues(alpha: 0.2),
+                Colors.white.withValues(alpha: 0.05),
               ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Employee ID: $id • Joined Oct 2023',
-              textAlign: isMobile ? TextAlign.center : TextAlign.start,
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+          ),
+        ),
+        Container(
+          width: isMobile ? 52 : 94,
+          height: isMobile ? 52 : 94,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceDark,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 15,
+                spreadRadius: -2,
+              )
+            ],
+          ),
+          child: Center(
+            child: Text(
+              name.isNotEmpty ? name.substring(0, 1).toUpperCase() : "R",
               style: GoogleFonts.outfit(
-                color: Colors.white.withOpacity(0.6),
-                fontSize: isMobile ? 14 : 16,
+                fontSize: isMobile ? 22 : 34,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -1,
               ),
             ),
-            const SizedBox(height: 16),
-            Wrap(
-              alignment: isMobile ? WrapAlignment.center : WrapAlignment.start,
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildHeaderTag(Icons.location_on_outlined, 'Riyadh Central'),
-                _buildHeaderTag(Icons.star_rounded, '4.9 Rating'),
-                _buildHeaderTag(Icons.verified_user_outlined, 'Verified'),
+          ),
+        ),
+        Positioned(
+          bottom: isMobile ? 2 : 10,
+          right: isMobile ? 2 : 10,
+          child: Container(
+            width: isMobile ? 14 : 18,
+            height: isMobile ? 14 : 18,
+            decoration: BoxDecoration(
+              color: Color(0xFF10B981),
+              shape: BoxShape.circle,
+              border: Border.all(color: Color(0xFF0F172A), width: isMobile ? 2 : 3),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0xFF10B981).withValues(alpha: 0.4),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                )
               ],
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final info = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          alignment: WrapAlignment.start,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          children: [
+            Text(
+              name,
+              style: GoogleFonts.outfit(
+                fontSize: isMobile ? 18 : 28,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -0.5,
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Color(0xFF10B981).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Color(0xFF10B981).withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'ACTIVE',
+                    style: TextStyle(
+                      color: Color(0xFF10B981), 
+                      fontSize: 8, 
+                      fontWeight: FontWeight.w900, 
+                      letterSpacing: 1.0
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-      ),
-      SizedBox(width: isMobile ? 0 : 32, height: isMobile ? 24 : 0),
-      SizedBox(
-        width: isMobile ? double.infinity : null,
-        child: Column(
+        SizedBox(height: 4),
+        Text(
+          'ID: $id • Joined Oct 2023',
+          textAlign: TextAlign.start,
+          style: GoogleFonts.outfit(
+            color: Colors.white.withValues(alpha: 0.6),
+            fontSize: isMobile ? 12 : 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: isMobile ? 8 : 20),
+        Wrap(
+          alignment: WrapAlignment.start,
+          spacing: isMobile ? 6 : 10,
+          runSpacing: isMobile ? 6 : 10,
+          children: [
+            _buildHeaderTag(Icons.location_on_rounded, 'Riyadh'),
+            _buildHeaderTag(Icons.star_rounded, '4.9'),
+            _buildHeaderTag(Icons.verified_user_rounded, 'Verified'),
+          ],
+        ),
+      ],
+    );
+
+    final buttons = isMobile 
+      ? Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Profile coming soon')));
+                },
+                icon: Icon(Icons.edit_outlined, size: 14),
+                label: Text('Edit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.primary,
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
+                ),
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Messaging coming soon')));
+                },
+                icon: Icon(Icons.chat_bubble_outline_rounded, size: 14),
+                label: Text('Message', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ],
+        )
+      : Column(
           children: [
             ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              label: const Text('Edit Profile'),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Profile coming soon')));
+              },
+              icon: Icon(Icons.edit_outlined, size: 18),
+              label: Text('Edit Profile'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                minimumSize: const Size(0, 48),
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                minimumSize: Size(0, 48),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-              label: const Text('Message'),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Messaging coming soon')));
+              },
+              icon: Icon(Icons.chat_bubble_outline_rounded, size: 18),
+              label: Text('Message'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
                 side: BorderSide(color: Colors.white.withOpacity(0.2)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                minimumSize: const Size(0, 48),
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                minimumSize: Size(0, 48),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
             ),
           ],
-        ),
-      ),
-    ];
+        );
 
     return Container(
-      padding: EdgeInsets.all(isMobile ? 24 : 32),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
           colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 30,
+            offset: Offset(0, 15),
           ),
         ],
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.5),
       ),
-      child: isMobile 
-        ? Column(children: headerContent)
-        : Row(children: headerContent),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.08),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          isMobile 
+            ? Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      avatar,
+                      SizedBox(width: 16),
+                      Expanded(child: info),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  buttons,
+                ],
+              )
+            : Row(
+                children: [
+                  avatar,
+                  SizedBox(width: 32),
+                  Expanded(child: info),
+                  SizedBox(width: 32),
+                  buttons,
+                ],
+              ),
+        ],
+      ),
     );
   }
 
   Widget _buildHeaderTag(IconData icon, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white.withOpacity(0.8), size: 14),
+          Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 12),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12)),
+          Text(
+            label, 
+            style: GoogleFonts.outfit(
+              color: Colors.white.withValues(alpha: 0.7), 
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            )
+          ),
         ],
       ),
     );
@@ -281,17 +421,17 @@ class RiderDetailScreen extends ConsumerWidget {
         children: [
           Row(
             children: [
-              _buildStatCard(context, 'Deliveries', '1,422', Icons.delivery_dining, Colors.blue),
-              const SizedBox(width: 16),
-              _buildStatCard(context, 'Success Rate', '99.2%', Icons.check_circle_outline, Colors.green),
+              _buildStatCard(context, 'Total Working Days', '214', Icons.calendar_today_rounded, Colors.blue),
+              const SizedBox(width: 12),
+              _buildStatCard(context, 'Working Hours', '1,640h', Icons.access_time_rounded, Colors.green),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             children: [
-              _buildStatCard(context, 'Avg. Delivery', '24m', Icons.timer_outlined, Colors.orange),
-              const SizedBox(width: 16),
-              _buildStatCard(context, 'COD Balance', '﷼ 450', Icons.payments_outlined, Colors.purple),
+              _buildStatCard(context, 'Leave', '14 Days', Icons.beach_access_rounded, Colors.orange),
+              const SizedBox(width: 12),
+              _buildStatCard(context, 'Requests', '3 Pending', Icons.history_edu_rounded, Colors.purple),
             ],
           ),
         ],
@@ -299,48 +439,92 @@ class RiderDetailScreen extends ConsumerWidget {
     }
     return Row(
       children: [
-        _buildStatCard(context, 'Total Deliveries', '1,422', Icons.delivery_dining, Colors.blue),
+        _buildStatCard(context, 'Total Working Days', '214', Icons.calendar_today_rounded, Colors.blue),
         const SizedBox(width: 20),
-        _buildStatCard(context, 'Success Rate', '99.2%', Icons.check_circle_outline, Colors.green),
+        _buildStatCard(context, 'Working Hours', '1,640h', Icons.access_time_rounded, Colors.green),
         const SizedBox(width: 20),
-        _buildStatCard(context, 'Avg. Delivery', '24m', Icons.timer_outlined, Colors.orange),
+        _buildStatCard(context, 'Leave', '14 Days', Icons.beach_access_rounded, Colors.orange),
         const SizedBox(width: 20),
-        _buildStatCard(context, 'COD Balance', '﷼ 450', Icons.payments_outlined, Colors.purple),
+        _buildStatCard(context, 'Requests', '3 Pending', Icons.history_edu_rounded, Colors.purple),
       ],
     );
   }
 
   Widget _buildStatCard(BuildContext context, String label, String value, IconData icon, Color color) {
+    final isMobile = MediaQuery.of(context).size.width < 900;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(isMobile ? 12 : 20),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Theme.of(context).dividerColor),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(isMobile ? 8 : 10),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: color, size: 20),
+                  child: Icon(icon, color: color, size: isMobile ? 18 : 20),
                 ),
-                const Spacer(),
-                const Icon(Icons.trending_up, color: Colors.green, size: 16),
-                const SizedBox(width: 4),
-                const Text('+12%', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.trending_up_rounded, color: Colors.green, size: 10),
+                      const SizedBox(width: 4),
+                      Text(
+                        '12%', 
+                        style: TextStyle(
+                          color: Colors.green, 
+                          fontSize: isMobile ? 9 : 10, 
+                          fontWeight: FontWeight.w900
+                        )
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 20),
-            Text(value, style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-            Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+            SizedBox(height: isMobile ? 12 : 24),
+            Text(
+              value, 
+              style: GoogleFonts.outfit(
+                fontSize: isMobile ? 20 : 28, 
+                fontWeight: FontWeight.w900, 
+                color: isDark ? Colors.white : AppColors.textPrimary,
+                letterSpacing: -0.5,
+              )
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label, 
+              style: GoogleFonts.outfit(
+                color: isDark ? Colors.white54 : AppColors.textSecondary, 
+                fontSize: isMobile ? 12 : 13,
+                fontWeight: FontWeight.w500,
+              )
+            ),
           ],
         ),
       ),
@@ -348,52 +532,124 @@ class RiderDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildSectionCard({required BuildContext context, required String title, required IconData icon, required Widget child}) {
+    final isMobile = MediaQuery.of(context).size.width < 900;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.01),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          )
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: AppColors.textPrimary, size: 20),
+              Container(
+                padding: EdgeInsets.all(isMobile ? 6 : 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: isMobile ? 16 : 18),
+              ),
               const SizedBox(width: 12),
               Text(
                 title,
                 style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  fontSize: isMobile ? 16 : 18,
+                  fontWeight: FontWeight.w900,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                  letterSpacing: -0.2,
                 ),
               ),
             ],
           ),
-          const Divider(height: 32),
+          SizedBox(height: isMobile ? 16 : 24),
           child,
         ],
       ),
     );
   }
 
-  Widget _buildIdentityDetails() {
+  Widget _buildIdentityDetails(BuildContext context) {
     return Column(
       children: [
-        _buildDetailRow('Iqama Number', '2410389210', isCopyable: true),
-        _buildDetailRow('Passport Number', 'K9281726', isCopyable: true),
-        _buildDetailRow('Driving License', 'Saudi Private (Valid)'),
-        _buildDetailRow('Sponsorship', 'Walim Logistics Co.'),
-        _buildDetailRow('Mobile Number', '+966 50 123 4567', isCopyable: true),
-        _buildDetailRow('Emergency Contact', 'Khalid (Brother) - +966 55 987 6543'),
+        _buildDetailRow(context, 'Iqama Number', '2410389210', isCopyable: true),
+        _buildDetailRow(context, 'Passport Number', 'K9281726', isCopyable: true),
+        _buildDetailRow(context, 'Driving License', 'Saudi Private (Valid)'),
+        _buildDetailRow(context, 'Sponsorship', 'Walim Logistics Co.'),
+        _buildDetailRow(context, 'Mobile Number', '+966 50 123 4567', isCopyable: true),
+        _buildDetailRow(context, 'Emergency Contact', 'Khalid (Brother) - +966 55 987 6543'),
       ],
     );
   }
 
-  Widget _buildDetailRow(String label, String value, {bool isCopyable = false}) {
+  Widget _buildDetailRow(BuildContext context, String label, String value, {bool isCopyable = false}) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    
+    if (isMobile) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label.toUpperCase(), 
+              style: GoogleFonts.outfit(
+                color: AppColors.textSecondary.withValues(alpha: 0.6), 
+                fontSize: 9, 
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1,
+              )
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value, 
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w600, 
+                      fontSize: 15,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    )
+                  ),
+                ),
+                if (isCopyable)
+                  Container(
+                    margin: const EdgeInsets.only(left: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.copy_all_rounded, size: 16, color: AppColors.primary),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: value));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$label copied!')));
+                      },
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -408,7 +664,10 @@ class RiderDetailScreen extends ConsumerWidget {
           if (isCopyable)
             IconButton(
               icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
-              onPressed: () {},
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: value));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$label copied!')));
+              },
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
@@ -417,10 +676,11 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAssetDetails() {
+  Widget _buildAssetDetails(BuildContext context) {
     return Column(
       children: [
         _buildAssetItem(
+          context,
           'Vehicle',
           'Yamaha TMAX #402',
           'Plate: 1234 ABC',
@@ -429,6 +689,7 @@ class RiderDetailScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         _buildAssetItem(
+          context,
           'Delivery Bag',
           'Keeta Thermal Bag',
           'Serial: TK-8892',
@@ -437,6 +698,7 @@ class RiderDetailScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         _buildAssetItem(
+          context,
           'Uniform',
           'Standard Kit (3 Sets)',
           'Assigned: 12 Oct 2023',
@@ -447,113 +709,260 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAssetItem(String category, String title, String subtitle, IconData icon, Color color) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 24),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(category, style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-              Text(subtitle, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-            ],
-          ),
-        ),
-        TextButton(
-          onPressed: () {},
-          child: const Text('Manage', style: TextStyle(fontSize: 12)),
-        ),
-      ],
-    );
-  }
+  Widget _buildAssetItem(BuildContext context, String category, String title, String subtitle, IconData icon, Color color) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-  Widget _buildComplianceList() {
-    return Column(
-      children: [
-        _buildComplianceItem('Iqama Expiry', 'Expires in 42 days', 0.8, Colors.green),
-        _buildComplianceItem('Health Insurance', 'Expires in 12 days', 0.15, Colors.red),
-        _buildComplianceItem('Driving License', 'Expires in 280 days', 0.95, Colors.green),
-        _buildComplianceItem('Balady Card', 'Expires in 150 days', 0.7, Colors.orange),
-      ],
-    );
-  }
-
-  Widget _buildComplianceItem(String title, String status, double progress, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(isMobile ? 10 : 12),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.01),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              const Spacer(),
-              Text(status, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
-            ],
+          Container(
+            padding: EdgeInsets.all(isMobile ? 10 : 14),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: isMobile ? 20 : 26),
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: AppColors.divider,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 6,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  category.toUpperCase(), 
+                  style: GoogleFonts.outfit(
+                    color: color.withValues(alpha: 0.7), 
+                    fontSize: 8, 
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  )
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  title, 
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold, 
+                    fontSize: isMobile ? 14 : 16,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  )
+                ),
+                Text(
+                  subtitle, 
+                  style: GoogleFonts.outfit(
+                    color: AppColors.textSecondary.withValues(alpha: 0.6), 
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  )
+                ),
+              ],
             ),
           ),
+          if (!isMobile)
+            TextButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen()));
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.05),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Manage', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            )
+          else
+            IconButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen()));
+              },
+              icon: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textSecondary),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickActions(BuildContext context) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+  Widget _buildComplianceList(BuildContext context) {
+    return Column(
       children: [
-        _buildActionButton(Icons.file_upload_outlined, 'Upload Document', () {}),
-        _buildActionButton(Icons.assignment_ind_outlined, 'Reassign Asset', () {}),
-        _buildActionButton(Icons.warning_amber_rounded, 'Log Incident', () {}),
-        _buildActionButton(Icons.history_rounded, 'Shift History', () {}),
-        _buildActionButton(Icons.payment_rounded, 'Issue Payout', () {}),
-        _buildActionButton(Icons.block_flipped, 'Suspend Rider', () {}, isDestructive: true),
+        _buildComplianceItem(context, 'Iqama Expiry', 'Expires in 42 days', 0.8, Colors.green),
+        _buildComplianceItem(context, 'Health Insurance', 'Expires in 12 days', 0.15, Colors.red),
+        _buildComplianceItem(context, 'Driving License', 'Expires in 280 days', 0.95, Colors.green),
+        _buildComplianceItem(context, 'Balady Card', 'Expires in 150 days', 0.7, Colors.orange),
       ],
     );
   }
 
-  Widget _buildActionButton(IconData icon, String label, VoidCallback onTap, {bool isDestructive = false}) {
+  Widget _buildComplianceItem(BuildContext context, String title, String status, double progress, Color color) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const DocumentVaultScreen()));
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                title, 
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold, 
+                  fontSize: 14,
+                  letterSpacing: -0.2,
+                )
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  status, 
+                  style: GoogleFonts.outfit(
+                    color: color, 
+                    fontSize: 11, 
+                    fontWeight: FontWeight.w900
+                  )
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Stack(
+            children: [
+              Container(
+                height: 8,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.divider.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                height: 8,
+                width: 300 * progress, // Simplified for demonstration
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color, color.withValues(alpha: 0.7)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    )
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = isMobile ? 2 : 3;
+        final spacing = isMobile ? 8.0 : 12.0;
+        final totalSpacing = spacing * (crossAxisCount - 1);
+        final buttonWidth = (constraints.maxWidth - totalSpacing) / crossAxisCount;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            _buildActionButton(context, Icons.file_upload_outlined, 'Upload Document', () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const DocumentVaultScreen()));
+            }, width: buttonWidth),
+            _buildActionButton(context, Icons.assignment_ind_outlined, 'Reassign Asset', () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const AssetManagementScreen()));
+            }, width: buttonWidth),
+            _buildActionButton(context, Icons.warning_amber_rounded, 'Log Incident', () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const IncidentReportScreen()));
+            }, width: buttonWidth),
+            _buildActionButton(context, Icons.history_rounded, 'Shift History', () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const ShiftAssignmentScreen()));
+            }, width: buttonWidth),
+            _buildActionButton(context, Icons.payment_rounded, 'Issue Payout', () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payout Processing coming soon')));
+            }, width: buttonWidth),
+            _buildActionButton(context, Icons.block_flipped, 'Suspend Rider', () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Suspend action initiated')));
+            }, isDestructive: true, width: buttonWidth),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context, IconData icon, String label, VoidCallback onTap, {bool isDestructive = false, required double width}) {
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        width: 140,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        width: width,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: isDestructive ? Colors.red.withOpacity(0.05) : AppColors.background,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isDestructive ? Colors.red.withOpacity(0.1) : AppColors.divider),
+          color: isDestructive 
+              ? Colors.red.withValues(alpha: 0.05) 
+              : Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDestructive 
+                ? Colors.red.withValues(alpha: 0.1) 
+                : Theme.of(context).dividerColor.withValues(alpha: 0.5)
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: isDestructive ? Colors.red : AppColors.primary, size: 20),
-            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: (isDestructive ? Colors.red : AppColors.primary).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: isDestructive ? Colors.red : AppColors.primary, size: 22),
+            ),
+            const SizedBox(height: 12),
             Text(
               label,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.outfit(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: isDestructive ? Colors.red : AppColors.textPrimary,
+                height: 1.1,
               ),
             ),
           ],
@@ -562,21 +971,44 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFinancialSummary() {
+  Widget _buildFinancialSummary(BuildContext context) {
     return Column(
       children: [
         _buildFinanceRow('Current COD Balance', '﷼ 450.00', Colors.orange),
         _buildFinanceRow('Pending Deposits', '﷼ 120.00', Colors.blue),
         _buildFinanceRow('Total Earnings (MTD)', '﷼ 3,850.00', Colors.green),
-        const Divider(height: 32),
-        ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            minimumSize: const Size(double.infinity, 48),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              )
+            ],
           ),
-          child: const Text('View Full Financial Ledger'),
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const CODReconciliationScreen()));
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.white,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: Text(
+              'View Full Financial Ledger', 
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold, letterSpacing: 0.5)
+            ),
+          ),
         ),
       ],
     );

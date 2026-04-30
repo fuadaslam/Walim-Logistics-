@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -7,18 +7,18 @@ import '../../dashboard/presentation/widgets/dashboard_scaffold.dart';
 import '../services/tracking_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/vehicle.dart';
+import 'package:walim_logistics/core/widgets/loading_screen.dart';
 import 'vehicle_detail_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   final bool showScaffold;
   const HomeScreen({super.key, this.showScaffold = true});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  String _activeMenu = 'Live Ops';
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final MapController _mapController = MapController();
   Vehicle? _selectedVehicle;
   bool _hasInitiallyCentered = false;
@@ -39,8 +39,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _checkInitialCentering() {
-    if (_hasInitiallyCentered || !_mapReady || _activeCity == 'All') return;
-    final provider = Provider.of<TrackingProvider>(context, listen: false);
+    final provider = ref.read(trackingProvider);
+    if (_hasInitiallyCentered || !_mapReady || provider.selectedCity == 'All') return;
     if (provider.vehicles.isNotEmpty) {
       final vehicle = provider.vehicles.first;
       if (vehicle.position != null) {
@@ -60,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<TrackingProvider>(context);
+    final provider = ref.watch(trackingProvider);
     
     if (!widget.showScaffold) {
       return _buildContent(provider);
@@ -76,8 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _buildLanguageToggle(),
         const SizedBox(width: 12),
         _buildLiveStatus(provider),
-        const SizedBox(width: 16),
-        _buildUserAvatar(provider),
         const SizedBox(width: 16),
       ],
       children: [
@@ -109,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Expanded(
                 child: provider.isInitialLoad 
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const AppLoadingScreen(message: 'Initializing tracking data...')
                   : _buildActiveView(provider),
               ),
             ],
@@ -152,11 +150,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildActiveView(TrackingProvider provider) {
     if (provider.isInitialLoad) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingScreen(message: 'Loading map insights...');
     }
 
     // Basic navigation logic
-    final menu = _activeMenu.trim();
+    final menu = provider.activeMenu.trim();
     if (menu == 'Live Ops') {
       return _buildMainDashboard(provider);
     } else if (menu == 'Riders') {
@@ -182,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSidebar() {
-    final provider = Provider.of<TrackingProvider>(context);
+    final provider = ref.watch(trackingProvider);
     return Container(
       width: 240,
       decoration: const BoxDecoration(
@@ -196,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(24),
             child: Row(
               children: [
-                Image.asset('assets/Walim Logo.png', height: 28),
+                Image.asset('assets/images/logo.png', height: 28),
                 const SizedBox(width: 12),
                 const Text(
                   'Walim',
@@ -206,55 +204,61 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          _buildSidebarCategory('OPERATIONS'),
-          _buildSidebarItem('Live Ops', Icons.sensors_rounded, active: _activeMenu == 'Live Ops'),
-          _buildSidebarItem('Riders', Icons.person_outline_rounded, 
-            badge: provider.totalCount.toString(), active: _activeMenu == 'Riders'),
-          _buildSidebarItem('Incidents', Icons.error_outline_rounded, 
-            badge: provider.incidents.length.toString(), active: _activeMenu == 'Incidents'),
-          
-          const SizedBox(height: 24),
-          _buildSidebarCategory('PLATFORMS'),
-          ...provider.platforms.map((p) => _buildSidebarItem(
-            p.name, 
-            Icons.circle_outlined, 
-            active: _activeMenu == p.name,
-            badge: p.count.toString(),
-          )),
-          
-          const SizedBox(height: 24),
-          _buildSidebarCategory('LOCATIONS'),
-          _buildSidebarItem(
-            'All', 
-            Icons.circle_outlined, 
-            active: _activeCity == 'All' && _activeMenu == 'Live Ops',
-            onTap: () {
-              setState(() {
-                _activeCity = 'All';
-                _activeMenu = 'Live Ops';
-              });
-              _mapController.move(_cities['All']!, 5);
-            },
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  _buildSidebarCategory('OPERATIONS'),
+                  _buildSidebarItem('Live Ops', Icons.sensors_rounded, active: provider.activeMenu == 'Live Ops'),
+                  _buildSidebarItem('Riders', Icons.person_outline_rounded, 
+                    badge: provider.totalCount.toString(), active: provider.activeMenu == 'Riders'),
+                  _buildSidebarItem('Incidents', Icons.error_outline_rounded, 
+                    badge: provider.incidents.length.toString(), active: provider.activeMenu == 'Incidents'),
+                  
+                  const SizedBox(height: 24),
+                  _buildSidebarCategory('PLATFORMS'),
+                  ...provider.platforms.map((p) => _buildSidebarItem(
+                    p.name, 
+                    Icons.circle_outlined, 
+                    active: provider.activeMenu == p.name,
+                    badge: p.count.toString(),
+                  )),
+                  
+                  const SizedBox(height: 24),
+                  _buildSidebarCategory('LOCATIONS'),
+                  _buildSidebarItem(
+                    'All', 
+                    Icons.circle_outlined, 
+                    active: provider.selectedCity == 'All' && provider.activeMenu == 'Live Ops',
+                    onTap: () {
+                      ref.read(trackingProvider.notifier).setSelectedCity('All');
+                      ref.read(trackingProvider.notifier).setActiveMenu('Live Ops');
+                      _mapController.move(_cities['All']!, 5);
+                    },
+                  ),
+                  ...provider.cities.map((c) => _buildSidebarItem(
+                    c.name, 
+                    Icons.circle_outlined, 
+                    active: provider.activeMenu == c.name,
+                    badge: c.count.toString(),
+                    onTap: () {
+                      ref.read(trackingProvider.notifier).setSelectedCity(c.name);
+                      ref.read(trackingProvider.notifier).setActiveMenu(c.name);
+                      _mapController.move(_cities[c.name]!, 11);
+                    },
+                  )),
+                  
+                  const SizedBox(height: 24),
+                  _buildSidebarCategory('PERFORMANCE'),
+                  _buildSidebarItem('Analytics', Icons.bar_chart_rounded, active: provider.activeMenu == 'Analytics'),
+                  _buildSidebarItem('SLA Monitor', Icons.verified_user_outlined, active: provider.activeMenu == 'SLA Monitor'),
+                ],
+              ),
+            ),
           ),
-          ...provider.cities.map((c) => _buildSidebarItem(
-            c.name, 
-            Icons.circle_outlined, 
-            active: _activeMenu == c.name,
-            badge: c.count.toString(),
-            onTap: () {
-              setState(() {
-                _activeCity = c.name;
-                _activeMenu = c.name;
-              });
-              _mapController.move(_cities[c.name]!, 11);
-            },
-          )),
-          
-          const SizedBox(height: 24),
-          _buildSidebarCategory('PERFORMANCE'),
-          _buildSidebarItem('Analytics', Icons.bar_chart_rounded, active: _activeMenu == 'Analytics'),
-          _buildSidebarItem('SLA Monitor', Icons.verified_user_outlined, active: _activeMenu == 'SLA Monitor'),
         ],
       ),
     );
@@ -269,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSidebarItem(String title, IconData icon, {bool active = false, String? badge, VoidCallback? onTap}) {
     return InkWell(
-      onTap: onTap ?? () => setState(() => _activeMenu = title),
+      onTap: onTap ?? () => ref.read(trackingProvider.notifier).setActiveMenu(title),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
@@ -310,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
       height: 40,
       decoration: BoxDecoration(color: AppTheme.sidebarBg, borderRadius: BorderRadius.circular(8)),
       child: TextField(
-        onChanged: (v) => Provider.of<TrackingProvider>(context, listen: false).setFilter(v),
+        onChanged: (v) => ref.read(trackingProvider.notifier).setFilter(v),
         decoration: const InputDecoration(
           hintText: 'Search riders, vehicles, orders...',
           prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.textBody),
@@ -350,7 +354,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return Tooltip(
         message: provider.error!,
         child: InkWell(
-          onTap: () => Provider.of<TrackingProvider>(context, listen: false).refresh(),
+          onTap: () => ref.read(trackingProvider.notifier).refresh(),
           borderRadius: BorderRadius.circular(6),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -362,33 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return row;
   }
 
-  Widget _buildUserAvatar(TrackingProvider provider) {
-    String initials = '??';
-    if (provider.userName.isNotEmpty) {
-      initials = provider.userName.length >= 2 
-        ? provider.userName.substring(0, 2).toUpperCase()
-        : provider.userName.substring(0, 1).toUpperCase();
-    }
 
-    return Row(
-      children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(provider.userName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-            Text(provider.userBranch, style: const TextStyle(fontSize: 11, color: AppTheme.textBody)),
-          ],
-        ),
-        const SizedBox(width: 12),
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-          child: Text(initials, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.primary)),
-        ),
-      ],
-    );
-  }
 
   Widget _buildMainDashboard(TrackingProvider provider) {
     return Center(
@@ -467,7 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 12),
           TextButton.icon(
-            onPressed: () => Provider.of<TrackingProvider>(context, listen: false).refresh(),
+            onPressed: () => ref.read(trackingProvider.notifier).refresh(),
             icon: const Icon(Icons.refresh_rounded, size: 16),
             label: const Text('Retry', style: TextStyle(fontSize: 12)),
             style: TextButton.styleFrom(foregroundColor: AppTheme.danger),
@@ -483,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Operations Control — ${provider.userBranch}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+            Text('Operations Control ${provider.selectedCity == 'All' ? provider.userBranch : provider.selectedCity}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
             const SizedBox(height: 4),
             Text(
               '${DateFormat('EEEE • d MMM yyyy • HH:mm').format(DateTime.now())} • Live sync ${provider.lastUpdate}',
@@ -620,7 +598,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMapSection(TrackingProvider provider) {
-    LatLng center = _cities[_activeCity] ?? const LatLng(23.8859, 45.0792);
+    LatLng center = _cities[provider.selectedCity] ?? const LatLng(23.8859, 45.0792);
 
     return Container(
       height: 600,
@@ -964,11 +942,11 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(inc.time, style: const TextStyle(fontSize: 11, color: AppTheme.textBody, fontWeight: FontWeight.w500)),
             const SizedBox(width: 16),
             _iconAction(Icons.check_rounded, AppTheme.onlineColor, () {
-              Provider.of<TrackingProvider>(context, listen: false).resolveIncident(inc.id);
+              ref.read(trackingProvider.notifier).resolveIncident(inc.id);
             }),
             const SizedBox(width: 8),
             _iconAction(Icons.close_rounded, AppTheme.danger, () {
-               Provider.of<TrackingProvider>(context, listen: false).resolveIncident(inc.id);
+               ref.read(trackingProvider.notifier).resolveIncident(inc.id);
             }),
           ],
         ),
@@ -977,7 +955,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showIncidentDetail(OperationalIncident inc) {
-    final provider = Provider.of<TrackingProvider>(context, listen: false);
+    final provider = ref.read(trackingProvider);
     final vehicle = provider.vehicles.where((v) => v.id == inc.vehicleId).firstOrNull;
 
     showModalBottomSheet(

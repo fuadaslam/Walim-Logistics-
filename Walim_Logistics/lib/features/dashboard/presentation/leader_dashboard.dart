@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/auth/presentation/auth_notifier.dart';
-import 'package:last_mile_fleet/features/fleet/presentation/inventory_handover_screen.dart';
-import 'package:last_mile_fleet/l10n/app_localizations.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_widgets.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:last_mile_fleet/features/fleet/presentation/shift_assignment_screen.dart';
-import 'package:last_mile_fleet/features/fleet/presentation/group_management_screen.dart';
-import 'package:last_mile_fleet/features/incidents/presentation/incident_report_screen.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
+import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
+import 'package:walim_logistics/l10n/app_localizations.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/fleet/presentation/shift_assignment_screen.dart';
+import 'package:walim_logistics/features/fleet/presentation/group_management_screen.dart';
+import 'package:walim_logistics/features/incidents/presentation/incident_report_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
 
 class LeaderDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -109,13 +110,13 @@ class LeaderDashboard extends ConsumerWidget {
                         },
                       ),
                       DashboardActionCard(
-                        title: 'Inventory Handover',
-                        subtitle: 'Scan QR for bags, fuel cards, & gear',
-                        icon: Icons.qr_code_scanner,
+                        title: 'Asset Registry',
+                        subtitle: 'Manage fleet assets and insurance',
+                        icon: Icons.inventory_2_outlined,
                         color: Colors.purple,
-                        onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const InventoryHandoverScreen()));
-                        },
+                          onTap: () {
+                            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen()));
+                          },
                       ),
                       DashboardActionCard(
                         title: 'Vehicle Status',
@@ -147,11 +148,11 @@ class LeaderDashboard extends ConsumerWidget {
                 children: [
                   _buildSectionHeader('Team Status'),
                   const SizedBox(height: 24),
-                  _buildRiderStatusItem('Ahmed Khan', 'On Duty', true),
+                  _buildRiderStatusItem(context, 'Ahmed Khan', 'On Duty', true),
                   const SizedBox(height: 12),
-                  _buildRiderStatusItem('Mohammed S.', 'Break', false),
+                  _buildRiderStatusItem(context, 'Mohammed S.', 'Break', false),
                   const SizedBox(height: 12),
-                  _buildRiderStatusItem('Zaid Ali', 'On Duty', true),
+                  _buildRiderStatusItem(context, 'Zaid Ali', 'On Duty', true),
                   const SizedBox(height: 32),
                   _buildSectionHeader('Urgent Alerts'),
                   const SizedBox(height: 24),
@@ -167,25 +168,31 @@ class LeaderDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildRiderStatusItem(String name, String status, bool isActive) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: isActive ? Colors.green : Colors.orange, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 16),
-          Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold))),
-          Text(status, style: TextStyle(color: isActive ? Colors.green : Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
-        ],
+  Widget _buildRiderStatusItem(BuildContext context, String name, String status, bool isActive) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderDetailScreen()));
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: isActive ? Colors.green : Colors.orange, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 16),
+            Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold))),
+            Text(status, style: TextStyle(color: isActive ? Colors.green : Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }

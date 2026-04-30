@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/auth/presentation/auth_notifier.dart';
-import 'package:last_mile_fleet/l10n/app_localizations.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
+import 'package:walim_logistics/l10n/app_localizations.dart';
 
-import 'package:last_mile_fleet/features/finance/presentation/reconciliation_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_widgets.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/finance/presentation/reconciliation_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:provider/provider.dart' as provider_pkg;
-import 'package:last_mile_fleet/features/tracking/services/tracking_provider.dart';
-import 'package:last_mile_fleet/features/tracking/screens/home_screen.dart' as walim_tracking;
-import 'package:last_mile_fleet/features/tracking/theme/app_theme.dart' as tracking_theme;
-import 'package:last_mile_fleet/features/dashboard/presentation/providers/navigation_provider.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/hr_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/finance_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/ops_manager_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/biz_dev_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/it_dev_dashboard.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/supervisor_dashboard.dart';
-import 'package:last_mile_fleet/features/fleet/presentation/fleet_asset_registry_screen.dart';
-import 'package:last_mile_fleet/features/admin/presentation/rbac_management_screen.dart';
-import 'package:last_mile_fleet/features/admin/presentation/audit_logs_screen.dart';
+import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
+import 'package:walim_logistics/features/tracking/screens/home_screen.dart' as walim_tracking;
+import 'package:walim_logistics/features/tracking/theme/app_theme.dart' as tracking_theme;
+import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
+import 'package:walim_logistics/features/dashboard/presentation/hr_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/finance_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/ops_manager_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/biz_dev_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/it_dev_dashboard.dart';
+import 'package:walim_logistics/features/dashboard/presentation/supervisor_dashboard.dart';
+import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/rbac_management_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/audit_logs_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/staff_management_screen.dart';
 
 class AdminDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -135,12 +136,9 @@ class AdminDashboard extends ConsumerWidget {
                             icon: Icons.map_outlined,
                             color: AppColors.primary,
                             onTap: () => Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => provider_pkg.ChangeNotifierProvider(
-                                create: (_) => TrackingProvider(),
-                                child: Theme(
-                                  data: tracking_theme.AppTheme.theme,
-                                  child: const walim_tracking.HomeScreen(),
-                                ),
+                              builder: (_) => Theme(
+                                data: tracking_theme.AppTheme.theme,
+                                child: const walim_tracking.HomeScreen(),
                               ),
                             )),
                           ),
@@ -173,11 +171,11 @@ class AdminDashboard extends ConsumerWidget {
                             onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.hr),
                           ),
                           DashboardActionCard(
-                            title: 'Fleet Allocation & SLA',
-                            subtitle: 'Manage platform demands and service levels',
-                            icon: Icons.local_shipping_outlined,
-                            color: Colors.blue,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OpsManagerDashboard())),
+                            title: 'Staff Monitoring',
+                            subtitle: 'Monitor all roles: Riders, Managers, etc.',
+                            icon: Icons.people_outline_rounded,
+                            color: Colors.purple,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
                           ),
                         ],
                       );

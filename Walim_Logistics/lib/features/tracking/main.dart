@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'services/tracking_provider.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => TrackingProvider(),
-      child: const WalimTrackingApp(),
+    const ProviderScope(
+      child: WalimTrackingApp(),
     ),
   );
 }

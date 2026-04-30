@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walim_logistics/core/providers/shared_prefs_provider.dart';
 
 enum DashboardTab {
   dashboard,
@@ -7,7 +9,6 @@ enum DashboardTab {
   assets,
   finance,
   attendance,
-  inspections,
   support,
   documents,
   requests,
@@ -35,17 +36,32 @@ class NavigationState {
 }
 
 class NavigationNotifier extends StateNotifier<NavigationState> {
-  NavigationNotifier() : super(NavigationState());
+  final SharedPreferences _prefs;
+  static const _sidebarCollapsedKey = 'sidebar_collapsed';
+
+  NavigationNotifier(this._prefs) : super(NavigationState()) {
+    _loadState();
+  }
+
+  void _loadState() {
+    final isCollapsed = _prefs.getBool(_sidebarCollapsedKey);
+    if (isCollapsed != null) {
+      state = state.copyWith(isSidebarCollapsed: isCollapsed);
+    }
+  }
 
   void setTab(DashboardTab tab) {
     state = state.copyWith(activeTab: tab);
   }
 
-  void toggleSidebar() {
-    state = state.copyWith(isSidebarCollapsed: !state.isSidebarCollapsed);
+  Future<void> toggleSidebar() async {
+    final newValue = !state.isSidebarCollapsed;
+    state = state.copyWith(isSidebarCollapsed: newValue);
+    await _prefs.setBool(_sidebarCollapsedKey, newValue);
   }
 }
 
 final navigationProvider = StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {
-  return NavigationNotifier();
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return NavigationNotifier(prefs);
 });

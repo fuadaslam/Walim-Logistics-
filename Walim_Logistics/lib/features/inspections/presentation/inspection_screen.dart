@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/l10n/app_localizations.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:last_mile_fleet/features/support/presentation/widgets/issue_report_bottom_sheet.dart';
+import 'package:walim_logistics/l10n/app_localizations.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/support/presentation/widgets/issue_report_bottom_sheet.dart';
 
 class InspectionScreen extends ConsumerStatefulWidget {
   final bool showScaffold;
@@ -30,6 +30,8 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
     'Fuel/Battery': false,
   };
 
+  final Map<String, bool> _vehicleIssues = {};
+
   final Map<String, bool> _safetyChecklist = {
     'Helmet': false,
     'Safety Jacket': false,
@@ -37,6 +39,8 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
     'Protectors': false,
     'Safety Shoes': false,
   };
+
+  final Map<String, bool> _safetyIssues = {};
 
   Future<void> _takePhoto(bool isVehicle) async {
     final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
@@ -218,7 +222,7 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
         const SizedBox(height: 32),
         _buildSectionTitle('Checklist', 'Ensure all components are in good working condition'),
         const SizedBox(height: 16),
-        _buildChecklistCard(_vehicleChecklist),
+        _buildChecklistCard(_vehicleChecklist, _vehicleIssues),
         const SizedBox(height: 16),
         _buildReportLink('Found a vehicle issue? Report it here'),
       ],
@@ -236,7 +240,7 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
         const SizedBox(height: 32),
         _buildSectionTitle('Safety Equipment', 'Verify you have all mandatory gear'),
         const SizedBox(height: 16),
-        _buildChecklistCard(_safetyChecklist),
+        _buildChecklistCard(_safetyChecklist, _safetyIssues),
         const SizedBox(height: 16),
         _buildReportLink('Missing safety gear? Report it here'),
       ],
@@ -287,7 +291,7 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
     );
   }
 
-  Widget _buildChecklistCard(Map<String, bool> checklist) {
+  Widget _buildChecklistCard(Map<String, bool> checklist, Map<String, bool> issues) {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -305,27 +309,58 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
         children: checklist.keys.map((key) {
           bool isLast = checklist.keys.last == key;
           bool isChecked = checklist[key] ?? false;
+          bool hasIssue = issues[key] ?? false;
+          
           return Column(
             children: [
-              CheckboxListTile(
+              ListTile(
+                onTap: () => setState(() {
+                  checklist[key] = !isChecked;
+                  if (!isChecked) issues[key] = false;
+                }),
+                leading: Checkbox(
+                  value: isChecked,
+                  activeColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  onChanged: (val) => setState(() {
+                    checklist[key] = val!;
+                    if (val) issues[key] = false;
+                  }),
+                ),
                 title: Text(
                   key, 
                   style: GoogleFonts.outfit(
                     fontWeight: isChecked ? FontWeight.bold : FontWeight.w500,
-                    color: isChecked ? AppColors.primary : null,
+                    color: hasIssue ? AppColors.error : (isChecked ? AppColors.primary : null),
+                    fontSize: 15,
                   )
                 ),
-                value: isChecked,
-                activeColor: AppColors.primary,
-                checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                onChanged: (val) => setState(() => checklist[key] = val!),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                secondary: Icon(
-                  isChecked ? Icons.check_circle_rounded : Icons.circle_outlined,
-                  color: isChecked ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.5),
-                ),
+                subtitle: hasIssue 
+                  ? Text('Issue reported', style: GoogleFonts.outfit(color: AppColors.error, fontSize: 12)) 
+                  : null,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                trailing: isChecked 
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Icon(Icons.check_circle_rounded, color: Colors.green, size: 22),
+                    )
+                  : IconButton(
+                      tooltip: 'Report issue for $key',
+                      icon: Icon(
+                        hasIssue ? Icons.report_gmailerrorred_rounded : Icons.report_problem_outlined,
+                        color: hasIssue ? AppColors.error : AppColors.textSecondary.withValues(alpha: 0.3),
+                        size: 20,
+                      ),
+                      onPressed: () async {
+                        await IssueReportBottomSheet.show(context, item: key);
+                        setState(() {
+                          issues[key] = true;
+                          checklist[key] = false;
+                        });
+                      },
+                    ),
               ),
-              if (!isLast) Divider(height: 1, indent: 60, endIndent: 20, color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
+              if (!isLast) Divider(height: 1, indent: 56, endIndent: 20, color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
             ],
           );
         }).toList(),
@@ -369,14 +404,14 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
     final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        height: 240,
+        height: 160,
         width: double.infinity,
         decoration: BoxDecoration(
           color: theme.cardColor,
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: file != null ? AppColors.primary : theme.dividerColor.withValues(alpha: 0.5),
             width: file != null ? 2 : 1.5,
@@ -384,8 +419,8 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
           image: file != null ? DecorationImage(image: FileImage(file), fit: BoxFit.cover) : null,
@@ -395,17 +430,17 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.add_a_photo_rounded, size: 40, color: AppColors.primary),
+                    child: const Icon(Icons.add_a_photo_rounded, size: 32, color: AppColors.primary),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
                   Text(
                     'Capture Photo', 
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 18),
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 16),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -468,10 +503,10 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
     bool isLast = _currentStep == 2;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, -5))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, -5))],
       ),
       child: Row(
         children: [
@@ -481,14 +516,14 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
               child: OutlinedButton(
                 onPressed: () => setState(() => _currentStep -= 1),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   side: BorderSide(color: Theme.of(context).dividerColor),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Icon(Icons.arrow_back),
               ),
             ),
-          if (!isFirst) const SizedBox(width: 16),
+          if (!isFirst) const SizedBox(width: 12),
           Expanded(
             flex: 3,
             child: ElevatedButton(
@@ -500,10 +535,10 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 18),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 8,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 4,
                 shadowColor: AppColors.primary.withValues(alpha: 0.3),
               ),
               child: Row(
@@ -511,10 +546,10 @@ class _InspectionScreenState extends ConsumerState<InspectionScreen> {
                 children: [
                   Text(
                     isLast ? 'START SHIFT' : 'CONTINUE',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1),
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 0.5),
                   ),
-                  const SizedBox(width: 8),
-                  Icon(isLast ? Icons.play_arrow_rounded : Icons.arrow_forward_rounded),
+                  const SizedBox(width: 6),
+                  Icon(isLast ? Icons.play_arrow_rounded : Icons.arrow_forward_rounded, size: 20),
                 ],
               ),
             ),

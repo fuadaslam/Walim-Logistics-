@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
-import 'package:last_mile_fleet/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 
 class LeaveRequestScreen extends StatefulWidget {
   final bool showScaffold;
@@ -30,7 +30,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('My Requests', style: GoogleFonts.outfit(fontSize: isMobile ? 20 : 22, fontWeight: FontWeight.bold)),
+          Text('My Requests', style: GoogleFonts.outfit(fontSize: isMobile ? 18 : 20, fontWeight: FontWeight.w600)),
           TextButton.icon(
             onPressed: () {},
             style: TextButton.styleFrom(
@@ -38,7 +38,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
             ),
             icon: const Icon(Icons.filter_list_rounded, size: 18),
-            label: Text('Filter', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+            label: Text('Filter', style: GoogleFonts.outfit(fontWeight: FontWeight.w500, fontSize: 13)),
           ),
         ],
       ),
@@ -75,9 +75,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
         border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.divider.withValues(alpha: 0.8)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -85,25 +85,25 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.all(isMobile ? 20 : 24),
+            padding: EdgeInsets.all(isMobile ? 18 : 24),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.add_moderator_rounded, color: AppColors.primary, size: 22),
+                  child: const Icon(Icons.add_moderator_rounded, color: AppColors.primary, size: 20),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('New Request', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('New Request', style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w600)),
                       Text('Submit a new absence or leave request', 
-                        style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary),
+                        style: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -115,16 +115,16 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
           ),
           const Divider(height: 1),
           Padding(
-            padding: EdgeInsets.all(isMobile ? 20 : 24),
+            padding: EdgeInsets.all(isMobile ? 18 : 24),
             child: Column(
               children: [
                 DropdownButtonFormField<String>(
                   value: _selectedType,
-                  style: GoogleFonts.outfit(color: theme.textTheme.bodyLarge?.color, fontSize: 15),
+                  style: GoogleFonts.outfit(color: theme.textTheme.bodyLarge?.color, fontSize: 14),
                   decoration: const InputDecoration(
                     labelText: 'Type of Request',
                     prefixIcon: Icon(Icons.category_outlined, size: 20),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                   items: ['Leave', 'Weekly Off', 'Emergency', 'Asset Handover']
                       .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -139,7 +139,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Reason for Handover',
                       prefixIcon: Icon(Icons.info_outline, size: 20),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                     items: ['Resignation', 'Annual Leave', 'Termination', 'Other']
                         .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -191,7 +191,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   maxLines: 3,
-                  style: GoogleFonts.outfit(fontSize: 15),
+                  style: GoogleFonts.outfit(fontSize: 14),
                   decoration: const InputDecoration(
                     labelText: 'Detailed Reason / Notes',
                     alignLabelWithHint: true,
@@ -208,16 +208,16 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.25),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
                   child: ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 60),
+                      minimumSize: const Size(double.infinity, 54),
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
@@ -230,9 +230,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
                         Text(
                           'Submit Request'.toUpperCase(),
                           style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.w800, 
-                            fontSize: 15, 
-                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.w600, 
+                            fontSize: 14, 
+                            letterSpacing: 0.5,
                             color: Colors.white,
                           ),
                         ),
@@ -262,7 +262,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
             boxShadow: [
               BoxShadow(
@@ -311,7 +311,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
                                 children: [
                                   Text(
                                     r['type'],
-                                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
+                                    style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 2),
                                   _buildStatusBadge(status, color),

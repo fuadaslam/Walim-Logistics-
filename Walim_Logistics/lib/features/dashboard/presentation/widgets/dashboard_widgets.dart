@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:last_mile_fleet/core/theme/app_theme.dart';
+import 'package:walim_logistics/core/theme/app_theme.dart';
 
 class DashboardStatCard extends StatefulWidget {
   final String label;
@@ -72,7 +72,7 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
                 color: _isHovered 
@@ -112,7 +112,7 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          padding: EdgeInsets.all(isMobile ? 8 : 12),
+                          padding: EdgeInsets.all(isMobile ? 8 : 10),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
@@ -317,15 +317,15 @@ class _DashboardActionCardState extends State<DashboardActionCard> {
       onExit: (_) => setState(() => _isHovered = false),
       child: InkWell(
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          padding: EdgeInsets.all(isMobile ? 12 : 16),
+          padding: EdgeInsets.all(isMobile ? 12 : 14),
           decoration: BoxDecoration(
             color: _isHovered 
                 ? widget.color.withOpacity(isDark ? 0.12 : 0.06) 
                 : Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: _isHovered ? widget.color : Theme.of(context).dividerColor.withOpacity(0.5),
               width: 1.5,
@@ -517,7 +517,7 @@ class ActivityFeed extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
       ),
       child: Column(
@@ -529,7 +529,7 @@ class ActivityFeed extends StatelessWidget {
               Text(
                 'Live Activity',
                 style: GoogleFonts.outfit(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).textTheme.titleLarge?.color,
                 ),

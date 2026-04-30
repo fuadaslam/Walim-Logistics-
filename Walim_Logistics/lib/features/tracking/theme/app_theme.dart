@@ -110,6 +110,10 @@ class AppTheme {
       bodyMedium: TextStyle(fontSize: 13, color: textBody),
       labelLarge: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textBody, letterSpacing: 0.5),
     ),
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: primary,
+      linearTrackColor: Color(0xFFFED7AA), // Light orange
+    ),
   );
 
   static ThemeData get darkTheme => ThemeData(

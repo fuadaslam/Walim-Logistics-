@@ -43,7 +43,12 @@ class AppTheme {
       ),
       textTheme: GoogleFonts.outfitTextTheme().copyWith(
         displayLarge: GoogleFonts.outfit(
-          fontSize: 32,
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: AppColors.textPrimary,
+        ),
+        titleLarge: GoogleFonts.outfit(
+          fontSize: 20,
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
         ),
@@ -55,12 +60,17 @@ class AppTheme {
           fontSize: 14,
           color: AppColors.textSecondary,
         ),
+        labelSmall: GoogleFonts.outfit(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textSecondary,
+        ),
       ),
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           side: const BorderSide(color: AppColors.divider),
         ),
       ),
@@ -68,9 +78,9 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 56),
+          minimumSize: const Size(double.infinity, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           elevation: 0,
         ),
@@ -79,18 +89,23 @@ class AppTheme {
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColors.divider),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColors.divider),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
-        hintStyle: const TextStyle(color: AppColors.textSecondary),
+        hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primary,
+        linearTrackColor: Color(0xFFFFCCBC), // Light orange track
+        refreshBackgroundColor: Colors.white,
       ),
     );
   }
@@ -112,7 +127,12 @@ class AppTheme {
       ),
       textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).copyWith(
         displayLarge: GoogleFonts.outfit(
-          fontSize: 32,
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: AppColors.textPrimaryDark,
+        ),
+        titleLarge: GoogleFonts.outfit(
+          fontSize: 20,
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimaryDark,
         ),
@@ -129,7 +149,7 @@ class AppTheme {
         color: AppColors.surfaceDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           side: const BorderSide(color: Colors.white10),
         ),
       ),
@@ -137,9 +157,9 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 56),
+          minimumSize: const Size(double.infinity, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           elevation: 0,
         ),
@@ -148,18 +168,23 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.surfaceDark,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Colors.white10),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Colors.white10),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
-        hintStyle: const TextStyle(color: Colors.white38),
+        hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primary,
+        linearTrackColor: Colors.white10,
+        refreshBackgroundColor: AppColors.surfaceDark,
       ),
     );
   }

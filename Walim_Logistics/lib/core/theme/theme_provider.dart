@@ -1,22 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walim_logistics/core/providers/shared_prefs_provider.dart';
 
 final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) {
-  return ThemeNotifier();
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return ThemeNotifier(prefs);
 });
 
 class ThemeNotifier extends StateNotifier<ThemeMode> {
-  ThemeNotifier() : super(ThemeMode.system);
+  final SharedPreferences _prefs;
+  static const _themeKey = 'theme_mode';
 
-  void toggleTheme() {
-    if (state == ThemeMode.light) {
-      state = ThemeMode.dark;
-    } else {
-      state = ThemeMode.light;
+  ThemeNotifier(this._prefs) : super(ThemeMode.system) {
+    _loadTheme();
+  }
+
+  void _loadTheme() {
+    final themeIndex = _prefs.getInt(_themeKey);
+    if (themeIndex != null) {
+      state = ThemeMode.values[themeIndex];
     }
   }
 
-  void setThemeMode(ThemeMode mode) {
+  Future<void> toggleTheme() async {
+    if (state == ThemeMode.light) {
+      await setThemeMode(ThemeMode.dark);
+    } else {
+      await setThemeMode(ThemeMode.light);
+    }
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
     state = mode;
+    await _prefs.setInt(_themeKey, mode.index);
   }
 }
