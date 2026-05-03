@@ -5,6 +5,8 @@ class Vehicle {
   final String protocol;
   final String status;
   final bool active;
+  final String? riderName;
+  final String? iqamaNumber;
   VehiclePosition? position;
 
   // Retained for UI compatibility
@@ -21,6 +23,8 @@ class Vehicle {
     this.protocol = '',
     this.status = 'unknown',
     this.active = true,
+    this.riderName,
+    this.iqamaNumber,
     this.position,
   });
 
@@ -51,6 +55,8 @@ class Vehicle {
       protocol: json['protocol']?.toString() ?? '',
       status: _normalizeStatus(json['status']?.toString() ?? ''),
       active: true,
+      riderName: json['rider_name'] ?? json['assigned_to_name'] ?? json['full_name'],
+      iqamaNumber: json['iqama_number'],
       position: hasLocation ? VehiclePosition.fromDeviceJson(json) : null,
     );
   }

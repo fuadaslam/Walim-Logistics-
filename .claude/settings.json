@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Supabase__apply_migration",
+      "Bash(flutter analyze *)",
+      "Bash(flutter clean *)",
+      "Bash(flutter build *)"
+    ]
+  }
+}

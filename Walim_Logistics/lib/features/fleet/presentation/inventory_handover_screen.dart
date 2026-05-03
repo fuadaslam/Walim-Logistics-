@@ -110,6 +110,7 @@ class _InventoryHandoverScreenState extends ConsumerState<InventoryHandoverScree
     return DashboardScaffold(
       title: 'INVENTORY HANDOVER',
       subtitle: 'Scan QR codes to assign assets to riders',
+      showBackButton: true,
       activeItem: 'Assets',
       children: [
         _buildContent(),

@@ -1,9 +1,9 @@
 Compiling lib/main.dart for the Web...                          
 Target dart2js failed: ProcessException: Process exited abnormally with exit code 1:
-lib/features/hr/presentation/rider_detail_screen.dart:994:79:
-Error: Couldn't find constructor 'CodReconciliationScreen'.
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const CodReconciliationScreen()));
-                                                                              ^^^^^^^^^^^^^^^^^^^^^^^
+lib/features/dashboard/presentation/widgets/dashboard_widgets.dart:59:23:
+Error: Can't find ')' to match '('.
+    return MouseRegion(
+                      ^
 Error: Compilation failed.
   Command: /Users/fuadaslam/Project-cgs/Dxt/flutter/bin/cache/dart-sdk/bin/dart compile js --platform-binaries=/Users/fuadaslam/Project-cgs/Dxt/flutter/bin/cache/flutter_web_sdk/kernel --invoker=flutter_tool -Ddart.vm.product=true -DFLUTTER_VERSION=3.32.8 -DFLUTTER_CHANNEL=stable -DFLUTTER_GIT_URL=https://github.com/flutter/flutter.git -DFLUTTER_FRAMEWORK_REVISION=edada7c56e -DFLUTTER_ENGINE_REVISION=ef0cd00091 -DFLUTTER_DART_VERSION=3.8.1 -DFLUTTER_WEB_USE_SKIA=true -DFLUTTER_WEB_USE_SKWASM=false -DFLUTTER_WEB_CANVASKIT_URL=https://www.gstatic.com/flutter-canvaskit/ef0cd000916d64fa0c5d09cc809fa7ad244a5767/ --native-null-assertions --no-source-maps -o /Users/fuadaslam/Walim/last_mile_fleet/Walim_Logistics/.dart_tool/flutter_build/59222749464759bcfed231fcd755c774/app.dill --packages=/Users/fuadaslam/Walim/last_mile_fleet/Walim_Logistics/.dart_tool/package_config.json --cfe-only /Users/fuadaslam/Walim/last_mile_fleet/Walim_Logistics/.dart_tool/flutter_build/59222749464759bcfed231fcd755c774/main.dart
 #0      RunResult.throwException (package:flutter_tools/src/base/process.dart:118:5)
@@ -46,5 +46,5 @@ Error: Compilation failed.
 #19     main (package:flutter_tools/executable.dart:102:3)
 <asynchronous suspension>
 
-Compiling lib/main.dart for the Web...                              8.6s
+Compiling lib/main.dart for the Web...                              8.8s
 Error: Failed to compile application for the Web.

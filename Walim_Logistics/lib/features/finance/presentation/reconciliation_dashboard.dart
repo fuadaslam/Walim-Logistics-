@@ -28,6 +28,7 @@ class ReconciliationDashboard extends StatelessWidget {
     return DashboardScaffold(
       title: 'COD RECONCILIATION',
       subtitle: 'Audit COD collections and platform reports',
+      showBackButton: true,
       activeItem: 'Finance',
       children: [
         _buildContent(context),

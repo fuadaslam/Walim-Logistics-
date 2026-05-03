@@ -11,6 +11,23 @@ import 'package:walim_logistics/features/hr/presentation/document_vault_screen.d
 import 'package:walim_logistics/features/incidents/presentation/incident_report_screen.dart';
 import 'package:walim_logistics/features/fleet/presentation/shift_assignment_screen.dart';
 import 'package:walim_logistics/features/finance/presentation/cod_reconciliation_screen.dart';
+import 'package:walim_logistics/features/fleet/data/fleet_repository.dart';
+import 'package:walim_logistics/features/hr/data/hr_repository.dart';
+import 'package:walim_logistics/features/admin/data/operations_repository.dart';
+import 'package:walim_logistics/features/inspections/presentation/inspection_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
+
+final _riderAssetsProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, id) {
+  return ref.watch(hrRepositoryProvider).getAssetsForProfile(id);
+});
+
+final _riderDocumentsProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, id) {
+  return ref.watch(hrRepositoryProvider).getDocumentsForProfile(id);
+});
+
+final _riderStatsProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, id) {
+  return ref.watch(hrRepositoryProvider).getProfileStats(id);
+});
 
 class RiderDetailScreen extends ConsumerWidget {
   final UserProfile? profile;
@@ -21,16 +38,15 @@ class RiderDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isMobile = MediaQuery.of(context).size.width < 900;
     final name = profile?.fullName ?? "Ahmed Ali";
-    final riderId = profile?.id.substring(0, 8).toUpperCase() ?? "WAL-78921";
     
     return DashboardScaffold(
       title: 'Rider Profile',
       subtitle: 'Managing details and performance for $name',
       showBackButton: true,
       children: [
-        _buildHeader(context, name, riderId, isMobile),
+        _buildHeader(context, ref, profile),
         SizedBox(height: isMobile ? 16 : 32),
-        _buildStatsGrid(context, isMobile),
+        _buildStatsGrid(context, ref, profile?.id),
         SizedBox(height: isMobile ? 16 : 32),
         if (isMobile)
           Column(
@@ -55,6 +71,52 @@ class RiderDetailScreen extends ConsumerWidget {
             ],
           ),
       ],
+    );
+  }
+
+  Widget _buildStatsGrid(BuildContext context, WidgetRef ref, String? id) {
+    if (id == null) return const SizedBox.shrink();
+    
+    final statsAsync = ref.watch(_riderStatsProvider(id));
+    final isMobile = MediaQuery.of(context).size.width < 900;
+
+    return statsAsync.when(
+      data: (stats) {
+        if (isMobile) {
+          return Column(
+            children: [
+              Row(
+                children: [
+                  _buildStatCard(context, 'Total Working Days', stats['workingDays'].toString(), Icons.calendar_today_rounded, Colors.blue),
+                  const SizedBox(width: 12),
+                  _buildStatCard(context, 'Working Hours', '${stats['workingHours']}h', Icons.access_time_rounded, Colors.green),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _buildStatCard(context, 'Leave', '${stats['leaveDays']} Days', Icons.beach_access_rounded, Colors.orange),
+                  const SizedBox(width: 12),
+                  _buildStatCard(context, 'Requests', '${stats['pendingRequests']} Pending', Icons.history_edu_rounded, Colors.purple),
+                ],
+              ),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            _buildStatCard(context, 'Total Working Days', stats['workingDays'].toString(), Icons.calendar_today_rounded, Colors.blue),
+            const SizedBox(width: 20),
+            _buildStatCard(context, 'Working Hours', '${stats['workingHours']}h', Icons.access_time_rounded, Colors.green),
+            const SizedBox(width: 20),
+            _buildStatCard(context, 'Leave', '${stats['leaveDays']} Days', Icons.beach_access_rounded, Colors.orange),
+            const SizedBox(width: 20),
+            _buildStatCard(context, 'Requests', '${stats['pendingRequests']} Pending', Icons.history_edu_rounded, Colors.purple),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text('Error loading stats: $e'),
     );
   }
 
@@ -111,7 +173,12 @@ class RiderDetailScreen extends ConsumerWidget {
       ],
     );
   }
-  Widget _buildHeader(BuildContext context, String name, String id, bool isMobile) {
+  Widget _buildHeader(BuildContext context, WidgetRef ref, UserProfile? profile) {
+    final isMobile = MediaQuery.of(context).size.width < 900;
+    final name = profile?.fullName ?? "Ahmed Ali";
+    final id = profile?.id ?? "WAL-78921";
+    final displayId = id.length > 8 ? id.substring(0, 8).toUpperCase() : id;
+    
     final avatar = Stack(
       alignment: Alignment.center,
       children: [
@@ -197,39 +264,12 @@ class RiderDetailScreen extends ConsumerWidget {
                 letterSpacing: -0.5,
               ),
             ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: Color(0xFF10B981).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Color(0xFF10B981).withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 5,
-                    height: 5,
-                    decoration: BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
-                  ),
-                  SizedBox(width: 4),
-                  Text(
-                    'ACTIVE',
-                    style: TextStyle(
-                      color: Color(0xFF10B981), 
-                      fontSize: 8, 
-                      fontWeight: FontWeight.w900, 
-                      letterSpacing: 1.0
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildStatusDropdown(context, ref, profile),
           ],
         ),
         SizedBox(height: 4),
         Text(
-          'ID: $id • Joined Oct 2023',
+          'ID: $id • ${profile?.role ?? "Rider"}',
           textAlign: TextAlign.start,
           style: GoogleFonts.outfit(
             color: Colors.white.withValues(alpha: 0.6),
@@ -415,40 +455,6 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsGrid(BuildContext context, bool isMobile) {
-    if (isMobile) {
-      return Column(
-        children: [
-          Row(
-            children: [
-              _buildStatCard(context, 'Total Working Days', '214', Icons.calendar_today_rounded, Colors.blue),
-              const SizedBox(width: 12),
-              _buildStatCard(context, 'Working Hours', '1,640h', Icons.access_time_rounded, Colors.green),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildStatCard(context, 'Leave', '14 Days', Icons.beach_access_rounded, Colors.orange),
-              const SizedBox(width: 12),
-              _buildStatCard(context, 'Requests', '3 Pending', Icons.history_edu_rounded, Colors.purple),
-            ],
-          ),
-        ],
-      );
-    }
-    return Row(
-      children: [
-        _buildStatCard(context, 'Total Working Days', '214', Icons.calendar_today_rounded, Colors.blue),
-        const SizedBox(width: 20),
-        _buildStatCard(context, 'Working Hours', '1,640h', Icons.access_time_rounded, Colors.green),
-        const SizedBox(width: 20),
-        _buildStatCard(context, 'Leave', '14 Days', Icons.beach_access_rounded, Colors.orange),
-        const SizedBox(width: 20),
-        _buildStatCard(context, 'Requests', '3 Pending', Icons.history_edu_rounded, Colors.purple),
-      ],
-    );
-  }
 
   Widget _buildStatCard(BuildContext context, String label, String value, IconData icon, Color color) {
     final isMobile = MediaQuery.of(context).size.width < 900;
@@ -677,36 +683,58 @@ class RiderDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildAssetDetails(BuildContext context) {
-    return Column(
-      children: [
-        _buildAssetItem(
-          context,
-          'Vehicle',
-          'Yamaha TMAX #402',
-          'Plate: 1234 ABC',
-          Icons.motorcycle,
-          Colors.blue,
-        ),
-        const SizedBox(height: 16),
-        _buildAssetItem(
-          context,
-          'Delivery Bag',
-          'Keeta Thermal Bag',
-          'Serial: TK-8892',
-          Icons.shopping_bag_outlined,
-          Colors.orange,
-        ),
-        const SizedBox(height: 16),
-        _buildAssetItem(
-          context,
-          'Uniform',
-          'Standard Kit (3 Sets)',
-          'Assigned: 12 Oct 2023',
-          Icons.checkroom_outlined,
-          Colors.purple,
-        ),
-      ],
-    );
+    if (profile == null) return const Center(child: Text('No profile data'));
+    
+    return Consumer(builder: (context, ref, _) {
+      final assetsAsync = ref.watch(_riderAssetsProvider(profile!.id));
+      
+      return assetsAsync.when(
+        data: (assets) {
+          if (assets.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text('No assets assigned', style: GoogleFonts.outfit(color: Colors.grey)),
+              ),
+            );
+          }
+          return Column(
+            children: assets.map((asset) {
+              return _buildAssetItem(
+                context,
+                asset['category'] ?? 'Asset',
+                asset['name'] ?? 'Unknown',
+                'S/N: ${asset['serial_number'] ?? 'N/A'}',
+                _getAssetIcon(asset['category']),
+                _getAssetColor(asset['category']),
+              );
+            }).toList(),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Text('Error loading assets: $e'),
+      );
+    });
+  }
+
+  IconData _getAssetIcon(String? category) {
+    switch (category?.toLowerCase()) {
+      case 'vehicle': return Icons.motorcycle;
+      case 'bag': return Icons.shopping_bag_outlined;
+      case 'uniform': return Icons.checkroom_outlined;
+      case 'smartphone': return Icons.phone_android_rounded;
+      default: return Icons.inventory_2_outlined;
+    }
+  }
+
+  Color _getAssetColor(String? category) {
+    switch (category?.toLowerCase()) {
+      case 'vehicle': return Colors.blue;
+      case 'bag': return Colors.orange;
+      case 'uniform': return Colors.purple;
+      case 'smartphone': return Colors.teal;
+      default: return Colors.grey;
+    }
   }
 
   Widget _buildAssetItem(BuildContext context, String category, String title, String subtitle, IconData icon, Color color) {
@@ -793,14 +821,42 @@ class RiderDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildComplianceList(BuildContext context) {
-    return Column(
-      children: [
-        _buildComplianceItem(context, 'Iqama Expiry', 'Expires in 42 days', 0.8, Colors.green),
-        _buildComplianceItem(context, 'Health Insurance', 'Expires in 12 days', 0.15, Colors.red),
-        _buildComplianceItem(context, 'Driving License', 'Expires in 280 days', 0.95, Colors.green),
-        _buildComplianceItem(context, 'Balady Card', 'Expires in 150 days', 0.7, Colors.orange),
-      ],
-    );
+    if (profile == null) return const SizedBox();
+    
+    return Consumer(builder: (context, ref, _) {
+      final docsAsync = ref.watch(_riderDocumentsProvider(profile!.id));
+      
+      return docsAsync.when(
+        data: (docs) {
+          if (docs.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text('No documents found', style: GoogleFonts.outfit(color: Colors.grey)),
+              ),
+            );
+          }
+          return Column(
+            children: docs.map((doc) {
+              final expiry = DateTime.parse(doc['expiry_date']);
+              final daysLeft = expiry.difference(DateTime.now()).inDays;
+              final progress = (daysLeft / 365).clamp(0.0, 1.0);
+              final color = daysLeft < 30 ? Colors.red : (daysLeft < 90 ? Colors.orange : Colors.green);
+              
+              return _buildComplianceItem(
+                context, 
+                doc['name'] ?? 'Document', 
+                daysLeft < 0 ? 'Expired' : 'Expires in $daysLeft days', 
+                progress, 
+                color
+              );
+            }).toList(),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Text('Error: $e'),
+      );
+    });
   }
 
   Widget _buildComplianceItem(BuildContext context, String title, String status, double progress, Color color) {
@@ -879,97 +935,132 @@ class RiderDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildQuickActions(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = isMobile ? 2 : 3;
-        final spacing = isMobile ? 8.0 : 12.0;
-        final totalSpacing = spacing * (crossAxisCount - 1);
-        final buttonWidth = (constraints.maxWidth - totalSpacing) / crossAxisCount;
-
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            _buildActionButton(context, Icons.file_upload_outlined, 'Upload Document', () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const DocumentVaultScreen()));
-            }, width: buttonWidth),
-            _buildActionButton(context, Icons.assignment_ind_outlined, 'Reassign Asset', () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const AssetManagementScreen()));
-            }, width: buttonWidth),
-            _buildActionButton(context, Icons.warning_amber_rounded, 'Log Incident', () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const IncidentReportScreen()));
-            }, width: buttonWidth),
-            _buildActionButton(context, Icons.history_rounded, 'Shift History', () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const ShiftAssignmentScreen()));
-            }, width: buttonWidth),
-            _buildActionButton(context, Icons.payment_rounded, 'Issue Payout', () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payout Processing coming soon')));
-            }, width: buttonWidth),
-            _buildActionButton(context, Icons.block_flipped, 'Suspend Rider', () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Suspend action initiated')));
-            }, isDestructive: true, width: buttonWidth),
-          ],
-        );
-      },
+    return Column(
+      children: [
+        _buildActionRow(context, 'Perform Inspection', Icons.security_rounded, Colors.redAccent, () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const InspectionScreen()));
+        }),
+        const SizedBox(height: 12),
+        _buildActionRow(context, 'Assign New Asset', Icons.add_business_rounded, Colors.blue, () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen()));
+        }),
+        const SizedBox(height: 12),
+        _buildActionRow(context, 'Document Vault', Icons.folder_zip_outlined, Colors.orange, () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const DocumentVaultScreen()));
+        }),
+        const SizedBox(height: 12),
+        _buildActionRow(context, 'Assign Shift', Icons.event_available_rounded, Colors.teal, () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ShiftAssignmentScreen()));
+        }),
+      ],
     );
   }
 
-  Widget _buildActionButton(BuildContext context, IconData icon, String label, VoidCallback onTap, {bool isDestructive = false, required double width}) {
-
+  Widget _buildActionRow(BuildContext context, String label, IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: width,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDestructive 
-              ? Colors.red.withValues(alpha: 0.05) 
-              : Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDestructive 
-                ? Colors.red.withValues(alpha: 0.1) 
-                : Theme.of(context).dividerColor.withValues(alpha: 0.5)
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
+          color: color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.1)),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: (isDestructive ? Colors.red : AppColors.primary).withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: isDestructive ? Colors.red : AppColors.primary, size: 22),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.outfit(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: isDestructive ? Colors.red : AppColors.textPrimary,
-                height: 1.1,
-              ),
-            ),
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 12),
+            Text(label, style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 14)),
+            const Spacer(),
+            const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 18),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildStatusDropdown(BuildContext context, WidgetRef ref, UserProfile? profile) {
+    if (profile == null) return const SizedBox();
+    
+    final statuses = ['Active', 'On Break', 'Offline', 'Suspended', 'Terminated'];
+    final currentStatus = profile.status[0].toUpperCase() + profile.status.substring(1).toLowerCase();
+    
+    return PopupMenuButton<String>(
+      initialValue: currentStatus,
+      onSelected: (String status) async {
+        try {
+          await ref.read(operationsRepositoryProvider).updateProfileStatus(profile.id, status);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Status updated to $status')));
+          ref.invalidate(allStaffProvider);
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
+      },
+      itemBuilder: (BuildContext context) {
+        return statuses.map((String status) {
+          return PopupMenuItem<String>(
+            value: status,
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(status),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(status, style: GoogleFonts.outfit(fontSize: 14)),
+              ],
+            ),
+          );
+        }).toList();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: _getStatusColor(currentStatus).withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: _getStatusColor(currentStatus).withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(color: _getStatusColor(currentStatus), shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              currentStatus.toUpperCase(),
+              style: TextStyle(
+                color: _getStatusColor(currentStatus), 
+                fontSize: 8, 
+                fontWeight: FontWeight.w900, 
+                letterSpacing: 1.0
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, color: Colors.white54, size: 14),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active': return const Color(0xFF10B981);
+      case 'on break': return Colors.orange;
+      case 'offline': return Colors.grey;
+      case 'suspended': return Colors.amber;
+      case 'terminated': return Colors.red;
+      default: return Colors.blue;
+    }
+  }
+
 
   Widget _buildFinancialSummary(BuildContext context) {
     return Column(

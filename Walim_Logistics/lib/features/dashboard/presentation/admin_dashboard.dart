@@ -3,26 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
-import 'package:walim_logistics/l10n/app_localizations.dart';
-
-import 'package:walim_logistics/features/finance/presentation/reconciliation_dashboard.dart';
+import 'package:walim_logistics/features/admin/presentation/admin_notifier.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:provider/provider.dart' as provider_pkg;
-import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
 import 'package:walim_logistics/features/tracking/screens/home_screen.dart' as walim_tracking;
 import 'package:walim_logistics/features/tracking/theme/app_theme.dart' as tracking_theme;
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
-import 'package:walim_logistics/features/dashboard/presentation/hr_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/finance_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/ops_manager_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/biz_dev_dashboard.dart';
 import 'package:walim_logistics/features/dashboard/presentation/it_dev_dashboard.dart';
 import 'package:walim_logistics/features/dashboard/presentation/supervisor_dashboard.dart';
-import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/rbac_management_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/audit_logs_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/staff_management_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/group_setup_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/shift_planner_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/supervisor_schedule_screen.dart';
 
 class AdminDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -56,54 +50,66 @@ class AdminDashboard extends ConsumerWidget {
   }
 
   Widget _buildContent(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(adminStatsProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Greeting & Status Section
-        _buildGreeting(context),
+        _buildGreeting(context, ref),
         const SizedBox(height: 32),
 
         // KPI Section
-        ResponsiveGrid(
-          children: [
-            const DashboardStatCard(
-              label: 'Active Riders',
-              value: '142',
-              icon: Icons.motorcycle,
-              color: Colors.blue,
-              trend: '+12%',
-              isPositive: true,
-              sparklineData: [10, 15, 8, 20, 12, 25, 22],
+        if (stats.isLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: CircularProgressIndicator(),
             ),
-            const DashboardStatCard(
-              label: 'Live Orders',
-              value: '854',
-              icon: Icons.shopping_bag_outlined,
-              color: Colors.orange,
-              trend: '+5.4%',
-              isPositive: true,
-              sparklineData: [50, 45, 60, 55, 70, 65, 80],
-            ),
-            const DashboardStatCard(
-              label: 'Fleet Health',
-              value: '94%',
-              icon: Icons.verified_user_outlined,
-              color: Colors.green,
-              trend: '-1%',
-              isPositive: false,
-              sparklineData: [98, 97, 96, 95, 94, 95, 94],
-            ),
-            const DashboardStatCard(
-              label: 'Pending COD',
-              value: '﷼ 12.4k',
-              icon: Icons.payments_outlined,
-              color: Colors.purple,
-              trend: '+8%',
-              isPositive: true,
-              sparklineData: [5, 8, 6, 10, 12, 11, 12.4],
-            ),
-          ],
-        ),
+          )
+        else
+          ResponsiveGrid(
+            children: [
+              DashboardStatCard(
+                label: 'Active Riders',
+                value: stats.activeRiders.toString(),
+                icon: Icons.motorcycle,
+                color: Colors.blue,
+                trend: 'Live',
+                isPositive: true,
+                sparklineData: const [10, 15, 8, 20, 12, 25, 22],
+              ),
+              DashboardStatCard(
+                label: 'On Duty Now',
+                value: stats.liveOrders.toString(),
+                icon: Icons.shopping_bag_outlined,
+                color: Colors.orange,
+                trend: 'Open shifts',
+                isPositive: true,
+                sparklineData: const [50, 45, 60, 55, 70, 65, 80],
+              ),
+              DashboardStatCard(
+                label: 'Fleet Health',
+                value: '${stats.fleetHealth}%',
+                icon: Icons.verified_user_outlined,
+                color: Colors.green,
+                trend: 'Operational',
+                isPositive: stats.fleetHealth >= 90,
+                sparklineData: const [98, 97, 96, 95, 94, 95, 94],
+              ),
+              DashboardStatCard(
+                label: 'Pending COD',
+                value: stats.pendingCod > 0
+                    ? '\u{FDFC} ${(stats.pendingCod / 1000).toStringAsFixed(1)}k'
+                    : '\u{FDFC} 0',
+                icon: Icons.payments_outlined,
+                color: Colors.purple,
+                trend: 'Unreconciled',
+                isPositive: false,
+                sparklineData: const [5, 8, 6, 10, 12, 11, 12.4],
+              ),
+            ],
+          ),
         
         const SizedBox(height: 40),
 
@@ -177,6 +183,27 @@ class AdminDashboard extends ConsumerWidget {
                             color: Colors.purple,
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
                           ),
+                          DashboardActionCard(
+                            title: 'Group Management',
+                            subtitle: 'Create groups and assign riders to supervisors',
+                            icon: Icons.groups_rounded,
+                            color: Colors.teal,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GroupSetupScreen())),
+                          ),
+                          DashboardActionCard(
+                            title: 'Shift Planner',
+                            subtitle: 'Generate rider shift plans by group and date',
+                            icon: Icons.event_note_rounded,
+                            color: Colors.indigo,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShiftPlannerScreen())),
+                          ),
+                          DashboardActionCard(
+                            title: 'Supervisor Schedule',
+                            subtitle: 'Assign supervisors to groups and shifts',
+                            icon: Icons.assignment_ind_rounded,
+                            color: Colors.orange,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupervisorScheduleScreen())),
+                          ),
                         ],
                       );
                     }
@@ -235,7 +262,15 @@ class AdminDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildGreeting(BuildContext context) {
+  Widget _buildGreeting(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(authProvider).profile;
+    final displayName = profile?.fullName ?? 'Admin';
+    final role = profile?.role ?? 'Admin';
+
+    final now = DateTime.now();
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final dateStr = '${months[now.month - 1]} ${now.day}, ${now.year}';
+
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -260,7 +295,7 @@ class AdminDashboard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Good Morning, Operations Lead',
+                  'Good Morning, $displayName',
                   style: GoogleFonts.outfit(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -269,7 +304,7 @@ class AdminDashboard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your fleet is operating at 94% efficiency today. 3 alerts require your attention.',
+                  'Your $role dashboard is operating at 94% efficiency today.',
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     color: Colors.white.withValues(alpha: 0.9),
@@ -289,7 +324,7 @@ class AdminDashboard extends ConsumerWidget {
                 const Icon(Icons.calendar_today, color: Colors.white, size: 16),
                 const SizedBox(width: 8),
                 Text(
-                  'Oct 24, 2023',
+                  dateStr,
                   style: GoogleFonts.outfit(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,

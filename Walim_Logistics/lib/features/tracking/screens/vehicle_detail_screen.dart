@@ -58,6 +58,8 @@ class VehicleDetailScreen extends ConsumerWidget {
                                     children: [
                                       _buildInfoTile('Unit Name', vehicle.name, Icons.label_rounded, color: Colors.orange),
                                       _buildInfoTile('Identity Plate', vehicle.fullPlate, Icons.badge_rounded, color: Colors.orange),
+                                      if (vehicle.riderName != null) _buildInfoTile('Rider Name', vehicle.riderName!, Icons.person_rounded, color: Colors.blue),
+                                      if (vehicle.iqamaNumber != null) _buildInfoTile('Iqama Number', vehicle.iqamaNumber!, Icons.badge_outlined, color: Colors.blue),
                                       if (vehicle.model.isNotEmpty) _buildInfoTile('Hardware', vehicle.model, Icons.memory_rounded),
                                       if (vehicle.vin.isNotEmpty) _buildInfoTile('VIN / Serial', vehicle.vin, Icons.fingerprint_rounded),
                                     ],
@@ -99,6 +101,8 @@ class VehicleDetailScreen extends ConsumerWidget {
                                 children: [
                                   _buildInfoTile('Unit Name', vehicle.name, Icons.label_rounded),
                                   _buildInfoTile('Identity Plate', vehicle.fullPlate, Icons.badge_rounded),
+                                  if (vehicle.riderName != null) _buildInfoTile('Rider Name', vehicle.riderName!, Icons.person_rounded, color: Colors.blue),
+                                  if (vehicle.iqamaNumber != null) _buildInfoTile('Iqama Number', vehicle.iqamaNumber!, Icons.badge_outlined, color: Colors.blue),
                                   if (vehicle.model.isNotEmpty) _buildInfoTile('Hardware', vehicle.model, Icons.memory_rounded),
                                   if (vehicle.vin.isNotEmpty) _buildInfoTile('VIN / Serial', vehicle.vin, Icons.fingerprint_rounded),
                                 ],

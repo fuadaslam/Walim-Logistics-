@@ -77,8 +77,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
-    await _repository.signOut();
-    state = AuthState();
+    try {
+      await _repository.signOut();
+    } catch (e) {
+      // Even if remote sign out fails, we should clear local state
+    } finally {
+      state = AuthState();
+    }
   }
 }
 

@@ -95,9 +95,45 @@ class HRRepository {
   }
 
   Future<List<Map<String, dynamic>>> getAllStaff() async {
+    final response = await _supabase.from('profiles').select('*, roles(name)');
+    return (response as List).map((p) => {
+      ...p as Map<String, dynamic>,
+      'role': p['roles']['name'],
+    }).toList().cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> getProfileStats(String profileId) async {
+    final results = await Future.wait([
+      _supabase.from('attendance').select('id').eq('profile_id', profileId).eq('attendance_type', 'shift'),
+      _supabase.from('leave_requests').select('id').eq('profile_id', profileId).eq('status', 'pending'),
+      _supabase.from('incidents').select('id').eq('reported_by', profileId).eq('status', 'pending'),
+    ]);
+
+    final workingDays = (results[0] as List).length;
+    final pendingLeaves = (results[1] as List).length;
+    final pendingIncidents = (results[2] as List).length;
+
+    return {
+      'workingDays': workingDays,
+      'workingHours': (workingDays * 8).toString(), // Mocked for now: 8h per day
+      'leaveDays': '14', // Placeholder for now
+      'pendingRequests': pendingLeaves + pendingIncidents,
+    };
+  }
+
+  Future<List<Map<String, dynamic>>> getAssetsForProfile(String profileId) async {
     return await _supabase
-        .from('profiles')
-        .select('*, roles(name)')
-        .order('full_name', ascending: true);
+        .from('assets')
+        .select('*, asset_assignments!inner(*)')
+        .eq('asset_assignments.profile_id', profileId)
+        .filter('asset_assignments.returned_at', 'is', null);
+  }
+
+  Future<List<Map<String, dynamic>>> getDocumentsForProfile(String profileId) async {
+    return await _supabase
+        .from('documents')
+        .select('*')
+        .eq('profile_id', profileId)
+        .order('expiry_date', ascending: true);
   }
 }

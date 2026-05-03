@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 
 class LeaveRequestScreen extends StatefulWidget {
   const LeaveRequestScreen({super.key});
@@ -14,11 +15,12 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Request Leave')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
+    return DashboardScaffold(
+      title: 'LEAVE REQUEST',
+      subtitle: 'Submit a new leave request for approval',
+      showBackButton: true,
+      children: [
+        Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text('Select Dates', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -83,7 +85,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 }

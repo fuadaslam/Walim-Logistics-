@@ -8,16 +8,13 @@ import 'package:walim_logistics/l10n/app_localizations.dart';
 import 'package:walim_logistics/core/localization/locale_provider.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/attendance/presentation/attendance_notifier.dart';
-import 'package:walim_logistics/features/inspections/presentation/inspection_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/document_vault_screen.dart';
-import 'package:walim_logistics/features/support/presentation/support_tickets_screen.dart';
-import 'package:walim_logistics/features/requests/presentation/leave_request_screen.dart'
-    as rider_requests;
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/rider_data_provider.dart';
+import 'package:intl/intl.dart';
 
 class RiderDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -30,12 +27,11 @@ class RiderDashboard extends ConsumerWidget {
       if (permission == LocationPermission.denied) return;
     }
 
-    await ref
-        .read(attendanceProvider.notifier)
-        .toggleShift(
-          centerLat: 24.7136,
-          centerLong: 46.6753,
-          radiusMeters: 500,
+    final zone = await ref.read(riderZoneProvider.future);
+    await ref.read(attendanceProvider.notifier).toggleShift(
+          centerLat: (zone?['geofence_center_lat'] as num?)?.toDouble() ?? 24.7136,
+          centerLong: (zone?['geofence_center_long'] as num?)?.toDouble() ?? 46.6753,
+          radiusMeters: (zone?['geofence_radius_meters'] as num?)?.toDouble() ?? 500,
         );
   }
 
@@ -187,7 +183,7 @@ class RiderDashboard extends ConsumerWidget {
         if (isMobile) ...[
           _buildMainContent(context, ref, attendanceState, l10n, isMobile),
           const SizedBox(height: 20),
-          _buildSidebarContent(context),
+          _buildSidebarContent(context, ref),
         ] else
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +199,7 @@ class RiderDashboard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 20),
-              Expanded(flex: 3, child: _buildSidebarContent(context)),
+              Expanded(flex: 3, child: _buildSidebarContent(context, ref)),
             ],
           ),
       ],
@@ -392,134 +388,141 @@ class RiderDashboard extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 24),
-        _buildRequestStatusSection(context),
+        _buildRequestStatusSection(context, ref),
       ],
     );
   }
 
-  Widget _buildRequestStatusSection(BuildContext context) {
-    final requests = [
-      {
-        'type': 'Asset Handover',
-        'date': 'Today',
-        'status': 'Pending',
-        'icon': Icons.handshake_outlined,
-        'color': Colors.blueGrey,
-      },
-      {
-        'type': 'Weekly Off',
-        'date': '02 May',
-        'status': 'Approved',
-        'icon': Icons.calendar_month_outlined,
-        'color': Colors.green,
-      },
-      {
-        'type': 'Sick Leave',
-        'date': '28 Apr',
-        'status': 'Pending',
-        'icon': Icons.medical_services_outlined,
-        'color': Colors.orange,
-      },
-      {
-        'type': 'Uniform Issue',
-        'date': '25 Apr',
-        'status': 'Resolved',
-        'icon': Icons.checkroom_outlined,
-        'color': Colors.blue,
-      },
-    ];
+  Widget _buildRequestStatusSection(BuildContext context, WidgetRef ref) {
+    final requestsAsync = ref.watch(riderLeaveRequestsProvider);
+
+    Color _statusColor(String status) {
+      switch (status) {
+        case 'Approved':
+          return Colors.green;
+        case 'Rejected':
+          return Colors.red;
+        default:
+          return Colors.orange;
+      }
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader(context, 'Request Status', Icons.history_rounded),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Theme.of(context).dividerColor.withOpacity(0.5),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-
-          child: ListView.separated(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: requests.length,
-            separatorBuilder: (context, index) => Divider(
-              height: 1,
-              indent: 72,
-              endIndent: 20,
-              color: Theme.of(context).dividerColor.withOpacity(0.3),
-            ),
-            itemBuilder: (context, index) {
-              final r = requests[index];
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
+        requestsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => const SizedBox.shrink(),
+          data: (requests) {
+            if (requests.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: Theme.of(context).dividerColor.withOpacity(0.5)),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      height: 44,
-                      width: 44,
-                      decoration: BoxDecoration(
-                        color: (r['color'] as Color).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        r['icon'] as IconData,
-                        color: r['color'] as Color,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            r['type'] as String,
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            r['date'] as String,
-                            style: GoogleFonts.outfit(
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.color?.withOpacity(0.5),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _buildStatusBadge(
-                      r['status'] as String,
-                      r['color'] as Color,
-                    ),
-                  ],
+                child: Center(
+                  child: Text('No requests yet',
+                      style: GoogleFonts.outfit(
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.color
+                              ?.withOpacity(0.5))),
                 ),
               );
-            },
-          ),
+            }
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.5),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: requests.length,
+                separatorBuilder: (context, index) => Divider(
+                  height: 1,
+                  indent: 72,
+                  endIndent: 20,
+                  color: Theme.of(context).dividerColor.withOpacity(0.3),
+                ),
+                itemBuilder: (context, index) {
+                  final r = requests[index];
+                  final status = r['status'] as String? ?? 'Pending';
+                  final color = _statusColor(status);
+                  final startDate = r['start_date'] != null
+                      ? DateFormat('MMM d')
+                          .format(DateTime.parse(r['start_date']))
+                      : '—';
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        Container(
+                          height: 44,
+                          width: 44,
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.event_note_outlined,
+                              color: color, size: 18),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                r['type'] as String? ?? 'Request',
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                startDate,
+                                style: GoogleFonts.outfit(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
+                                      ?.withOpacity(0.5),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _buildStatusBadge(status, color),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         ),
       ],
     );
@@ -546,73 +549,84 @@ class RiderDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildSidebarContent(BuildContext context) {
+  Widget _buildSidebarContent(BuildContext context, WidgetRef ref) {
+    final assetsAsync = ref.watch(riderAssetsProvider);
+    final iqamaAsync = ref.watch(riderIqamaExpiryProvider);
+    final activityAsync = ref.watch(riderRecentAttendanceProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(
-          context,
-          'My Responsibility',
-          Icons.inventory_2_rounded,
-        ),
+        _buildSectionHeader(context, 'My Responsibility', Icons.inventory_2_rounded),
         const SizedBox(height: 12),
-        _buildAssetCard(
-          context,
-          'Yamaha TMAX #402',
-          'Plate: 1234 ABC',
-          Icons.motorcycle,
-          Colors.blue,
-        ),
-        const SizedBox(height: 12),
-        _buildAssetCard(
-          context,
-          'Company Uniform',
-          'Set of 3 (New)',
-          Icons.person_outline,
-          Colors.purple,
-        ),
-        const SizedBox(height: 12),
-        _buildAssetCard(
-          context,
-          'Thermal Delivery Bag',
-          'Keeta Branded',
-          Icons.shopping_bag_outlined,
-          Colors.orange,
+        assetsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (assets) {
+            if (assets.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text('No assets assigned',
+                    style: GoogleFonts.outfit(color: AppColors.textSecondary)),
+              );
+            }
+            return Column(
+              children: [
+                for (int i = 0; i < assets.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  _buildAssetCard(
+                    context,
+                    assets[i]['name'] as String? ?? 'Asset',
+                    assets[i]['category'] as String? ?? '',
+                    Icons.inventory_2_outlined,
+                    Colors.blue,
+                  ),
+                ],
+              ],
+            );
+          },
         ),
         const SizedBox(height: 24),
-        _buildSectionHeader(
-          context,
-          'Recent Activity',
-          Icons.notifications_active_rounded,
-        ),
+        _buildSectionHeader(context, 'Recent Activity', Icons.notifications_active_rounded),
         const SizedBox(height: 12),
-        ActivityFeed(
-          items: [
-            ActivityItem(
-              title: 'Shift Verified',
-              subtitle: 'Attendance synced with HR',
-              time: '12 mins ago',
-              icon: Icons.sync_rounded,
-              color: Colors.green,
-            ),
-            ActivityItem(
-              title: 'New Broadcast',
-              subtitle: 'Rider safety meeting at 4 PM',
-              time: '1 hour ago',
-              icon: Icons.campaign,
-              color: Colors.orange,
-            ),
-            ActivityItem(
-              title: 'Check-in Confirmed',
-              subtitle: 'Shift started at Riyadh Central',
-              time: '4 hours ago',
-              icon: Icons.login,
-              color: Colors.blue,
-            ),
-          ],
+        activityAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (records) {
+            if (records.isEmpty) {
+              return ActivityFeed(items: const []);
+            }
+            return ActivityFeed(
+              items: records.map((r) {
+                final isCheckout = r['check_out_time'] != null;
+                final dt = r['check_in_time'] != null
+                    ? DateTime.tryParse(r['check_in_time'].toString())?.toLocal()
+                    : null;
+                final diff = dt != null ? DateTime.now().difference(dt) : null;
+                final timeStr = diff != null
+                    ? diff.inMinutes < 60
+                        ? '${diff.inMinutes} mins ago'
+                        : '${diff.inHours}h ago'
+                    : '';
+                return ActivityItem(
+                  title: isCheckout ? 'Checked Out' : 'Checked In',
+                  subtitle: isCheckout ? 'Shift ended' : 'Shift started',
+                  time: timeStr,
+                  icon: isCheckout ? Icons.logout_rounded : Icons.login_rounded,
+                  color: isCheckout ? Colors.orange : Colors.green,
+                );
+              }).toList(),
+            );
+          },
         ),
         const SizedBox(height: 24),
-        _buildComplianceAlert(context),
+        iqamaAsync.when(
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (expiry) => expiry != null
+              ? _buildComplianceAlert(context, expiry)
+              : const SizedBox.shrink(),
+        ),
         const SizedBox(height: 24),
         _buildMapPreview(context),
       ],
@@ -1075,30 +1089,34 @@ class RiderDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildComplianceAlert(BuildContext context) {
+  Widget _buildComplianceAlert(BuildContext context, DateTime expiryDate) {
+    final daysLeft = expiryDate.difference(DateTime.now()).inDays;
+    final isExpired = daysLeft < 0;
+    final color = isExpired ? AppColors.error : AppColors.warning;
+    final label = isExpired ? 'IQAMA EXPIRED' : 'IQAMA ALERT';
+    final message = isExpired
+        ? 'Your IQAMA has expired. Immediate renewal required.'
+        : 'Expires in $daysLeft day${daysLeft == 1 ? '' : 's'}. Renewal required soon.';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.warning.withOpacity(0.05),
+        color: color.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.warning.withOpacity(0.2)),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.warning_amber_rounded,
-                color: AppColors.warning,
-                size: 18,
-              ),
+              Icon(Icons.warning_amber_rounded, color: color, size: 18),
               const SizedBox(width: 8),
               Text(
-                'IQAMA ALERT',
+                label,
                 style: GoogleFonts.outfit(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.warning,
+                  color: color,
                   fontSize: 12,
                 ),
               ),
@@ -1106,7 +1124,7 @@ class RiderDashboard extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Expires in 45 days. Renewal required soon.',
+            message,
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -1121,7 +1139,7 @@ class RiderDashboard extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => const DocumentVaultScreen()),
               ),
               style: TextButton.styleFrom(
-                backgroundColor: AppColors.warning.withOpacity(0.1),
+                backgroundColor: color.withOpacity(0.1),
                 padding: const EdgeInsets.symmetric(vertical: 8),
               ),
               child: const Text(

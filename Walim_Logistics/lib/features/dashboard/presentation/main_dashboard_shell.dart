@@ -107,6 +107,13 @@ class MainDashboardShell extends ConsumerWidget {
           activeItem: 'Documents',
           body: const DocumentVaultScreen(showScaffold: false),
         );
+      case DashboardTab.attendance:
+        return _TabConfig(
+          title: 'PERFORMANCE HUB',
+          subtitle: 'Real-time SLA tracking and platform compliance',
+          activeItem: 'Performance',
+          body: const SupervisorDashboard(showScaffold: false),
+        );
       case DashboardTab.requests:
         return _TabConfig(
           title: 'MY REQUESTS',

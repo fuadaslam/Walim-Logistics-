@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 
 class IncidentReportScreen extends StatefulWidget {
   const IncidentReportScreen({super.key});
@@ -15,11 +15,12 @@ class _IncidentReportScreenState extends State<IncidentReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Report Incident')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
+    return DashboardScaffold(
+      title: 'REPORT INCIDENT',
+      subtitle: 'Document a new incident for review',
+      showBackButton: true,
+      children: [
+        Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text('Type of Incident', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -56,7 +57,7 @@ class _IncidentReportScreenState extends State<IncidentReportScreen> {
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 }

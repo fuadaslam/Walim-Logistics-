@@ -1,17 +1,28 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 
-class CapacityPlanningScreen extends StatelessWidget {
+class CapacityPlanningScreen extends ConsumerWidget {
   const CapacityPlanningScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dashboardData = ref.watch(dashboardDataProvider);
+
+    if (dashboardData.isLoading && dashboardData.activeRiders == 0) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return DashboardScaffold(
       title: 'CAPACITY PLANNING',
       subtitle: 'Analyze demand and manage fleet recruitment',
+      showBackButton: true,
       children: [
         Text(
           'Demand Forecast',
@@ -21,46 +32,48 @@ class CapacityPlanningScreen extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 20),
-        _buildForecastChart(context),
-        
-        const SizedBox(height: 40),
-        
+        const SizedBox(height: 12),
+        _buildForecastChart(context, dashboardData),
+        const SizedBox(height: 24),
         Text(
-          'Hiring Needs (Projected)',
+          'Capacity vs. Utilization',
           style: GoogleFonts.outfit(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 20),
-        
+        const SizedBox(height: 12),
         ResponsiveGrid(
           mobileCrossAxisCount: 1,
           tabletCrossAxisCount: 2,
-          desktopCrossAxisCount: 2,
-          childAspectRatio: 3,
+          desktopCrossAxisCount: 3,
+          childAspectRatio: 3.2,
           children: [
             _buildHiringCard(
-              peak: 'White Friday Peak',
-              count: 'Need +45 Riders',
-              target: 'Target: Nov 15',
-              icon: Icons.flash_on_rounded,
-              color: Colors.orange,
+              peak: 'Current Capacity',
+              count: '${dashboardData.activeRiders} / ${dashboardData.peakCapacity}',
+              target: 'Total Riders',
+              icon: Icons.people_outline_rounded,
+              color: AppColors.primary,
             ),
             _buildHiringCard(
-              peak: 'Ramadan Prep',
-              count: 'Need +30 Riders',
-              target: 'Target: Feb 10',
-              icon: Icons.nightlight_round,
-              color: Colors.indigo,
+              peak: 'Platform Coverage',
+              count: '${dashboardData.platforms.length} Platforms',
+              target: 'Active Hubs',
+              icon: Icons.hub_outlined,
+              color: Colors.teal,
+            ),
+            _buildHiringCard(
+              peak: 'Asset Health',
+              count: '${dashboardData.assetHealth}% Ready',
+              target: 'Fleet Status',
+              icon: Icons.vibration_outlined,
+              color: Colors.orange,
             ),
           ],
         ),
-        
-        const SizedBox(height: 40),
-        
+        const SizedBox(height: 24),
         Center(
           child: ElevatedButton.icon(
             onPressed: () {},
@@ -68,7 +81,8 @@ class CapacityPlanningScreen extends StatelessWidget {
             label: const Text('Create Recruitment Campaign'),
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(300, 60),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
             ),
           ),
         ),
@@ -76,7 +90,7 @@ class CapacityPlanningScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildForecastChart(BuildContext context) {
+  Widget _buildForecastChart(BuildContext context, DashboardData data) {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -97,8 +111,9 @@ class CapacityPlanningScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Volume Projections',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
+                'Volume Projections (Mock)',
+                style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const Icon(Icons.more_horiz, color: AppColors.textSecondary),
             ],
@@ -142,7 +157,10 @@ class CapacityPlanningScreen extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           label,
-          style: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+          style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -179,11 +197,13 @@ class CapacityPlanningScreen extends StatelessWidget {
               children: [
                 Text(
                   peak,
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Text(
                   count,
-                  style: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 14),
+                  style: GoogleFonts.outfit(
+                      color: AppColors.textSecondary, fontSize: 14),
                 ),
               ],
             ),
@@ -207,4 +227,3 @@ class CapacityPlanningScreen extends StatelessWidget {
     );
   }
 }
-

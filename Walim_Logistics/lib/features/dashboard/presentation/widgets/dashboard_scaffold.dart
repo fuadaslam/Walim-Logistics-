@@ -24,6 +24,9 @@ import 'package:walim_logistics/l10n/app_localizations.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
 import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
 import 'package:walim_logistics/core/localization/locale_provider.dart';
+import 'package:walim_logistics/features/dashboard/presentation/layout_settings_screen.dart';
+import 'package:flutter/services.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/search_provider.dart';
 
 class DashboardScaffold extends ConsumerStatefulWidget {
   final String title;
@@ -62,6 +65,170 @@ class DashboardScaffold extends ConsumerStatefulWidget {
 }
 
 class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
+  final FocusNode _searchFocusNode = FocusNode();
+  final LayerLink _searchLayerLink = LayerLink();
+  OverlayEntry? _searchOverlayEntry;
+  bool _isSearchFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchFocusNode.addListener(_onSearchFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _searchFocusNode.removeListener(_onSearchFocusChange);
+    _searchFocusNode.dispose();
+    _removeSearchOverlay();
+    super.dispose();
+  }
+
+  void _onSearchFocusChange() {
+    setState(() {
+      _isSearchFocused = _searchFocusNode.hasFocus;
+    });
+    if (_isSearchFocused) {
+      _showSearchOverlay();
+    } else {
+      // Delay removal to allow tapping results
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted && !_searchFocusNode.hasFocus) {
+          _removeSearchOverlay();
+        }
+      });
+    }
+  }
+
+  void _showSearchOverlay() {
+    _removeSearchOverlay();
+    if (widget.onSearchChanged != null) return; // Don't show global overlay if specific handler exists
+
+    final overlay = Overlay.of(context);
+    _searchOverlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        width: 600, // Matching search bar max width
+        child: CompositedTransformFollower(
+          link: _searchLayerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 52),
+          child: Material(
+            color: Colors.transparent,
+            child: _buildSearchResultsOverlay(),
+          ),
+        ),
+      ),
+    );
+    overlay.insert(_searchOverlayEntry!);
+  }
+
+  void _removeSearchOverlay() {
+    _searchOverlayEntry?.remove();
+    _searchOverlayEntry = null;
+  }
+
+  Widget _buildSearchResultsOverlay() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final searchState = ref.watch(searchProvider);
+        final results = searchState.results;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        if (results.isEmpty && searchState.query.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(top: 8),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark.withOpacity(0.95) : Colors.white.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.3)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 400),
+              child: results.isEmpty 
+                ? Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.search_off_rounded, size: 48, color: Theme.of(context).disabledColor),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No results found for "${searchState.query}"',
+                          style: GoogleFonts.outfit(color: Theme.of(context).textTheme.bodyMedium?.color),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.separated(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: results.length,
+                    separatorBuilder: (v, i) => Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.3)),
+                    itemBuilder: (context, index) {
+                      final item = results[index];
+                      return ListTile(
+                        leading: _getSearchIcon(item.type),
+                        title: Text(item.title, style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                        subtitle: Text(item.subtitle, style: GoogleFonts.outfit(fontSize: 12)),
+                        onTap: () => _handleSearchResultTap(item),
+                        hoverColor: AppColors.primary.withOpacity(0.05),
+                      );
+                    },
+                  ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _getSearchIcon(SearchResultType type) {
+    switch (type) {
+      case SearchResultType.rider: return const Icon(Icons.motorcycle_rounded, color: Colors.blue);
+      case SearchResultType.staff: return const Icon(Icons.people_rounded, color: Colors.teal);
+      case SearchResultType.screen: return const Icon(Icons.launch_rounded, color: Colors.orange);
+      case SearchResultType.vehicle: return const Icon(Icons.local_shipping_rounded, color: Colors.indigo);
+      default: return const Icon(Icons.search_rounded);
+    }
+  }
+
+  void _handleSearchResultTap(SearchResult result) {
+    _searchFocusNode.unfocus();
+    _removeSearchOverlay();
+    
+    if (result.type == SearchResultType.screen && result.route != null) {
+      // Handle navigation
+      final nav = ref.read(navigationProvider.notifier);
+      switch (result.route) {
+        case 'Live Ops': nav.setTab(DashboardTab.liveOps); break;
+        case 'HR': nav.setTab(DashboardTab.hr); break;
+        case 'Assets': nav.setTab(DashboardTab.assets); break;
+        case 'Finance': nav.setTab(DashboardTab.finance); break;
+        case 'Performance': nav.setTab(DashboardTab.attendance); break;
+        case 'Settings': 
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const LayoutSettingsScreen()));
+          break;
+      }
+    } else {
+      // Show detail view for rider/staff
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Viewing detail for ${result.title}')),
+      );
+    }
+  }
 
   Future<void> _handleLogout() async {
     final l10n = AppLocalizations.of(context)!;
@@ -95,53 +262,69 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     final authState = ref.watch(authProvider);
     final isSidebarCollapsed = navState.isSidebarCollapsed;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: !isDesktop ? _buildMobileAppBar(context) : null,
-      drawer: !isDesktop ? Drawer(child: _buildSidebar(context, isSidebarCollapsed, authState, navState)) : null,
-      endDrawer: widget.endDrawer,
-      body: Row(
-        children: [
-          if (isDesktop) _buildSidebar(context, isSidebarCollapsed, authState, navState),
-          Expanded(
-            child: Column(
-              children: [
-                if (isDesktop) _buildDesktopHeaderWidget(context, isSidebarCollapsed),
-                Expanded(
-                  child: widget.body != null 
-                    ? Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 10 : 20,
-                          vertical: 20,
-                        ),
-                        child: widget.body!,
-                      )
-                    : CustomScrollView(
-                    slivers: [
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 10 : 20,
-                          vertical: 20,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildListDelegate([
-                            ...widget.children,
-                            const SizedBox(height: 40),
-                          ]),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+    return Shortcuts(
+      shortcuts: {
+        LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyK): const _SearchIntent(),
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyK): const _SearchIntent(),
+      },
+      child: Actions(
+        actions: {
+          _SearchIntent: CallbackAction<_SearchIntent>(
+            onInvoke: (intent) {
+              _searchFocusNode.requestFocus();
+              return null;
+            },
           ),
-        ],
+        },
+        child: Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: !isDesktop ? _buildMobileAppBar(context) : null,
+          drawer: !isDesktop ? Drawer(child: _buildSidebar(context, isSidebarCollapsed, authState, navState)) : null,
+          endDrawer: widget.endDrawer,
+          body: Row(
+            children: [
+              if (isDesktop) _buildSidebar(context, isSidebarCollapsed, authState, navState),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (isDesktop) _buildDesktopHeaderWidget(context, isSidebarCollapsed),
+                    Expanded(
+                      child: widget.body != null 
+                        ? Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isDesktop ? 10 : 20,
+                              vertical: 20,
+                            ),
+                            child: widget.body!,
+                          )
+                        : CustomScrollView(
+                        slivers: [
+                          SliverPadding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isDesktop ? 10 : 20,
+                              vertical: 20,
+                            ),
+                            sliver: SliverList(
+                              delegate: SliverChildListDelegate([
+                                ...widget.children,
+                                const SizedBox(height: 40),
+                              ]),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          bottomNavigationBar: !isDesktop && !(widget.showBackButton || widget.onBack != null) 
+              ? _buildBottomNavigationBar(context, authState, navState) 
+              : null,
+          floatingActionButton: widget.floatingActionButton,
+        ),
       ),
-      bottomNavigationBar: !isDesktop && !(widget.showBackButton || widget.onBack != null) 
-          ? _buildBottomNavigationBar(context, authState, navState) 
-          : null,
-      floatingActionButton: widget.floatingActionButton,
     );
   }
 
@@ -178,7 +361,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
 
 
     // 3. HR / Support
-    if ((role == 'Admin' || role == 'HR' || role == 'Operations Manager') && items.length < 5) {
+    if ((role == 'Admin' || role == 'HR') && items.length < 5) {
       items.add(_BottomNavItem(
         icon: Icons.people_rounded,
         label: 'HR',
@@ -196,7 +379,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
 
 
     // 4. Assets / Finance / Requests
-    if ((role == 'Admin' || role == 'Finance Manager' || role == 'Operations Manager') && items.length < 5) {
+    if ((role == 'Admin' || role == 'Finance Manager') && items.length < 5) {
        items.add(_BottomNavItem(
         icon: Icons.payments_rounded,
         label: 'Finance',
@@ -458,7 +641,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           ),
           _buildSidebarItem(context, Icons.settings_rounded, 'Settings', widget.activeItem == 'Settings', isSidebarCollapsed, onTap: () {
             if (widget.activeItem == 'Settings') return;
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const LayoutSettingsScreen()));
           }),
           const Divider(height: 32, indent: 24, endIndent: 24),
           _buildSidebarItem(
@@ -544,36 +727,46 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
 
           // 1. Search Bar
           Expanded(
-            child: Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.03),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.dividerColor.withOpacity(0.3)),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-
-              child: Row(
-                children: [
-                  Icon(Icons.search_rounded, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      onChanged: widget.onSearchChanged,
-                      style: GoogleFonts.outfit(fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: widget.searchHint ?? 'Search inventory, parts or vehicles (Cmd+K)',
-                        hintStyle: GoogleFonts.outfit(
-                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
-                          fontSize: 14,
+            child: CompositedTransformTarget(
+              link: _searchLayerLink,
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: theme.dividerColor.withOpacity(0.3)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+  
+                child: Row(
+                  children: [
+                    Icon(Icons.search_rounded, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        focusNode: _searchFocusNode,
+                        onChanged: (v) {
+                          if (widget.onSearchChanged != null) {
+                            widget.onSearchChanged!(v);
+                          } else {
+                            ref.read(searchProvider.notifier).setQuery(v);
+                          }
+                        },
+                        style: GoogleFonts.outfit(fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: widget.searchHint ?? 'Search inventory, riders or staff (Cmd+K)',
+                          hintStyle: GoogleFonts.outfit(
+                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                            fontSize: 14,
+                          ),
+  
+                          border: InputBorder.none,
+                          isDense: true,
                         ),
-
-                        border: InputBorder.none,
-                        isDense: true,
                       ),
                     ),
-                  ),
-                  Container(
+                    const SizedBox(width: 12),
+                    Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: theme.dividerColor.withOpacity(0.2),
@@ -594,11 +787,11 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                       ],
                     ),
                   ),
-
                 ],
               ),
             ),
           ),
+        ),
           if (widget.headerActions != null) ...[
             const SizedBox(width: 24),
             ...widget.headerActions!,
@@ -649,7 +842,9 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                 () => ref.read(themeProvider.notifier).toggleTheme()
               ),
               const SizedBox(width: 8),
-              _buildHeaderIcon(Icons.settings_outlined, 'Settings', () {}),
+              _buildHeaderIcon(Icons.settings_outlined, 'Settings', () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const LayoutSettingsScreen()));
+              }),
             ],
           ),
           
@@ -738,8 +933,17 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             onTap: () => navNotifier.setTab(DashboardTab.liveOps),
           ),
 
+        if (role == 'Admin' || role == 'Operations Manager' || role == 'Supervisor')
+          _buildSidebarItem(
+            context, 
+            Icons.speed_rounded, 
+            'Performance', 
+            navState.activeTab == DashboardTab.attendance, // Reusing attendance tab for Performance Hub
+            isSidebarCollapsed,
+            onTap: () => navNotifier.setTab(DashboardTab.attendance),
+          ),
 
-        if (role == 'Admin' || role == 'HR' || role == 'Operations Manager')
+        if (role == 'Admin' || role == 'HR')
           _buildSidebarItem(
             context, 
             Icons.people_rounded, 
@@ -759,7 +963,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             onTap: () => navNotifier.setTab(DashboardTab.assets),
           ),
 
-        if (role == 'Admin' || role == 'Finance Manager' || role == 'Operations Manager')
+        if (role == 'Admin' || role == 'Finance Manager')
           _buildSidebarItem(
             context, 
             Icons.payments_rounded, 
@@ -874,4 +1078,8 @@ class _BottomNavItem {
     required this.tab,
     required this.isActive,
   });
+}
+
+class _SearchIntent extends Intent {
+  const _SearchIntent();
 }

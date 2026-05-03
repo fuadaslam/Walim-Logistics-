@@ -5,6 +5,7 @@ import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
+import 'package:walim_logistics/features/admin/data/operations_repository.dart';
 import 'package:walim_logistics/shared/models/profile.dart';
 
 class StaffManagementScreen extends ConsumerStatefulWidget {
@@ -64,7 +65,20 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
           error: (err, stack) => Center(child: Text('Error: $err')),
         ),
       ],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddStaffDialog(context),
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.person_add_rounded, color: Colors.white),
+        label: Text('Add Staff', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
     );
+  }
+
+  void _showAddStaffDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const _AddStaffDialog(),
+    ).then((_) => ref.invalidate(allStaffProvider));
   }
 
   Widget _buildRoleFilter() {
@@ -187,9 +201,38 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                 ],
               ),
             ),
+            IconButton(
+              icon: Icon(Icons.delete_outline_rounded, color: Colors.red.withOpacity(0.3), size: 20),
+              onPressed: () => _confirmDelete(profile),
+            ),
             Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary.withValues(alpha: 0.3)),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmDelete(UserProfile profile) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Member', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        content: Text('Are you sure you want to remove ${profile.fullName} from the system?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await ref.read(operationsRepositoryProvider).deleteProfile(profile.id);
+                ref.invalidate(allStaffProvider);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }
@@ -267,5 +310,113 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
         ],
       ),
     );
+  }
+}
+
+class _AddStaffDialog extends ConsumerStatefulWidget {
+  const _AddStaffDialog();
+
+  @override
+  ConsumerState<_AddStaffDialog> createState() => _AddStaffDialogState();
+}
+
+class _AddStaffDialogState extends ConsumerState<_AddStaffDialog> {
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _iqamaCtrl = TextEditingController();
+  String _selectedRole = 'Rider';
+  bool _loading = false;
+
+  final List<String> _roles = [
+    'Admin',
+    'Operations Manager',
+    'Supervisor',
+    'Leader',
+    'Rider',
+    'HR',
+    'Finance Manager',
+    'IT_Dev',
+    'Business Development',
+  ];
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _iqamaCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Add New Staff Member', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameCtrl,
+              decoration: const InputDecoration(labelText: 'Full Name', prefixIcon: Icon(Icons.person)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _emailCtrl,
+              decoration: const InputDecoration(labelText: 'Email Address', prefixIcon: Icon(Icons.email)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _phoneCtrl,
+              decoration: const InputDecoration(labelText: 'Phone Number', prefixIcon: Icon(Icons.phone)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _iqamaCtrl,
+              decoration: const InputDecoration(labelText: 'Iqama Number (Optional)', prefixIcon: Icon(Icons.badge)),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedRole,
+              decoration: const InputDecoration(labelText: 'Role', border: OutlineInputBorder()),
+              items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+              onChanged: (v) => setState(() => _selectedRole = v!),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: _loading ? null : _save,
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+          child: _loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _save() async {
+    if (_nameCtrl.text.isEmpty || _emailCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Name and Email are required')));
+      return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      await ref.read(operationsRepositoryProvider).createProfile(
+        fullName: _nameCtrl.text.trim(),
+        email: _emailCtrl.text.trim(),
+        phone: _phoneCtrl.text.trim(),
+        roleName: _selectedRole,
+        iqamaNumber: _iqamaCtrl.text.trim().isEmpty ? null : _iqamaCtrl.text.trim(),
+      );
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 }

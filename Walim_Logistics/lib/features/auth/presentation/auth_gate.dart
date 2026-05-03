@@ -10,6 +10,14 @@ class AuthGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Listen for auth state changes to clear navigation stack on logout
+    ref.listen(authProvider, (previous, next) {
+      if (next.user == null && previous?.user != null) {
+        // User logged out, clear the navigation stack to ensure we go to LoginScreen
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    });
+
     final authState = ref.watch(authProvider);
 
     if (authState.user == null) {

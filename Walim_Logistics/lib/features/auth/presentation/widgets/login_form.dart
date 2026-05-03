@@ -48,7 +48,11 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 15, 
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
             decoration: InputDecoration(
               hintText: 'Email Address',
               prefixIcon: Container(
@@ -59,6 +63,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 ),
               ),
               fillColor: const Color(0xFFF8FAFC),
+              hintStyle: TextStyle(
+                color: AppColors.textSecondary.withOpacity(0.6),
+                fontSize: 14,
+              ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             ),
             validator: (value) {
@@ -73,7 +81,11 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           TextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 15, 
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
             decoration: InputDecoration(
               hintText: 'Password',
               prefixIcon: Container(
@@ -92,6 +104,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
               ),
               fillColor: const Color(0xFFF8FAFC),
+              hintStyle: TextStyle(
+                color: AppColors.textSecondary.withOpacity(0.6),
+                fontSize: 14,
+              ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             ),
             validator: (value) {
