@@ -78,3 +78,8 @@ build/
 # Supabase
 supabase/.temp/
 .supabase/
+
+# Project Specific
+.claude/
+memory/
+supabase/migrations/002_phase1_supervisor_tables.sql
