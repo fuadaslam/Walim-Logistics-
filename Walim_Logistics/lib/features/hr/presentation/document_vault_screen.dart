@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/hr/domain/models/document_model.dart';
 import 'package:walim_logistics/features/hr/presentation/document_detail_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/document_notifier.dart';
@@ -289,22 +290,11 @@ class _DocumentVaultScreenState extends ConsumerState<DocumentVaultScreen> {
         const SizedBox(height: 16),
 
         if (filtered.isEmpty && _searchQuery.isNotEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Column(
-                children: [
-                  Icon(Icons.search_off_rounded,
-                      size: 48,
-                      color:
-                          AppColors.textSecondary.withValues(alpha: 0.3)),
-                  const SizedBox(height: 16),
-                  Text('No documents found',
-                      style:
-                          GoogleFonts.outfit(color: AppColors.textSecondary)),
-                ],
-              ),
-            ),
+          const EmptyStatePlaceholder(
+            icon: Icons.search_off_rounded,
+            title: 'No Documents Found',
+            subtitle: 'Try adjusting your search to find the document you\'re looking for.',
+            color: Colors.blueGrey,
           ),
 
         ...filtered.map((doc) => Padding(

@@ -293,6 +293,34 @@ class OperationsRepository {
     }).toList();
   }
 
+  Future<List<Map<String, dynamic>>> fetchAttendanceReports({
+    DateTime? date,
+    String? platformId,
+    String? groupId,
+  }) async {
+    var query = _db.from('attendance_reports').select('''
+          *,
+          profiles!supervisor_id(full_name),
+          platforms(name),
+          groups(name)
+        ''');
+
+    if (date != null) {
+      query = query.eq('report_date', _fmtDate(date));
+    }
+
+    if (platformId != null) {
+      query = query.eq('platform_id', platformId);
+    }
+
+    if (groupId != null) {
+      query = query.eq('group_id', groupId);
+    }
+
+    final res = await query.order('report_date', ascending: false).order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(res as List);
+  }
+
   String _fmtDate(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }

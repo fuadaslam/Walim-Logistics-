@@ -41,7 +41,7 @@ class TrackingProvider extends ChangeNotifier {
   String _filter = '';
   String _statusFilter = '';
   String _selectedCity = 'All';
-  String _activeMenu = 'Live Ops';
+  String _activeMenu = 'Live GPS';
   final Set<String> _resolvedIncidentIds = {};
 
   TrackingProvider() {
@@ -150,9 +150,7 @@ class TrackingProvider extends ChangeNotifier {
                   .inMinutes >
               20)
       .length;
-  String get totalCod =>
-      (totalCount * 450).toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
 
   List<PlatformMetric> get platforms {
     if (_vehicles.isEmpty) return [];

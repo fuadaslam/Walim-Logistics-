@@ -11,7 +11,6 @@ class NotificationSettingsScreen extends StatefulWidget {
 
 class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
   bool _shiftReminders = true;
-  bool _codWarnings = true;
   bool _incidentAlerts = true;
   bool _documentExpiry = true;
 
@@ -39,12 +38,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           value: _shiftReminders,
           onChanged: (val) => setState(() => _shiftReminders = val),
         ),
-        _buildNotificationSwitch(
-          title: 'COD Discrepancy Warnings',
-          subtitle: 'Alerts riders when cash doesn\'t match',
-          value: _codWarnings,
-          onChanged: (val) => setState(() => _codWarnings = val),
-        ),
+
         _buildNotificationSwitch(
           title: 'Incident Updates',
           subtitle: 'Notify riders when supervisor approves incident',

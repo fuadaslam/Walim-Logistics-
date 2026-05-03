@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import '../../dashboard/presentation/widgets/dashboard_scaffold.dart';
 import '../services/tracking_provider.dart';
 import '../theme/app_theme.dart';
@@ -67,7 +68,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     return DashboardScaffold(
-      activeItem: 'Live Ops',
+      activeItem: 'Live GPS',
       title: 'Operations Control',
       subtitle: '${DateFormat('EEEE • d MMM yyyy • HH:mm').format(DateTime.now())} • Live sync ${provider.lastUpdate}',
       actions: [
@@ -155,7 +156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Basic navigation logic
     final menu = provider.activeMenu.trim();
-    if (menu == 'Live Ops') {
+    if (menu == 'Live GPS') {
       return _buildMainDashboard(provider);
     } else if (menu == 'Riders') {
       return _buildRidersList(provider);
@@ -212,7 +213,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   const SizedBox(height: 8),
                   _buildSidebarCategory('OPERATIONS'),
-                  _buildSidebarItem('Live Ops', Icons.sensors_rounded, active: provider.activeMenu == 'Live Ops'),
+                  _buildSidebarItem('Live GPS', Icons.sensors_rounded, active: provider.activeMenu == 'Live GPS'),
                   _buildSidebarItem('Riders', Icons.person_outline_rounded, 
                     badge: provider.totalCount.toString(), active: provider.activeMenu == 'Riders'),
                   _buildSidebarItem('Incidents', Icons.error_outline_rounded, 
@@ -232,10 +233,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _buildSidebarItem(
                     'All', 
                     Icons.circle_outlined, 
-                    active: provider.selectedCity == 'All' && provider.activeMenu == 'Live Ops',
+                    active: provider.selectedCity == 'All' && provider.activeMenu == 'Live GPS',
                     onTap: () {
                       ref.read(trackingProvider.notifier).setSelectedCity('All');
-                      ref.read(trackingProvider.notifier).setActiveMenu('Live Ops');
+                      ref.read(trackingProvider.notifier).setActiveMenu('Live GPS');
                       _mapController.move(_cities['All']!, 5);
                     },
                   ),
@@ -912,7 +913,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const Divider(height: 1),
           if (incidents.isEmpty)
-            const Padding(padding: EdgeInsets.all(24), child: Text('No active incidents', style: TextStyle(color: AppTheme.textBody, fontSize: 12))),
+            const EmptyStatePlaceholder(
+              icon: Icons.check_circle_outline_rounded,
+              title: 'All Clear',
+              subtitle: 'No active incidents or signal losses reported.',
+              color: Colors.green,
+            ),
           ...incidents.map((inc) => _incidentItem(inc)),
         ],
       ),
@@ -1242,7 +1248,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             child: Column(
               children: items.isEmpty 
-                ? [const Padding(padding: EdgeInsets.all(48), child: Center(child: Text('No data found matching this view')))]
+                ? [const EmptyStatePlaceholder(
+                    icon: Icons.search_off_rounded,
+                    title: 'No Data Found',
+                    subtitle: 'No entries matching this view were found in the system.',
+                    color: Colors.blueGrey,
+                  )]
                 : items.map((item) => itemBuilder(item)).toList(),
             ),
           ),

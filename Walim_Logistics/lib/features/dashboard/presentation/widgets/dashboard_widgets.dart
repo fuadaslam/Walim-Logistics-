@@ -72,7 +72,7 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
           borderRadius: BorderRadius.circular(20),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            padding: EdgeInsets.all(isMobile ? 10 : 16),
+            padding: EdgeInsets.all(isMobile ? 8 : 12),
             decoration: BoxDecoration(
               color: isDark 
                   ? AppColors.surfaceDark.withOpacity(0.8) 
@@ -106,10 +106,10 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
               children: [
                 if (widget.sparklineData != null)
                   Positioned(
-                    bottom: -8,
+                    bottom: -6,
                     left: -15,
                     right: -15,
-                    height: isMobile ? 35 : 45,
+                    height: isMobile ? 30 : 40,
                     child: Opacity(
                       opacity: _isHovered ? 0.4 : 0.2,
                       child: MetricSparkline(
@@ -137,7 +137,7 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
                           child: Icon(
                             widget.icon, 
                             color: widget.color, 
-                            size: isMobile ? 16 : 18,
+                            size: isMobile ? 14 : 16,
                           ),
                         ),
                         if (widget.trend != null)
@@ -154,14 +154,14 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
                               children: [
                                 Icon(
                                   (widget.isPositive ?? true) ? Icons.trending_up : Icons.trending_down,
-                                  size: 10,
+                                  size: 9,
                                   color: (widget.isPositive ?? true) ? Colors.green : Colors.red,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   widget.trend!,
                                   style: GoogleFonts.outfit(
-                                    fontSize: 9,
+                                    fontSize: 8,
                                     fontWeight: FontWeight.bold,
                                     color: (widget.isPositive ?? true) ? Colors.green : Colors.red,
                                   ),
@@ -181,7 +181,7 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
                             Text(
                               widget.value,
                               style: GoogleFonts.outfit(
-                                fontSize: isMobile ? 22 : 24,
+                                fontSize: isMobile ? 20 : 22,
                                 fontWeight: FontWeight.w900,
                                 color: isDark ? Colors.white : AppColors.textPrimary,
                                 letterSpacing: -0.5,
@@ -195,7 +195,7 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.outfit(
-                                    fontSize: 9,
+                                    fontSize: 8,
                                     color: (isDark ? Colors.white70 : AppColors.textSecondary).withOpacity(0.8),
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 0.5,
@@ -370,7 +370,7 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
           borderRadius: BorderRadius.circular(20),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            padding: EdgeInsets.all(isMobile ? 12 : 16),
+            padding: EdgeInsets.all(isMobile ? 10 : 12),
             decoration: BoxDecoration(
               color: isDark ? AppColors.surfaceDark : Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -391,7 +391,7 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -413,7 +413,7 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
                   child: Icon(
                     widget.icon, 
                     color: Colors.white, 
-                    size: isMobile ? 18 : 20,
+                    size: isMobile ? 16 : 18,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -431,7 +431,7 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.outfit(
-                                fontSize: isMobile ? 13 : 14,
+                                fontSize: isMobile ? 12 : 13,
                                 fontWeight: FontWeight.w800,
                                 color: isDark ? Colors.white : AppColors.textPrimary,
                                 letterSpacing: -0.3,
@@ -497,10 +497,10 @@ class ActivityFeed extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark.withOpacity(0.5) : Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDark ? Colors.white.withOpacity(0.08) : AppColors.divider.withOpacity(0.5),
           width: 1.5,
@@ -559,75 +559,82 @@ class ActivityFeed extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: items.length,
-            separatorBuilder: (context, index) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Divider(height: 1, color: (isDark ? Colors.white : AppColors.divider).withOpacity(0.1)),
-            ),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return InkWell(
-                onTap: item.onTap,
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: item.color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: item.color.withOpacity(0.2)),
+          const SizedBox(height: 16),
+          if (items.isEmpty)
+            const EmptyStatePlaceholder(
+              icon: Icons.notifications_none_rounded,
+              title: 'No recent activity',
+              subtitle: 'All systems operational. New updates will appear here in real-time.',
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
+              separatorBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Divider(height: 1, color: (isDark ? Colors.white : AppColors.divider).withOpacity(0.1)),
+              ),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return InkWell(
+                  onTap: item.onTap,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: item.color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: item.color.withOpacity(0.2)),
+                          ),
+                          child: Icon(item.icon, color: item.color, size: 20),
                         ),
-                        child: Icon(item.icon, color: item.color, size: 20),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.title,
-                              style: GoogleFonts.outfit(
-                                fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : AppColors.textPrimary,
-                                fontSize: 14,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.title,
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark ? Colors.white : AppColors.textPrimary,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item.subtitle,
-                              style: GoogleFonts.outfit(
-                                color: (isDark ? Colors.white70 : AppColors.textSecondary).withOpacity(0.8),
-                                fontSize: 12,
-                                height: 1.3,
-                                fontWeight: FontWeight.w500,
+                              const SizedBox(height: 2),
+                              Text(
+                                item.subtitle,
+                                style: GoogleFonts.outfit(
+                                  color: (isDark ? Colors.white70 : AppColors.textSecondary).withOpacity(0.8),
+                                  fontSize: 12,
+                                  height: 1.3,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        item.time,
-                        style: GoogleFonts.outfit(
-                          color: AppColors.textSecondary.withOpacity(0.6),
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(width: 8),
+                        Text(
+                          item.time,
+                          style: GoogleFonts.outfit(
+                            color: AppColors.textSecondary.withOpacity(0.6),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
         ],
       ),
     );
@@ -722,6 +729,103 @@ class AnimatedTransform extends StatelessWidget {
         );
       },
       child: child,
+    );
+  }
+}
+
+class EmptyStatePlaceholder extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color? color;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  const EmptyStatePlaceholder({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.color,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeColor = color ?? AppColors.primary;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      decoration: BoxDecoration(
+        color: isDark 
+            ? AppColors.surfaceDark.withOpacity(0.3) 
+            : themeColor.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark 
+              ? Colors.white.withOpacity(0.05) 
+              : themeColor.withOpacity(0.05),
+          width: 1.5,
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: themeColor.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 40,
+              color: themeColor,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              color: (isDark ? Colors.white70 : AppColors.textSecondary).withOpacity(0.8),
+              fontWeight: FontWeight.w500,
+              height: 1.5,
+            ),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: onAction,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: Text(actionLabel!),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: themeColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

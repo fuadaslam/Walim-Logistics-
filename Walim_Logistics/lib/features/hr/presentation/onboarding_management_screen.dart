@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
+import 'package:walim_logistics/shared/models/profile.dart';
 
-class OnboardingManagementScreen extends StatelessWidget {
+class OnboardingManagementScreen extends ConsumerWidget {
   const OnboardingManagementScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return DashboardScaffold(
       title: 'ONBOARDING & OFFBOARDING',
       subtitle: 'Digital contracts, training progress, and staff transitions',
       showBackButton: true,
       activeItem: 'HR',
       children: [
-        _buildPhaseTabs(context),
+        _buildPhaseTabs(context, ref),
       ],
     );
   }
 
-  Widget _buildPhaseTabs(BuildContext context) {
+  Widget _buildPhaseTabs(BuildContext context, WidgetRef ref) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return DefaultTabController(
       length: 2,
@@ -63,7 +67,7 @@ class OnboardingManagementScreen extends StatelessWidget {
             height: 700,
             child: TabBarView(
               children: [
-                _buildOnboardingList(),
+                _buildOnboardingList(context, ref),
                 _buildOffboardingList(),
               ],
             ),
@@ -73,213 +77,157 @@ class OnboardingManagementScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOnboardingList() {
-    final List<Map<String, dynamic>> onboardingStaff = [
-      {
-        'name': 'James Wilson',
-        'role': 'Delivery Rider',
-        'contract': 'Signed',
-        'training': 0.8,
-        'assets': 'Pending',
-        'startDate': '2024-05-01',
-      },
-      {
-        'name': 'Arun Varma',
-        'role': 'Warehouse Assistant',
-        'contract': 'Pending',
-        'training': 0.3,
-        'assets': 'Assigned',
-        'startDate': '2024-05-05',
-      },
-      {
-        'name': 'Faisal Ahmed',
-        'role': 'Fleet Supervisor',
-        'contract': 'Signed',
-        'training': 1.0,
-        'assets': 'Assigned',
-        'startDate': '2024-04-25',
-      },
-    ];
+  Widget _buildOnboardingList(BuildContext context, WidgetRef ref) {
+    final onboardingAsync = ref.watch(onboardingStaffProvider);
 
-    return ListView.builder(
-      itemCount: onboardingStaff.length,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemBuilder: (context, index) {
-        final staff = onboardingStaff[index];
-        final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-        
-        return Container(
-          margin: const EdgeInsets.only(bottom: 20),
-          decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.surfaceDark : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: isDarkMode ? Colors.white10 : AppColors.divider),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
+    return onboardingAsync.when(
+      data: (onboardingStaff) {
+        if (onboardingStaff.isEmpty) {
+          return const EmptyStatePlaceholder(
+            icon: Icons.person_add_alt_1_rounded,
+            title: 'No Active Onboarding',
+            subtitle: 'There are currently no staff members in the onboarding process.',
+            color: Colors.blueGrey,
+          );
+        }
+
+        return ListView.builder(
+          itemCount: onboardingStaff.length,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          itemBuilder: (context, index) {
+            final staff = onboardingStaff[index];
+            final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+            
+            return Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: isDarkMode ? AppColors.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: isDarkMode ? Colors.white10 : AppColors.divider),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: InkWell(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderDetailScreen()));
-            },
-            borderRadius: BorderRadius.circular(24),
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                children: [
-                  Row(
+              child: InkWell(
+                onTap: () {
+                  // Pass a partial UserProfile for now or fetch full details
+                  final profile = UserProfile(
+                    id: staff['id'],
+                    role: staff['role'],
+                    fullName: staff['name'],
+                    status: 'active',
+                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => RiderDetailScreen(profile: profile)));
+                },
+                borderRadius: BorderRadius.circular(24),
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Column(
                     children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            staff['name'][0],
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              staff['name'],
-                              style: GoogleFonts.outfit(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                      Row(
+                        children: [
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(Icons.work_outline_rounded, size: 14, color: AppColors.textSecondary),
-                                const SizedBox(width: 6),
-                                Text(
-                                  staff['role'],
-                                  style: GoogleFonts.outfit(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                      _buildStatusChip('Start Date: ${staff['startDate']}', Colors.indigo),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
-                    children: [
-                      _buildTaskStatus('Contract Status', staff['contract'] == 'Signed'),
-                      const SizedBox(width: 40),
-                      _buildTaskStatus('Asset Allocation', staff['assets'] == 'Assigned'),
-                      const SizedBox(width: 40),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            child: Center(
+                              child: Text(
+                                staff['name'].isNotEmpty ? staff['name'][0] : 'S',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Training Progress',
+                                  staff['name'],
                                   style: GoogleFonts.outfit(
-                                    fontSize: 13,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                     color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
                                   ),
                                 ),
-                                Text(
-                                  '${(staff['training'] * 100).toInt()}%',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                  ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(Icons.work_outline_rounded, size: 14, color: AppColors.textSecondary),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      staff['role'],
+                                      style: GoogleFonts.outfit(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    height: 10,
-                                    width: double.infinity,
-                                    color: isDarkMode ? Colors.white10 : AppColors.background,
-                                  ),
-                                  FractionallySizedBox(
-                                    widthFactor: staff['training'],
-                                    child: Container(
-                                      height: 10,
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [AppColors.primary, AppColors.primaryLight],
-                                        ),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                          _buildStatusChip('Start Date: ${staff['startDate']}', Colors.indigo),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          _buildTaskStatus('Contract Status', staff['contract'] == 'Signed'),
+                          const SizedBox(width: 40),
+                          _buildTaskStatus('Asset Allocation', staff['assets'] == 'Assigned'),
+                          const SizedBox(width: 40),
+                          Expanded(
+                            child: _buildTaskStatus('Training', (staff['training'] as double) > 0.0),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => EmptyStatePlaceholder(
+        icon: Icons.error_outline_rounded,
+        title: 'Data Unavailable',
+        subtitle: 'Error: $e',
+        color: AppColors.error,
+      ),
     );
   }
-
   Widget _buildOffboardingList() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.history_rounded, size: 64, color: AppColors.textSecondary.withOpacity(0.2)),
-          const SizedBox(height: 16),
-          Text(
-            'No active offboarding requests',
-            style: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 16),
-          ),
-        ],
-      ),
+    return const EmptyStatePlaceholder(
+      icon: Icons.history_rounded,
+      title: 'No Offboarding Requests',
+      subtitle: 'There are no staff members currently in the offboarding process.',
+      color: Colors.blueGrey,
     );
   }
 
@@ -339,3 +287,4 @@ class OnboardingManagementScreen extends StatelessWidget {
     );
   }
 }
+

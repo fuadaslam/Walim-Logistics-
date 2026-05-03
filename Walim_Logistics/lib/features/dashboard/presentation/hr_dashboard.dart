@@ -260,34 +260,19 @@ class HRDashboard extends ConsumerWidget {
 
     return alertsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.error.withOpacity(0.1)),
-        ),
-        child: const Text('Failed to load compliance data',
-            style: TextStyle(color: AppColors.error)),
+      error: (e, _) => const EmptyStatePlaceholder(
+        icon: Icons.error_outline_rounded,
+        title: 'Compliance Data Unavailable',
+        subtitle: 'There was an issue loading compliance alerts. Please try again later.',
+        color: AppColors.error,
       ),
       data: (alerts) {
         if (alerts.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.green.withOpacity(0.1)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.check_circle_outline, color: Colors.green),
-                const SizedBox(width: 12),
-                Text('All documents are compliant',
-                    style: GoogleFonts.outfit(
-                        color: Colors.green, fontWeight: FontWeight.w600)),
-              ],
-            ),
+          return const EmptyStatePlaceholder(
+            icon: Icons.verified_user_rounded,
+            title: 'Fully Compliant',
+            subtitle: 'All staff documents and government registrations are up to date.',
+            color: Colors.green,
           );
         }
 
@@ -378,14 +363,19 @@ class HRDashboard extends ConsumerWidget {
       ),
       child: activityAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => const Text('Failed to load activity',
-            style: TextStyle(color: AppColors.error)),
+        error: (e, _) => const EmptyStatePlaceholder(
+          icon: Icons.error_outline_rounded,
+          title: 'Activity Feed Unavailable',
+          subtitle: 'We couldn\'t load the recent activity at this time.',
+          color: AppColors.error,
+        ),
         data: (activities) {
           if (activities.isEmpty) {
-            return Center(
-              child: Text('No recent activity',
-                  style:
-                      GoogleFonts.outfit(color: AppColors.textSecondary)),
+            return const EmptyStatePlaceholder(
+              icon: Icons.history_rounded,
+              title: 'No recent activity',
+              subtitle: 'New HR requests and updates will appear here.',
+              color: Colors.orange,
             );
           }
           return Column(

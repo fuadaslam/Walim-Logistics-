@@ -4,6 +4,16 @@ class UserProfile {
   final String fullName;
   final String? phoneNumber;
   final String status;
+  final String? iqamaNumber;
+  final String? passportNumber;
+  final String? drivingLicense;
+  final String? sponsorship;
+  final String? emergencyContact;
+  final String? location;
+  final double? rating;
+  final double? lastLat;
+  final double? lastLng;
+  final DateTime? lastLocationUpdate;
 
   UserProfile({
     required this.id,
@@ -11,26 +21,30 @@ class UserProfile {
     required this.fullName,
     this.phoneNumber,
     required this.status,
+    this.iqamaNumber,
+    this.passportNumber,
+    this.drivingLicense,
+    this.sponsorship,
+    this.emergencyContact,
+    this.location,
+    this.rating,
+    this.lastLat,
+    this.lastLng,
+    this.lastLocationUpdate,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
-    print('DEBUG: UserProfile.fromJson input: $json');
-    
     String roleName = 'Rider';
-    
-    // 1. Try to get role from joined data (roles table)
+
     dynamic rolesData = json['roles'] ?? json['role_data'] ?? json['role_id'];
-    
+
     if (rolesData is Map && rolesData['name'] != null) {
       roleName = rolesData['name'].toString().trim();
     } else if (rolesData is List && rolesData.isNotEmpty && rolesData[0] is Map) {
       roleName = rolesData[0]['name'].toString().trim();
-    } 
-    // 2. Fallback: Map known UUIDs if join failed
-    else if (json['role_id'] != null) {
+    } else if (json['role_id'] != null) {
       final roleId = json['role_id'].toString().toLowerCase();
-      // Map based on the IDs seen in the Supabase screenshot
-      final Map<String, String> roleMap = {
+      const Map<String, String> roleMap = {
         '15931603-c3e7-488d-8d5c-6d3e5788a088': 'Admin',
         '40bb48ba-cf1a-4434-ad1d-3eeb2db1d439': 'Supervisor',
         '470c2b57-52ea-4669-8f34-b58d11969e7f': 'HR',
@@ -41,14 +55,8 @@ class UserProfile {
         'b715adb2-df95-4cd2-a1a6-7c36faef2276': 'Business Development',
         'cf5cc7e6-1964-49c2-bb99-03aaa5068d4f': 'Operations Manager',
       };
-      
-      if (roleMap.containsKey(roleId)) {
-        roleName = roleMap[roleId]!;
-        print('DEBUG: Resolved role from UUID fallback: $roleName');
-      }
+      roleName = roleMap[roleId] ?? roleName;
     }
-
-    print('DEBUG: Final resolved role name: $roleName');
 
     return UserProfile(
       id: json['id'],
@@ -56,6 +64,19 @@ class UserProfile {
       fullName: json['full_name'] ?? 'User',
       phoneNumber: json['phone_number'],
       status: json['status'] ?? 'active',
+      iqamaNumber: json['iqama_number'],
+      passportNumber: json['passport_number'],
+      drivingLicense: json['driving_license'],
+      sponsorship: json['sponsorship'],
+      emergencyContact: json['emergency_contact'],
+      location: json['location'],
+      rating: (json['rating'] as num?)?.toDouble(),
+      lastLat: (json['last_lat'] as num?)?.toDouble(),
+      lastLng: (json['last_lng'] as num?)?.toDouble(),
+      lastLocationUpdate: json['last_location_update'] != null 
+          ? DateTime.parse(json['last_location_update']) 
+          : null,
     );
   }
 }
+

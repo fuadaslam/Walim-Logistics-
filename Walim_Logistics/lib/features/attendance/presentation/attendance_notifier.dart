@@ -1,6 +1,6 @@
-import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:walim_logistics/core/services/location_service.dart';
 import '../data/attendance_repository.dart';
 import '../../auth/presentation/auth_notifier.dart';
 
@@ -42,16 +42,9 @@ class AttendanceState {
 class AttendanceNotifier extends StateNotifier<AttendanceState> {
   final AttendanceRepository _repository;
   final Ref _ref;
-  Timer? _locationTimer;
 
   AttendanceNotifier(this._repository, this._ref) : super(AttendanceState()) {
     _checkActiveShift();
-  }
-
-  @override
-  void dispose() {
-    _locationTimer?.cancel();
-    super.dispose();
   }
 
   Future<void> _checkActiveShift() async {
@@ -68,32 +61,11 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
       );
 
       if (activeShift != null) {
-        _startLocationTimer();
+        _ref.read(locationServiceProvider).startTracking();
       }
     }
   }
 
-  void _startLocationTimer() {
-    _locationTimer?.cancel();
-    _locationTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
-      if (!state.hasActiveShift) {
-        timer.cancel();
-        return;
-      }
-      try {
-        final position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.bestForNavigation,
-        );
-        // Location update fetched successfully every 10 seconds.
-        // We could also send it to the backend here if there's an API for it.
-        print(
-          'Accurate location (10s interval): \${position.latitude}, \${position.longitude}',
-        );
-      } catch (e) {
-        print('Error getting location: \$e');
-      }
-    });
-  }
 
   Future<void> toggleShift({
     required double centerLat,
@@ -114,7 +86,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
           lat: position.latitude,
           long: position.longitude,
         );
-        _locationTimer?.cancel();
+        _ref.read(locationServiceProvider).stopTracking();
         state = state.copyWith(hasActiveShift: false, isCheckingIn: false);
       } else {
         // Checking IN
@@ -167,7 +139,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
             todayCheckIns: newCount,
           );
         }
-        _startLocationTimer();
+        _ref.read(locationServiceProvider).startTracking();
       }
     } catch (e) {
       state = state.copyWith(isCheckingIn: false, error: e.toString());

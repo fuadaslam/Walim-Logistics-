@@ -7,7 +7,6 @@ import 'package:walim_logistics/core/theme/theme_provider.dart';
 import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
 import 'package:walim_logistics/features/tracking/screens/home_screen.dart' as walim_tracking;
 import 'package:walim_logistics/features/dashboard/presentation/admin_dashboard.dart';
-import 'package:walim_logistics/features/finance/presentation/reconciliation_dashboard.dart';
 import 'package:walim_logistics/features/fleet/presentation/inventory_handover_screen.dart';
 import 'package:walim_logistics/features/notifications/presentation/notification_settings_screen.dart';
 import 'package:walim_logistics/features/tracking/theme/app_theme.dart' as tracking_theme;
@@ -213,7 +212,8 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
       // Handle navigation
       final nav = ref.read(navigationProvider.notifier);
       switch (result.route) {
-        case 'Live Ops': nav.setTab(DashboardTab.liveOps); break;
+        case 'Live GPS': nav.setTab(DashboardTab.liveOps); break;
+        case 'Live Rider': nav.setTab(DashboardTab.liveRider); break;
         case 'HR': nav.setTab(DashboardTab.hr); break;
         case 'Assets': nav.setTab(DashboardTab.assets); break;
         case 'Finance': nav.setTab(DashboardTab.finance); break;
@@ -344,13 +344,23 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
       ),
     ];
 
-    // 1. Live Ops (High Priority for Ops roles)
+    // 1. Live GPS (High Priority for Ops roles)
     if ((role == 'Admin' || role == 'Supervisor' || role == 'Operations Manager' || role == 'IT_Dev' || role == 'Leader') && items.length < 5) {
       items.add(_BottomNavItem(
         icon: Icons.map_rounded,
-        label: 'Live',
+        label: 'GPS',
         tab: DashboardTab.liveOps,
         isActive: navState.activeTab == DashboardTab.liveOps,
+      ));
+    }
+
+    // 1.1 Live Rider (High Priority for Ops roles)
+    if ((role == 'Admin' || role == 'Supervisor' || role == 'Operations Manager') && items.length < 5) {
+      items.add(_BottomNavItem(
+        icon: Icons.motorcycle_rounded,
+        label: 'Riders',
+        tab: DashboardTab.liveRider,
+        isActive: navState.activeTab == DashboardTab.liveRider,
       ));
     }
 
@@ -927,10 +937,20 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           _buildSidebarItem(
             context, 
             Icons.map_rounded, 
-            'Live Ops', 
+            'Live GPS', 
             navState.activeTab == DashboardTab.liveOps, 
             isSidebarCollapsed,
             onTap: () => navNotifier.setTab(DashboardTab.liveOps),
+          ),
+
+        if (role == 'Admin' || role == 'Supervisor' || role == 'Operations Manager')
+          _buildSidebarItem(
+            context, 
+            Icons.motorcycle_rounded, 
+            'Live Rider', 
+            navState.activeTab == DashboardTab.liveRider, 
+            isSidebarCollapsed,
+            onTap: () => navNotifier.setTab(DashboardTab.liveRider),
           ),
 
         if (role == 'Admin' || role == 'Operations Manager' || role == 'Supervisor')

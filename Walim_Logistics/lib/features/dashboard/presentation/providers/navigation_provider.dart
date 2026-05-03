@@ -5,6 +5,7 @@ import 'package:walim_logistics/core/providers/shared_prefs_provider.dart';
 enum DashboardTab {
   dashboard,
   liveOps,
+  liveRider,
   hr,
   assets,
   finance,

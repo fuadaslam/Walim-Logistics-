@@ -12,6 +12,8 @@ class AdminStats {
   final int fleetHealth;
   final double pendingCod;
   final int liveOrders;
+  final int onLeave;
+  final int pendingRequests;
   final bool isLoading;
   final String? error;
 
@@ -20,6 +22,8 @@ class AdminStats {
     this.fleetHealth = 0,
     this.pendingCod = 0,
     this.liveOrders = 0,
+    this.onLeave = 0,
+    this.pendingRequests = 0,
     this.isLoading = false,
     this.error,
   });
@@ -29,6 +33,8 @@ class AdminStats {
     int? fleetHealth,
     double? pendingCod,
     int? liveOrders,
+    int? onLeave,
+    int? pendingRequests,
     bool? isLoading,
     String? error,
   }) {
@@ -37,6 +43,8 @@ class AdminStats {
       fleetHealth: fleetHealth ?? this.fleetHealth,
       pendingCod: pendingCod ?? this.pendingCod,
       liveOrders: liveOrders ?? this.liveOrders,
+      onLeave: onLeave ?? this.onLeave,
+      pendingRequests: pendingRequests ?? this.pendingRequests,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -59,6 +67,8 @@ class AdminNotifier extends StateNotifier<AdminStats> {
         fleetHealth: stats['fleetHealth'] as int? ?? 0,
         pendingCod: (stats['pendingCod'] as num?)?.toDouble() ?? 0,
         liveOrders: stats['liveOrders'] as int? ?? 0,
+        onLeave: stats['onLeave'] as int? ?? 0,
+        pendingRequests: stats['pendingRequests'] as int? ?? 0,
         isLoading: false,
       );
     } catch (e) {

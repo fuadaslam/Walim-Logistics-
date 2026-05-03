@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'admin_notifier.dart';
 
 class AuditLogsScreen extends ConsumerWidget {
@@ -25,36 +26,19 @@ class AuditLogsScreen extends ConsumerWidget {
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (e, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: Column(
-                children: [
-                  const Icon(Icons.error_outline, color: AppColors.error, size: 40),
-                  const SizedBox(height: 12),
-                  Text('Failed to load logs', style: GoogleFonts.outfit(color: AppColors.error)),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => ref.refresh(auditLogsProvider),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            ),
+          error: (e, _) => EmptyStatePlaceholder(
+            icon: Icons.error_outline_rounded,
+            title: 'Audit Logs Unavailable',
+            subtitle: 'We couldn\'t load the system audit logs. Error: $e',
+            color: AppColors.error,
           ),
           data: (logs) {
             if (logs.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(40),
-                  child: Column(
-                    children: [
-                      Icon(Icons.history_rounded, size: 48, color: AppColors.textSecondary.withOpacity(0.3)),
-                      const SizedBox(height: 16),
-                      Text('No audit logs yet', style: GoogleFonts.outfit(color: AppColors.textSecondary)),
-                    ],
-                  ),
-                ),
+              return const EmptyStatePlaceholder(
+                icon: Icons.history_rounded,
+                title: 'No Audit Logs',
+                subtitle: 'No system actions have been recorded yet.',
+                color: Colors.blueGrey,
               );
             }
             return Container(

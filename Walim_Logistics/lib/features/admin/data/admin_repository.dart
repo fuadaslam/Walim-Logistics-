@@ -9,7 +9,7 @@ class AdminRepository {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day).toIso8601String();
 
-    final results = await Future.wait([
+    final results = await Future.wait<dynamic>([
       _supabase.from('profiles').select('id').eq('status', 'active'),
       _supabase.from('vehicles').select('status'),
       _supabase.from('cod_reconciliation').select('collected_amount').eq('status', 'pending'),
@@ -18,6 +18,8 @@ class AdminRepository {
           .select('id')
           .filter('check_out_time', 'is', null)
           .gte('check_in_time', today),
+      _supabase.from('profiles').select('id').eq('status', 'on_leave').count(CountOption.exact),
+      _supabase.from('leave_requests').select('id').eq('status', 'pending').count(CountOption.exact),
     ]);
 
     final activeRiders = (results[0] as List).length;
@@ -37,12 +39,16 @@ class AdminRepository {
     );
 
     final liveOrders = (results[3] as List).length;
+    final onLeave = results[4].count ?? 0;
+    final pendingRequests = results[5].count ?? 0;
 
     return {
       'activeRiders': activeRiders,
       'fleetHealth': fleetHealth,
       'pendingCod': pendingCod,
       'liveOrders': liveOrders,
+      'onLeave': onLeave,
+      'pendingRequests': pendingRequests,
     };
   }
 

@@ -10,12 +10,17 @@ import 'package:walim_logistics/features/hr/presentation/asset_management_screen
 import 'package:walim_logistics/features/hr/presentation/document_vault_screen.dart';
 import 'package:walim_logistics/features/incidents/presentation/incident_report_screen.dart';
 import 'package:walim_logistics/features/fleet/presentation/shift_assignment_screen.dart';
-import 'package:walim_logistics/features/finance/presentation/cod_reconciliation_screen.dart';
+
 import 'package:walim_logistics/features/fleet/data/fleet_repository.dart';
 import 'package:walim_logistics/features/hr/data/hr_repository.dart';
+
 import 'package:walim_logistics/features/admin/data/operations_repository.dart';
+import 'package:walim_logistics/features/admin/data/office_repository.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/inspections/presentation/inspection_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/rider_data_provider.dart';
 
 final _riderAssetsProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, id) {
   return ref.watch(hrRepositoryProvider).getAssetsForProfile(id);
@@ -28,6 +33,12 @@ final _riderDocumentsProvider = FutureProvider.autoDispose.family<List<Map<Strin
 final _riderStatsProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, id) {
   return ref.watch(hrRepositoryProvider).getProfileStats(id);
 });
+
+final _riderZoneByIdProvider = FutureProvider.autoDispose.family<Map<String, dynamic>?, String>((ref, id) {
+  return ref.watch(fleetRepositoryProvider).getRiderCurrentZone(id);
+});
+
+
 
 class RiderDetailScreen extends ConsumerWidget {
   final UserProfile? profile;
@@ -51,9 +62,9 @@ class RiderDetailScreen extends ConsumerWidget {
         if (isMobile)
           Column(
             children: [
-              _buildMainContent(context),
+              _buildMainContent(context, ref),
               const SizedBox(height: 24),
-              _buildSecondaryContent(context),
+              _buildSecondaryContent(context, ref),
             ],
           )
         else
@@ -62,11 +73,11 @@ class RiderDetailScreen extends ConsumerWidget {
             children: [
               Expanded(
                 flex: 2,
-                child: _buildMainContent(context),
+                child: _buildMainContent(context, ref),
               ),
               const SizedBox(width: 24),
               Expanded(
-                child: _buildSecondaryContent(context),
+                child: _buildSecondaryContent(context, ref),
               ),
             ],
           ),
@@ -120,7 +131,7 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMainContent(BuildContext context) {
+  Widget _buildMainContent(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         _buildSectionCard(
@@ -147,7 +158,10 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSecondaryContent(BuildContext context) {
+  Widget _buildSecondaryContent(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(authProvider).profile;
+    final isRider = currentUser?.role == 'Rider';
+
     return Column(
       children: [
         _buildSectionCard(
@@ -157,19 +171,47 @@ class RiderDetailScreen extends ConsumerWidget {
           child: _buildComplianceList(context),
         ),
         const SizedBox(height: 24),
-        _buildSectionCard(
-          context: context,
-          title: 'Quick Actions',
-          icon: Icons.bolt_rounded,
-          child: _buildQuickActions(context),
-        ),
-        const SizedBox(height: 24),
-        _buildSectionCard(
-          context: context,
-          title: 'Financial Summary',
-          icon: Icons.account_balance_wallet_outlined,
-          child: _buildFinancialSummary(context),
-        ),
+        if (isRider)
+          _buildSectionCard(
+            context: context,
+            title: 'Account Actions',
+            icon: Icons.account_circle_outlined,
+            child: _buildActionRow(
+              context,
+              'Logout',
+              Icons.logout_rounded,
+              AppColors.error,
+              () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('Logout', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                    content: const Text('Are you sure you want to log out of your account?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Logout', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) {
+                  await ref.read(authProvider.notifier).signOut();
+                }
+              },
+            ),
+          )
+        else
+          _buildSectionCard(
+            context: context,
+            title: 'Quick Actions',
+            icon: Icons.bolt_rounded,
+            child: _buildQuickActions(context, ref),
+          ),
       ],
     );
   }
@@ -283,11 +325,21 @@ class RiderDetailScreen extends ConsumerWidget {
           spacing: isMobile ? 6 : 10,
           runSpacing: isMobile ? 6 : 10,
           children: [
-            _buildHeaderTag(Icons.location_on_rounded, 'Riyadh'),
-            _buildHeaderTag(Icons.star_rounded, '4.9'),
-            _buildHeaderTag(Icons.verified_user_rounded, 'Verified'),
+            Consumer(
+              builder: (context, ref, _) {
+                final zoneAsync = ref.watch(_riderZoneByIdProvider(profile?.id ?? ''));
+                final locationText = profile?.location ?? zoneAsync.value?['name'] ?? 'Riyadh';
+                return _buildHeaderTag(Icons.location_on_rounded, locationText);
+              },
+            ),
+            _buildHeaderTag(Icons.star_rounded, profile?.rating?.toString() ?? '4.9'),
+            _buildHeaderTag(
+              profile?.status.toLowerCase() == 'active' ? Icons.verified_user_rounded : Icons.info_outline_rounded,
+              profile?.status.toLowerCase() == 'active' ? 'Verified' : 'Unverified',
+            ),
           ],
         ),
+
       ],
     );
 
@@ -478,39 +530,13 @@ class RiderDetailScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(isMobile ? 8 : 10),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: color, size: isMobile ? 18 : 20),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.trending_up_rounded, color: Colors.green, size: 10),
-                      const SizedBox(width: 4),
-                      Text(
-                        '12%', 
-                        style: TextStyle(
-                          color: Colors.green, 
-                          fontSize: isMobile ? 9 : 10, 
-                          fontWeight: FontWeight.w900
-                        )
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            Container(
+              padding: EdgeInsets.all(isMobile ? 8 : 10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: isMobile ? 18 : 20),
             ),
             SizedBox(height: isMobile ? 12 : 24),
             Text(
@@ -591,12 +617,12 @@ class RiderDetailScreen extends ConsumerWidget {
   Widget _buildIdentityDetails(BuildContext context) {
     return Column(
       children: [
-        _buildDetailRow(context, 'Iqama Number', '2410389210', isCopyable: true),
-        _buildDetailRow(context, 'Passport Number', 'K9281726', isCopyable: true),
-        _buildDetailRow(context, 'Driving License', 'Saudi Private (Valid)'),
-        _buildDetailRow(context, 'Sponsorship', 'Walim Logistics Co.'),
-        _buildDetailRow(context, 'Mobile Number', '+966 50 123 4567', isCopyable: true),
-        _buildDetailRow(context, 'Emergency Contact', 'Khalid (Brother) - +966 55 987 6543'),
+        _buildDetailRow(context, 'Iqama Number', profile?.iqamaNumber ?? 'N/A', isCopyable: true),
+        _buildDetailRow(context, 'Passport Number', profile?.passportNumber ?? 'N/A', isCopyable: true),
+        _buildDetailRow(context, 'Driving License', profile?.drivingLicense ?? 'Saudi Private (Valid)'),
+        _buildDetailRow(context, 'Sponsorship', profile?.sponsorship ?? 'Walim Logistics Co.'),
+        _buildDetailRow(context, 'Mobile Number', profile?.phoneNumber ?? 'N/A', isCopyable: true),
+        _buildDetailRow(context, 'Emergency Contact', profile?.emergencyContact ?? 'N/A'),
       ],
     );
   }
@@ -691,11 +717,11 @@ class RiderDetailScreen extends ConsumerWidget {
       return assetsAsync.when(
         data: (assets) {
           if (assets.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('No assets assigned', style: GoogleFonts.outfit(color: Colors.grey)),
-              ),
+            return const EmptyStatePlaceholder(
+              icon: Icons.inventory_2_outlined,
+              title: 'No Assets Assigned',
+              subtitle: 'This staff member hasn\'t been issued any company equipment yet.',
+              color: Colors.blueGrey,
             );
           }
           return Column(
@@ -712,7 +738,12 @@ class RiderDetailScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Text('Error loading assets: $e'),
+        error: (e, _) => EmptyStatePlaceholder(
+          icon: Icons.error_outline_rounded,
+          title: 'Assets Unavailable',
+          subtitle: 'Error loading assets: $e',
+          color: AppColors.error,
+        ),
       );
     });
   }
@@ -829,11 +860,11 @@ class RiderDetailScreen extends ConsumerWidget {
       return docsAsync.when(
         data: (docs) {
           if (docs.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('No documents found', style: GoogleFonts.outfit(color: Colors.grey)),
-              ),
+            return const EmptyStatePlaceholder(
+              icon: Icons.badge_outlined,
+              title: 'No Documents Found',
+              subtitle: 'Digital records for Iqama, Passport, or Health IDs are not available.',
+              color: Colors.orange,
             );
           }
           return Column(
@@ -854,7 +885,12 @@ class RiderDetailScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Text('Error: $e'),
+        error: (e, _) => EmptyStatePlaceholder(
+          icon: Icons.error_outline_rounded,
+          title: 'Compliance Data Unavailable',
+          subtitle: 'Error: $e',
+          color: AppColors.error,
+        ),
       );
     });
   }
@@ -934,9 +970,66 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context) {
+  Widget _buildQuickActions(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(authProvider).profile;
+    
+    bool canRequestOffice = false;
+    if (currentUser != null && profile != null) {
+      final myRole = currentUser.role;
+      final targetRole = profile!.role;
+      
+      if (myRole == 'Admin' || myRole == 'Operations Manager') {
+        if (targetRole == 'Rider' || targetRole == 'Supervisor') {
+          canRequestOffice = true;
+        }
+      } else if (myRole == 'Supervisor') {
+        if (targetRole == 'Rider') {
+          canRequestOffice = true;
+        }
+      }
+    }
+
     return Column(
       children: [
+        if (canRequestOffice) ...[
+          _buildActionRow(context, 'Request to Office', Icons.business_rounded, AppColors.primary, () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('Request to Office', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                content: Text('Are you sure you want to request ${profile?.fullName} to come to the office? An alert will be shown on their dashboard.'),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Request', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirm == true) {
+              try {
+                await ref.read(officeRepositoryProvider).requestOfficeCall(
+                  targetProfileId: profile!.id,
+                  requestedByProfileId: currentUser!.id,
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Office request sent successfully'), backgroundColor: Colors.green),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            }
+          }),
+          const SizedBox(height: 12),
+        ],
         _buildActionRow(context, 'Perform Inspection', Icons.security_rounded, Colors.redAccent, () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const InspectionScreen()));
         }),
@@ -1062,61 +1155,9 @@ class RiderDetailScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildFinancialSummary(BuildContext context) {
-    return Column(
-      children: [
-        _buildFinanceRow('Current COD Balance', '﷼ 450.00', Colors.orange),
-        _buildFinanceRow('Pending Deposits', '﷼ 120.00', Colors.blue),
-        _buildFinanceRow('Total Earnings (MTD)', '﷼ 3,850.00', Colors.green),
-        const SizedBox(height: 24),
-        Container(
-          width: double.infinity,
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              )
-            ],
-          ),
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const CODReconciliationScreen()));
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: Colors.white,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            child: Text(
-              'View Full Financial Ledger', 
-              style: GoogleFonts.outfit(fontWeight: FontWeight.bold, letterSpacing: 0.5)
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildFinanceRow(String label, String value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-          const Spacer(),
-          Text(value, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
-        ],
-      ),
-    );
-  }
+
+
 
   Widget _buildPerformanceChart(BuildContext context) {
     return Container(

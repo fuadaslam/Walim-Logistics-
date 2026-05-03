@@ -7,6 +7,7 @@ import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboar
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/dashboard/presentation/matching_data_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/capacity_planning_screen.dart';
+import 'package:walim_logistics/features/dashboard/presentation/vehicle_allocation_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/supervisor_dashboard.dart';
 import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/staff_management_screen.dart';
@@ -16,6 +17,10 @@ import 'package:walim_logistics/features/admin/presentation/shift_planner_screen
 import 'package:walim_logistics/features/admin/presentation/supervisor_schedule_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/layout_provider.dart';
+import 'package:walim_logistics/features/tracking/screens/rider_tracking_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/attendance_reports_screen.dart';
 
 class OpsManagerDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -159,29 +164,27 @@ class OpsManagerDashboard extends ConsumerWidget {
         _buildSectionHeader('Core Performance Metrics'),
         const SizedBox(height: 20),
         ResponsiveGrid(
-          desktopCrossAxisCount: 4,
-          tabletCrossAxisCount: 4,
+          desktopCrossAxisCount: 3,
+          tabletCrossAxisCount: 3,
           mobileCrossAxisCount: 2,
           spacing: 12,
           childAspectRatio: 2.1,
           children: [
             DashboardStatCard(
-              label: 'Overall SLA',
-              value: '98.5%',
-              icon: Icons.assignment_turned_in_outlined,
-              color: Colors.green,
-              trend: 'Target: 97%',
-              sparklineData: [95, 96, 94, 98, 97, 98.5],
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupervisorDashboard())),
+              label: 'Active Riders',
+              value: _formatCount(data.activeRiders),
+              icon: Icons.motorcycle_rounded,
+              color: Colors.teal,
+              trend: 'On duty',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
             ),
             DashboardStatCard(
-              label: 'Fleet Utilization',
-              value: '94%',
-              icon: Icons.local_shipping_outlined,
-              color: Colors.blue,
-              trend: 'All zones active',
-              sparklineData: [85, 88, 90, 92, 94, 94],
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CapacityPlanningScreen())),
+              label: 'Riders on Leave',
+              value: data.ridersOnLeave.toString(),
+              icon: Icons.person_off_outlined,
+              color: Colors.orange,
+              trend: 'Scheduled absence',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
             ),
             DashboardStatCard(
               label: 'Active Incidents',
@@ -193,45 +196,28 @@ class OpsManagerDashboard extends ConsumerWidget {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InspectionManagementScreen())),
             ),
             DashboardStatCard(
-              label: 'Peak Capacity',
-              value: _formatCount(data.peakCapacity),
-              icon: Icons.trending_up_outlined,
-              color: Colors.purple,
-              trend: 'Theoretical',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CapacityPlanningScreen())),
-            ),
-            DashboardStatCard(
-              label: 'Active Riders',
-              value: _formatCount(data.activeRiders),
-              icon: Icons.motorcycle_rounded,
-              color: Colors.teal,
-              trend: 'Peak capacity',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
-            ),
-            DashboardStatCard(
-              label: 'Active Groups',
-              value: data.activeGroups.toString(),
-              icon: Icons.groups_rounded,
+              label: 'Supervisors',
+              value: data.supervisorsCount.toString(),
+              icon: Icons.admin_panel_settings_rounded,
               color: Colors.indigo,
-              trend: 'All active',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GroupSetupScreen())),
-            ),
-            DashboardStatCard(
-              label: 'Inactive Riders',
-              value: data.inactiveRiders.toString(),
-              icon: Icons.person_off_outlined,
-              color: Colors.redAccent,
-              trend: 'Action needed',
-              isPositive: data.inactiveRiders == 0,
+              trend: 'Field management',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
             ),
             DashboardStatCard(
-              label: 'Asset Health',
-              value: '${data.assetHealth}%',
-              icon: Icons.health_and_safety_outlined,
+              label: 'SOS',
+              value: data.checkedInToday.toString(),
+              icon: Icons.login_rounded,
               color: Colors.green,
-              trend: 'Stable',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen())),
+              trend: 'Start of Shift',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceReportsScreen())),
+            ),
+            DashboardStatCard(
+              label: 'EOS',
+              value: data.checkedOutToday.toString(),
+              icon: Icons.logout_rounded,
+              color: Colors.blueGrey,
+              trend: 'End of Shift',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceReportsScreen())),
             ),
           ],
         ),
@@ -253,19 +239,19 @@ class OpsManagerDashboard extends ConsumerWidget {
           spacing: 16,
           children: [
             DashboardActionCard(
-              title: 'Fleet Mix Allocation',
+              title: 'Vehicle Allocation',
               subtitle: 'Balance Vans vs Bikes',
               icon: Icons.swap_horiz_outlined,
               color: Colors.indigo,
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CapacityPlanningScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VehicleAllocationScreen())),
             ),
             DashboardActionCard(
-              title: 'SLA Monitoring Hub',
-              subtitle: 'Real-time agreement status',
-              icon: Icons.speed_outlined,
+              title: 'Live Rider Tracking',
+              subtitle: 'Monitor all active riders',
+              icon: Icons.my_location_rounded,
               color: Colors.green,
               badge: 'LIVE',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupervisorDashboard())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderTrackingScreen())),
             ),
             DashboardActionCard(
               title: 'Capacity Planning',
@@ -324,7 +310,28 @@ class OpsManagerDashboard extends ConsumerWidget {
               color: Colors.redAccent,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InspectionManagementScreen())),
             ),
-          ],
+            DashboardActionCard(
+              title: 'Performance Management',
+              subtitle: 'Bonuses, penalties, targets & leaderboard',
+              icon: Icons.military_tech_rounded,
+              color: Colors.indigo,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminPerformanceScreen())),
+            ),
+                          DashboardActionCard(
+                            title: 'Leaderboard',
+                            subtitle: 'Top performers — riders and supervisors',
+                            icon: Icons.leaderboard_rounded,
+                            color: Colors.amber,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
+                          ),
+                          DashboardActionCard(
+                            title: 'SOS/EOS Monitoring',
+                            subtitle: 'View daily supervisor shift reports',
+                            icon: Icons.assignment_turned_in_rounded,
+                            color: Colors.deepPurple,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceReportsScreen())),
+                          ),
+                        ],
         ),
       ],
     );
@@ -338,17 +345,7 @@ class OpsManagerDashboard extends ConsumerWidget {
         const SizedBox(height: 20),
         ActivityFeed(
           onViewAll: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InspectionManagementScreen())),
-          items: data.recentActivity.isEmpty 
-            ? [
-                ActivityItem(
-                  title: 'No recent activity',
-                  subtitle: 'All systems operational',
-                  time: 'Now',
-                  icon: Icons.check_circle_outline,
-                  color: Colors.green,
-                )
-              ]
-            : data.recentActivity.map((item) => ActivityItem(
+          items: data.recentActivity.map((item) => ActivityItem(
                 title: item['title'],
                 subtitle: item['subtitle'],
                 time: item['time'],
@@ -384,7 +381,12 @@ class OpsManagerDashboard extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         if (data.platforms.isEmpty)
-          Text('No platforms registered', style: TextStyle(color: AppColors.textSecondary, fontSize: 12))
+          const EmptyStatePlaceholder(
+            icon: Icons.hub_outlined,
+            title: 'No platforms registered',
+            subtitle: 'You haven\'t linked any external delivery platforms yet.',
+            color: Colors.teal,
+          )
         else
           ...data.platforms.map((p) => Column(
             children: [

@@ -5,6 +5,7 @@ import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:intl/intl.dart';
 
 class LeaveManagementScreen extends ConsumerWidget {
@@ -56,41 +57,19 @@ class LeaveManagementScreen extends ConsumerWidget {
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (e, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: Column(
-                children: [
-                  const Icon(Icons.error_outline, color: AppColors.error, size: 40),
-                  const SizedBox(height: 12),
-                  Text('Failed to load requests',
-                      style: GoogleFonts.outfit(color: AppColors.error)),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => ref.refresh(hrAllLeaveRequestsProvider),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            ),
+          error: (e, _) => EmptyStatePlaceholder(
+            icon: Icons.error_outline_rounded,
+            title: 'Requests Unavailable',
+            subtitle: 'We couldn\'t load the leave requests. Error: $e',
+            color: AppColors.error,
           ),
           data: (requests) {
             if (requests.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(40),
-                  child: Column(
-                    children: [
-                      Icon(Icons.event_available_rounded,
-                          size: 48,
-                          color: AppColors.textSecondary.withOpacity(0.3)),
-                      const SizedBox(height: 16),
-                      Text('No leave requests yet',
-                          style: GoogleFonts.outfit(
-                              color: AppColors.textSecondary)),
-                    ],
-                  ),
-                ),
+              return const EmptyStatePlaceholder(
+                icon: Icons.event_available_rounded,
+                title: 'No Leave Requests',
+                subtitle: 'There are no pending or history requests to display.',
+                color: Colors.green,
               );
             }
             return ListView.builder(

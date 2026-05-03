@@ -82,3 +82,8 @@ final hrRecentActivityProvider = FutureProvider<List<Map<String, dynamic>>>((ref
 final allStaffProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(hrRepositoryProvider).getAllStaff();
 });
+
+final onboardingStaffProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.watch(hrRepositoryProvider).getOnboardingStaff();
+});
+

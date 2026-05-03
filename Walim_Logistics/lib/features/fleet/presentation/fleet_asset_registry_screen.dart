@@ -5,6 +5,7 @@ import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/tracking/models/vehicle.dart';
 import 'package:walim_logistics/features/tracking/screens/vehicle_detail_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 
 class FleetAssetRegistryScreen extends ConsumerWidget {
@@ -163,7 +164,24 @@ class FleetAssetRegistryScreen extends ConsumerWidget {
             },
           );
 
-    if (!showScaffold) return content;
+    if (!showScaffold) {
+      return CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 40 : 20,
+              vertical: isDesktop ? 30 : 20,
+            ),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildHeader(context, ref),
+                content,
+              ]),
+            ),
+          ),
+        ],
+      );
+    }
 
     return DashboardScaffold(
       title: 'FLEET ASSET REGISTRY',
@@ -179,6 +197,56 @@ class FleetAssetRegistryScreen extends ConsumerWidget {
       children: [
         content,
       ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, WidgetRef ref) {
+    final isDesktop = MediaQuery.of(context).size.width > 900;
+    
+    return Padding(
+      padding: EdgeInsets.only(bottom: isDesktop ? 32 : 24),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              } else {
+                ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard);
+              }
+            },
+            icon: const Icon(Icons.arrow_back_rounded),
+            style: IconButton.styleFrom(
+              backgroundColor: Theme.of(context).cardColor,
+              padding: const EdgeInsets.all(12),
+              side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+            ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'FLEET ASSET REGISTRY',
+                  style: GoogleFonts.outfit(
+                    fontSize: isDesktop ? 28 : 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).textTheme.titleLarge?.color,
+                  ),
+                ),
+                Text(
+                  'Track vehicle registrations, inspections, and insurance',
+                  style: GoogleFonts.outfit(
+                    fontSize: isDesktop ? 14 : 12,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

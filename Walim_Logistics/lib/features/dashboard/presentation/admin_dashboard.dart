@@ -17,6 +17,10 @@ import 'package:walim_logistics/features/hr/presentation/staff_management_screen
 import 'package:walim_logistics/features/admin/presentation/group_setup_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/shift_planner_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/supervisor_schedule_screen.dart';
+import 'package:walim_logistics/features/tracking/screens/rider_tracking_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/attendance_reports_screen.dart';
 
 class AdminDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -57,7 +61,7 @@ class AdminDashboard extends ConsumerWidget {
       children: [
         // Greeting & Status Section
         _buildGreeting(context, ref),
-        const SizedBox(height: 32),
+        const SizedBox(height: 16),
 
         // KPI Section
         if (stats.isLoading)
@@ -69,6 +73,9 @@ class AdminDashboard extends ConsumerWidget {
           )
         else
           ResponsiveGrid(
+            tabletCrossAxisCount: 4,
+            childAspectRatio: 2.1,
+            spacing: 16,
             children: [
               DashboardStatCard(
                 label: 'Active Riders',
@@ -89,29 +96,27 @@ class AdminDashboard extends ConsumerWidget {
                 sparklineData: const [50, 45, 60, 55, 70, 65, 80],
               ),
               DashboardStatCard(
-                label: 'Fleet Health',
-                value: '${stats.fleetHealth}%',
-                icon: Icons.verified_user_outlined,
+                label: 'On Leave',
+                value: stats.onLeave.toString(),
+                icon: Icons.person_off_outlined,
                 color: Colors.green,
-                trend: 'Operational',
-                isPositive: stats.fleetHealth >= 90,
-                sparklineData: const [98, 97, 96, 95, 94, 95, 94],
+                trend: 'Current',
+                isPositive: stats.onLeave < 5,
+                sparklineData: const [2, 3, 2, 4, 3, 2, 2],
               ),
               DashboardStatCard(
-                label: 'Pending COD',
-                value: stats.pendingCod > 0
-                    ? '\u{FDFC} ${(stats.pendingCod / 1000).toStringAsFixed(1)}k'
-                    : '\u{FDFC} 0',
-                icon: Icons.payments_outlined,
+                label: 'Requests',
+                value: stats.pendingRequests.toString(),
+                icon: Icons.assignment_late_outlined,
                 color: Colors.purple,
-                trend: 'Unreconciled',
-                isPositive: false,
-                sparklineData: const [5, 8, 6, 10, 12, 11, 12.4],
+                trend: 'Pending',
+                isPositive: stats.pendingRequests == 0,
+                sparklineData: const [5, 8, 6, 10, 12, 11, 8],
               ),
             ],
           ),
         
-        const SizedBox(height: 40),
+        const SizedBox(height: 16),
 
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,35 +131,31 @@ class AdminDashboard extends ConsumerWidget {
                   const SizedBox(height: 20),
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      final crossAxisCount = constraints.maxWidth > 600 ? 2 : 1;
+                      int crossAxisCount = 1;
+                      if (constraints.maxWidth > 1100) {
+                        crossAxisCount = 3;
+                      } else if (constraints.maxWidth > 600) {
+                        crossAxisCount = 2;
+                      }
                       
                       return GridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisCount: crossAxisCount,
-                        mainAxisSpacing: 20,
-                        crossAxisSpacing: 20,
-                        childAspectRatio: 2.4,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: crossAxisCount == 3 ? 2.5 : (crossAxisCount == 2 ? 3.2 : 4.5),
                         children: [
                           DashboardActionCard(
-                            title: 'Live Operations Map',
-                            subtitle: 'Monitor all active riders and deliveries',
-                            icon: Icons.map_outlined,
+                            title: 'Live Rider Tracking',
+                            subtitle: 'Monitor all active riders in real-time',
+                            icon: Icons.my_location_rounded,
                             color: AppColors.primary,
                             onTap: () => Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => Theme(
-                                data: tracking_theme.AppTheme.theme,
-                                child: const walim_tracking.HomeScreen(),
-                              ),
+                              builder: (_) => const RiderTrackingScreen(),
                             )),
                           ),
-                          DashboardActionCard(
-                            title: 'Financial Reconciliation',
-                            subtitle: 'Audit COD collections and platform reports',
-                            icon: Icons.account_balance_wallet_outlined,
-                            color: Colors.green,
-                            onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.finance),
-                          ),
+
                           DashboardActionCard(
                             title: 'Inventory & Assets',
                             subtitle: 'Manage uniforms, bags, and fuel cards',
@@ -163,11 +164,18 @@ class AdminDashboard extends ConsumerWidget {
                             onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.assets),
                           ),
                           DashboardActionCard(
-                            title: 'Performance Analytics',
-                            subtitle: 'View detailed fleet and rider reports',
-                            icon: Icons.analytics_outlined,
+                            title: 'Performance Management',
+                            subtitle: 'Bonuses, penalties, targets & leaderboard',
+                            icon: Icons.military_tech_rounded,
                             color: Colors.indigo,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupervisorDashboard())),
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminPerformanceScreen())),
+                          ),
+                          DashboardActionCard(
+                            title: 'Leaderboard',
+                            subtitle: 'Top performers — riders and supervisors',
+                            icon: Icons.leaderboard_rounded,
+                            color: Colors.amber,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
                           ),
                           DashboardActionCard(
                             title: 'HR Management',
@@ -203,6 +211,13 @@ class AdminDashboard extends ConsumerWidget {
                             icon: Icons.assignment_ind_rounded,
                             color: Colors.orange,
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupervisorScheduleScreen())),
+                          ),
+                          DashboardActionCard(
+                            title: 'SOS/EOS Monitoring',
+                            subtitle: 'View daily supervisor shift reports',
+                            icon: Icons.assignment_turned_in_rounded,
+                            color: Colors.deepPurple,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceReportsScreen())),
                           ),
                         ],
                       );
@@ -272,19 +287,19 @@ class AdminDashboard extends ConsumerWidget {
     final dateStr = '${months[now.month - 1]} ${now.day}, ${now.year}';
 
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.15 : 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: AppColors.primary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.15 : 0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -297,16 +312,16 @@ class AdminDashboard extends ConsumerWidget {
                 Text(
                   'Good Morning, $displayName',
                   style: GoogleFonts.outfit(
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   'Your $role dashboard is operating at 94% efficiency today.',
                   style: GoogleFonts.outfit(
-                    fontSize: 16,
+                    fontSize: 14,
                     color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
@@ -314,20 +329,21 @@ class AdminDashboard extends ConsumerWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today, color: Colors.white, size: 16),
-                const SizedBox(width: 8),
+                const Icon(Icons.calendar_today, color: Colors.white, size: 14),
+                const SizedBox(width: 6),
                 Text(
                   dateStr,
                   style: GoogleFonts.outfit(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    fontSize: 13,
                   ),
                 ),
               ],
@@ -351,10 +367,10 @@ class AdminDashboard extends ConsumerWidget {
 
   Widget _buildAdminTools(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
       ),
       child: Column(

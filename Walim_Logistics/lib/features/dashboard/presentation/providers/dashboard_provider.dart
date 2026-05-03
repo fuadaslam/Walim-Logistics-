@@ -10,10 +10,13 @@ final dashboardRepositoryProvider = Provider((ref) {
 class DashboardData {
   final int activeRiders;
   final int inactiveRiders;
+  final int ridersOnLeave;
   final int activeIncidents;
   final int activeGroups;
+  final int supervisorsCount;
   final int assetHealth;
-  final int checkedInToday;
+  final int checkedInToday; // SOS
+  final int checkedOutToday; // EOS
   final int pendingInspections;
   final int peakCapacity;
   final List<Map<String, dynamic>> platforms;
@@ -26,10 +29,13 @@ class DashboardData {
   DashboardData({
     this.activeRiders = 0,
     this.inactiveRiders = 0,
+    this.ridersOnLeave = 0,
     this.activeIncidents = 0,
     this.activeGroups = 0,
+    this.supervisorsCount = 0,
     this.assetHealth = 0,
     this.checkedInToday = 0,
+    this.checkedOutToday = 0,
     this.pendingInspections = 0,
     this.peakCapacity = 0,
     this.platforms = const [],
@@ -43,10 +49,13 @@ class DashboardData {
   DashboardData copyWith({
     int? activeRiders,
     int? inactiveRiders,
+    int? ridersOnLeave,
     int? activeIncidents,
     int? activeGroups,
+    int? supervisorsCount,
     int? assetHealth,
     int? checkedInToday,
+    int? checkedOutToday,
     int? pendingInspections,
     int? peakCapacity,
     List<Map<String, dynamic>>? platforms,
@@ -59,10 +68,13 @@ class DashboardData {
     return DashboardData(
       activeRiders: activeRiders ?? this.activeRiders,
       inactiveRiders: inactiveRiders ?? this.inactiveRiders,
+      ridersOnLeave: ridersOnLeave ?? this.ridersOnLeave,
       activeIncidents: activeIncidents ?? this.activeIncidents,
       activeGroups: activeGroups ?? this.activeGroups,
+      supervisorsCount: supervisorsCount ?? this.supervisorsCount,
       assetHealth: assetHealth ?? this.assetHealth,
       checkedInToday: checkedInToday ?? this.checkedInToday,
+      checkedOutToday: checkedOutToday ?? this.checkedOutToday,
       pendingInspections: pendingInspections ?? this.pendingInspections,
       peakCapacity: peakCapacity ?? this.peakCapacity,
       platforms: platforms ?? this.platforms,
@@ -93,10 +105,13 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
       state = state.copyWith(
         activeRiders: metrics['activeRiders'],
         inactiveRiders: metrics['inactiveRiders'],
+        ridersOnLeave: metrics['ridersOnLeave'],
         activeIncidents: metrics['activeIncidents'],
         activeGroups: metrics['activeGroups'],
+        supervisorsCount: metrics['supervisorsCount'],
         assetHealth: metrics['assetHealth'],
         checkedInToday: metrics['checkedInToday'],
+        checkedOutToday: metrics['checkedOutToday'],
         pendingInspections: metrics['pendingInspections'],
         peakCapacity: metrics['peakCapacity'],
         platforms: List<Map<String, dynamic>>.from(metrics['platforms']),

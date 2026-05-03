@@ -82,4 +82,5 @@ supabase/.temp/
 # Project Specific
 .claude/
 memory/
+DATA_IMPORT_INTEGRATION.*
 supabase/migrations/002_phase1_supervisor_tables.sql

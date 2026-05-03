@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FinanceRepository {
@@ -5,63 +6,46 @@ class FinanceRepository {
 
   FinanceRepository(this._supabase);
 
-  Future<void> reportCashCollection({
-    required String profileId,
-    required String platformId,
-    required double amount,
-  }) async {
-    await _supabase.from('cod_reconciliation').insert({
-      'profile_id': profileId,
-      'platform_id': platformId,
-      'collected_amount': amount,
-      'status': 'pending',
-    });
+
+
+  Future<Map<String, double>> getFinanceStats() async {
+    double fuelExpenses = 0;
+    try {
+      final expensesResponse = await _supabase
+          .from('expenses')
+          .select('amount')
+          .eq('category', 'fuel');
+      for (final row in expensesResponse) {
+        fuelExpenses += (row['amount'] as num?)?.toDouble() ?? 0.0;
+      }
+    } catch (e) {
+      debugPrint('Fuel expenses unavailable: $e');
+    }
+
+    return {
+      'fuelExpenses': fuelExpenses,
+    };
   }
 
-  Future<List<Map<String, dynamic>>> getPendingReconciliations() async {
-    return await _supabase
-        .from('cod_reconciliation')
-        .select('*, profiles!inner(full_name), platforms!inner(name)')
-        .eq('status', 'pending')
-        .order('created_at', ascending: false);
+
+
+
+
+
+
+  Future<List<Map<String, dynamic>>> getUpcomingInvoices() async {
+    try {
+      return await _supabase
+          .from('vendor_invoices')
+          .select()
+          .order('due_date', ascending: true)
+          .limit(5);
+    } catch (_) {
+      return [];
+    }
   }
 
-  Future<void> reconcile({
-    required String reconId,
-    required double expectedAmount,
-    required String status,
-  }) async {
-    final row = await _supabase
-        .from('cod_reconciliation')
-        .select('collected_amount')
-        .eq('id', reconId)
-        .single();
 
-    final discrepancy = expectedAmount - ((row['collected_amount'] as num?)?.toDouble() ?? 0.0);
-
-    await _supabase.from('cod_reconciliation').update({
-      'expected_amount': expectedAmount,
-      'discrepancy': discrepancy,
-      'status': status,
-      'reconciled_at': DateTime.now().toIso8601String(),
-    }).eq('id', reconId);
-  }
-
-  Future<List<Map<String, dynamic>>> getPlatforms() async {
-    return await _supabase
-        .from('platforms')
-        .select()
-        .order('name', ascending: true);
-  }
-
-  Future<List<Map<String, dynamic>>> getReconciliationForPlatform(
-    String platformId,
-  ) async {
-    return await _supabase
-        .from('cod_reconciliation')
-        .select('*, profiles!inner(full_name, status)')
-        .eq('platform_id', platformId)
-        .order('created_at', ascending: false)
-        .limit(30);
-  }
 }
+
+

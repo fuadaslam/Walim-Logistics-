@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/admin/data/operations_repository.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'rider_group_assignment_screen.dart';
 
 final _groupsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>(
@@ -40,8 +41,13 @@ class GroupSetupScreen extends ConsumerWidget {
           error: (e, _) => _ErrorTile(message: e.toString()),
           data: (groups) {
             if (groups.isEmpty) {
-              return _EmptyState(
-                onTap: () => _showGroupDialog(context, ref, null),
+              return EmptyStatePlaceholder(
+                icon: Icons.groups_outlined,
+                title: 'No groups yet',
+                subtitle: 'Create your first group to start assigning riders to supervisors.',
+                color: AppColors.primary,
+                actionLabel: 'Create Group',
+                onAction: () => _showGroupDialog(context, ref, null),
               );
             }
             return ListView.separated(
@@ -478,47 +484,6 @@ class _ActionBtn extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  final VoidCallback onTap;
-  const _EmptyState({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          children: [
-            Icon(Icons.groups_outlined,
-                size: 64, color: Colors.grey.withOpacity(0.4)),
-            const SizedBox(height: 16),
-            Text('No groups yet.',
-                style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w700, fontSize: 18)),
-            const SizedBox(height: 8),
-            Text('Create your first group to start assigning riders.',
-                style:
-                    GoogleFonts.outfit(fontSize: 13, color: Colors.grey)),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: onTap,
-              icon: const Icon(Icons.add_rounded, color: Colors.white),
-              label: Text('Create Group',
-                  style: GoogleFonts.outfit(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12))),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _ErrorTile extends StatelessWidget {
   final String message;

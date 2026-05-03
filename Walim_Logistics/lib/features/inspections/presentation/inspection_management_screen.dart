@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'inspection_notifier.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:intl/intl.dart';
 
 class InspectionManagementScreen extends ConsumerWidget {
@@ -137,18 +138,13 @@ class InspectionManagementScreen extends ConsumerWidget {
 
   Widget _buildRiderList(List<RiderInspectionState> riders, bool isCompleted) {
     if (riders.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person_off_rounded, size: 64, color: AppColors.textSecondary.withOpacity(0.2)),
-            const SizedBox(height: 16),
-            Text(
-              'No riders found in this category',
-              style: GoogleFonts.outfit(color: AppColors.textSecondary),
-            ),
-          ],
-        ),
+      return EmptyStatePlaceholder(
+        icon: isCompleted ? Icons.task_alt_rounded : Icons.person_off_rounded,
+        title: isCompleted ? 'No completed inspections' : 'All clear!',
+        subtitle: isCompleted 
+            ? 'Waiting for riders to submit their daily safety checks.' 
+            : 'Every rider on duty has completed their safety inspection.',
+        color: isCompleted ? Colors.blue : Colors.green,
       );
     }
 

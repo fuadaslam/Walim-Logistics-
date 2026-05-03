@@ -14,6 +14,12 @@ import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboar
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/rider_data_provider.dart';
+import 'package:walim_logistics/core/services/location_service.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/location_permission_alert.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/office_request_alert.dart';
+import 'package:walim_logistics/features/tracking/services/location_providers.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/my_performance_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
 import 'package:intl/intl.dart';
 
 class RiderDashboard extends ConsumerWidget {
@@ -47,6 +53,13 @@ class RiderDashboard extends ConsumerWidget {
           ),
         );
       }
+
+      // Start/Stop tracking based on shift status
+      if (next.hasActiveShift && !(previous?.hasActiveShift ?? false)) {
+        ref.read(locationServiceProvider).startTracking();
+      } else if (!next.hasActiveShift && (previous?.hasActiveShift ?? false)) {
+        ref.read(locationServiceProvider).stopTracking();
+      }
     });
 
     final l10n = AppLocalizations.of(context)!;
@@ -55,7 +68,10 @@ class RiderDashboard extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final userName = authState.profile?.fullName ?? 'Rider';
     final greeting = _getGreeting();
-    final weatherStatus = "Riyadh: 32°C • Clear";
+    
+    final zoneAsync = ref.watch(riderZoneProvider);
+    final currentZone = zoneAsync.value?['name'] ?? 'Riyadh';
+    final weatherStatus = "$currentZone: 32°C • Clear";
 
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -161,10 +177,17 @@ class RiderDashboard extends ConsumerWidget {
     String weather,
   ) {
     final isMobile = MediaQuery.of(context).size.width < 900;
+    final hasPermission = ref.watch(permissionStatusProvider).value ?? true;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (authState.profile != null)
+          OfficeRequestAlert(profileId: authState.profile!.id),
+        if (attendanceState.hasActiveShift && !hasPermission)
+          LocationPermissionAlert(onRetry: () {
+            ref.invalidate(permissionStatusProvider);
+          }),
         if (attendanceState.todayCheckIns < 3 &&
             !attendanceState.hasActiveShift)
           Padding(
@@ -385,6 +408,24 @@ class RiderDashboard extends ConsumerWidget {
                     .setTab(DashboardTab.requests);
               },
             ),
+            DashboardActionCard(
+              title: 'My Performance',
+              subtitle: 'Your score, targets and this month\'s adjustments',
+              icon: Icons.bar_chart_rounded,
+              color: Colors.indigo,
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyPerformanceScreen()));
+              },
+            ),
+            DashboardActionCard(
+              title: 'Leaderboard',
+              subtitle: 'See how you rank among all riders',
+              icon: Icons.leaderboard_rounded,
+              color: Colors.amber,
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LeaderboardScreen()));
+              },
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -417,23 +458,11 @@ class RiderDashboard extends ConsumerWidget {
           error: (e, _) => const SizedBox.shrink(),
           data: (requests) {
             if (requests.isEmpty) {
-              return Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.5)),
-                ),
-                child: Center(
-                  child: Text('No requests yet',
-                      style: GoogleFonts.outfit(
-                          color: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.color
-                              ?.withOpacity(0.5))),
-                ),
+              return const EmptyStatePlaceholder(
+                icon: Icons.history_rounded,
+                title: 'No requests yet',
+                subtitle: 'Your leave and HR requests will appear here once submitted.',
+                color: Colors.blueGrey,
               );
             }
             return Container(
@@ -564,10 +593,11 @@ class RiderDashboard extends ConsumerWidget {
           error: (_, __) => const SizedBox.shrink(),
           data: (assets) {
             if (assets.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text('No assets assigned',
-                    style: GoogleFonts.outfit(color: AppColors.textSecondary)),
+              return const EmptyStatePlaceholder(
+                icon: Icons.inventory_2_outlined,
+                title: 'No assets assigned',
+                subtitle: 'You don\'t have any company equipment assigned to you yet.',
+                color: Colors.blueGrey,
               );
             }
             return Column(
@@ -628,7 +658,7 @@ class RiderDashboard extends ConsumerWidget {
               : const SizedBox.shrink(),
         ),
         const SizedBox(height: 24),
-        _buildMapPreview(context),
+        _buildMapPreview(context, ref),
       ],
     );
   }
@@ -665,7 +695,8 @@ class RiderDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildMapPreview(BuildContext context) {
+  Widget _buildMapPreview(BuildContext context, WidgetRef ref) {
+    final zoneAsync = ref.watch(riderZoneProvider);
     return Container(
       height: 220,
       width: double.infinity,
@@ -741,7 +772,7 @@ class RiderDashboard extends ConsumerWidget {
                     ],
                   ),
                   child: Text(
-                    'Riyadh Central Zone',
+                    zoneAsync.value?['name'] ?? 'Riyadh Central Zone',
                     style: GoogleFonts.outfit(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
@@ -843,7 +874,7 @@ class RiderDashboard extends ConsumerWidget {
 
                           Text(
                             isActive
-                                ? 'Riyadh Central • 04h 22m'
+                                ? '${ref.watch(riderZoneProvider).value?['name'] ?? 'Riyadh Central'} • 04h 22m'
                                 : 'Within Geo-fence Area',
                             style: GoogleFonts.outfit(
                               color: Colors.white,
@@ -943,7 +974,7 @@ class RiderDashboard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isActive ? 'ZONE: RIYADH CENTRAL' : 'NOT ON DUTY',
+                        isActive ? 'ZONE: ${(ref.watch(riderZoneProvider).value?['name'] as String?)?.toUpperCase() ?? 'RIYADH CENTRAL'}' : 'NOT ON DUTY',
                         style: GoogleFonts.outfit(
                           color: Colors.white.withOpacity(0.8),
                           fontSize: 12,

@@ -8,10 +8,17 @@ import 'package:walim_logistics/features/incidents/presentation/incident_approva
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/dashboard/presentation/matching_data_screen.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/office_request_alert.dart';
 import 'package:walim_logistics/features/supervisor/presentation/daily_shift_control_screen.dart';
 import 'package:walim_logistics/features/supervisor/presentation/supervisor_group_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/layout_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:walim_logistics/features/tracking/screens/rider_tracking_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/my_performance_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/performance_calculation_screen.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 
 class SupervisorDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -58,7 +65,11 @@ class SupervisorDashboard extends ConsumerWidget {
 
     if (!isDesktop) {
       return Column(
-        children: layout.sections.map((section) => _buildSection(context, ref, section, data)).toList(),
+        children: [
+          if (ref.watch(authProvider).profile != null)
+            OfficeRequestAlert(profileId: ref.watch(authProvider).profile!.id),
+          ...layout.sections.map((section) => _buildSection(context, ref, section, data)).toList(),
+        ],
       );
     }
 
@@ -86,7 +97,11 @@ class SupervisorDashboard extends ConsumerWidget {
           flex: 2,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: leftColumn,
+            children: [
+              if (ref.watch(authProvider).profile != null)
+                OfficeRequestAlert(profileId: ref.watch(authProvider).profile!.id),
+              ...leftColumn,
+            ],
           ),
         ),
         if (rightColumn.isNotEmpty) ...[
@@ -105,9 +120,9 @@ class SupervisorDashboard extends ConsumerWidget {
   Widget _buildSection(BuildContext context, WidgetRef ref, DashboardSection section, DashboardData data) {
     switch (section) {
       case DashboardSection.metrics:
-        return _buildMetricsSection(context, data);
+        return _buildMetricsSection(context, ref, data);
       case DashboardSection.actions:
-        return _buildActionsSection(context);
+        return _buildActionsSection(context, ref);
       case DashboardSection.activity:
         return _buildActivitySection(data);
       case DashboardSection.intelligence:
@@ -117,7 +132,7 @@ class SupervisorDashboard extends ConsumerWidget {
     }
   }
 
-  Widget _buildMetricsSection(BuildContext context, DashboardData data) {
+  Widget _buildMetricsSection(BuildContext context, WidgetRef ref, DashboardData data) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -130,6 +145,7 @@ class SupervisorDashboard extends ConsumerWidget {
         _buildSectionHeader('Fleet Performance Metrics'),
         const SizedBox(height: 24),
         ResponsiveGrid(
+          tabletCrossAxisCount: 4,
           children: [
             DashboardStatCard(
               label: 'Avg. Time/Deliv',
@@ -169,7 +185,7 @@ class SupervisorDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionsSection(BuildContext context) {
+  Widget _buildActionsSection(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -182,12 +198,12 @@ class SupervisorDashboard extends ConsumerWidget {
           childAspectRatio: 2.2,
           children: [
             DashboardActionCard(
-              title: 'Live Heatmaps',
-              subtitle: 'Rider concentration vs Demand',
-              icon: Icons.layers_outlined,
+              title: 'Live Rider Tracking',
+              subtitle: 'Monitor your group in real-time',
+              icon: Icons.my_location_rounded,
               color: Colors.orange,
               onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LiveTrackingScreen()));
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RiderTrackingScreen()));
               },
             ),
             DashboardActionCard(
@@ -215,6 +231,46 @@ class SupervisorDashboard extends ConsumerWidget {
               color: Colors.blue,
               onTap: () {},
             ),
+            DashboardActionCard(
+              title: 'Performance Management',
+              subtitle: 'Issue bonuses, penalties & set targets',
+              icon: Icons.military_tech_rounded,
+              color: Colors.indigo,
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPerformanceScreen()));
+              },
+            ),
+            DashboardActionCard(
+              title: 'Leaderboard',
+              subtitle: 'Top riders and supervisors this month',
+              icon: Icons.leaderboard_rounded,
+              color: Colors.amber,
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LeaderboardScreen()));
+              },
+            ),
+            if (ref.read(authProvider).profile?.role == 'Admin' || 
+                ref.read(authProvider).profile?.role == 'Operations Manager')
+              DashboardActionCard(
+                title: 'Scoring Configuration',
+                subtitle: 'Design how performance scores are calculated',
+                icon: Icons.settings_suggest_rounded,
+                color: Colors.deepPurple,
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PerformanceCalculationScreen()));
+                },
+              ),
+            if (ref.read(authProvider).profile?.role != 'Admin' && 
+                ref.read(authProvider).profile?.role != 'Operations Manager')
+              DashboardActionCard(
+                title: 'My Performance',
+                subtitle: 'Your score, targets and adjustments',
+                icon: Icons.bar_chart_rounded,
+                color: Colors.teal,
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyPerformanceScreen()));
+                },
+              ),
           ],
         ),
       ],
@@ -228,9 +284,10 @@ class SupervisorDashboard extends ConsumerWidget {
         _buildSectionHeader('Live Operational Feed'),
         const SizedBox(height: 24),
         if (data.recentActivity.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Text('No recent activity'),
+          const EmptyStatePlaceholder(
+            icon: Icons.notifications_none_rounded,
+            title: 'No recent activity',
+            subtitle: 'All systems operational. New updates will appear here in real-time.',
           )
         else
           ...data.recentActivity.map((activity) => Column(
@@ -255,7 +312,12 @@ class SupervisorDashboard extends ConsumerWidget {
         _buildSectionHeader('Platform Distribution'),
         const SizedBox(height: 24),
         if (data.platformShare.isEmpty)
-          const Text('No data available')
+          const EmptyStatePlaceholder(
+            icon: Icons.pie_chart_outline_rounded,
+            title: 'No data available',
+            subtitle: 'Waiting for platform distribution data to be processed.',
+            color: Colors.indigo,
+          )
         else
           ...data.platformShare.map((p) => Column(
             children: [

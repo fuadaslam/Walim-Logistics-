@@ -109,6 +109,7 @@ class ITDevDashboard extends ConsumerWidget {
         _buildSectionHeader('System Performance'),
         const SizedBox(height: 24),
         ResponsiveGrid(
+          tabletCrossAxisCount: 4,
           children: const [
             DashboardStatCard(
               label: 'Server Uptime',

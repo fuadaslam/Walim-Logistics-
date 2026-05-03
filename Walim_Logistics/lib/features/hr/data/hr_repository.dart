@@ -96,9 +96,19 @@ class HRRepository {
 
   Future<List<Map<String, dynamic>>> getAllStaff() async {
     final response = await _supabase.from('profiles').select('*, roles(name)');
-    return (response as List).map((p) => {
-      ...p as Map<String, dynamic>,
-      'role': p['roles']['name'],
+    return (response as List).map((p) {
+      final profile = p as Map<String, dynamic>;
+      final roleData = profile['roles'];
+      String roleName = 'Staff';
+      if (roleData is Map) {
+        roleName = roleData['name'] ?? 'Staff';
+      } else if (roleData is List && roleData.isNotEmpty) {
+        roleName = roleData[0]['name'] ?? 'Staff';
+      }
+      return {
+        ...profile,
+        'role': roleName,
+      };
     }).toList().cast<Map<String, dynamic>>();
   }
 
@@ -107,19 +117,22 @@ class HRRepository {
       _supabase.from('attendance').select('id').eq('profile_id', profileId).eq('attendance_type', 'shift'),
       _supabase.from('leave_requests').select('id').eq('profile_id', profileId).eq('status', 'pending'),
       _supabase.from('incidents').select('id').eq('reported_by', profileId).eq('status', 'pending'),
+      _supabase.from('leave_requests').select('id').eq('profile_id', profileId).eq('status', 'Approved'),
     ]);
 
     final workingDays = (results[0] as List).length;
     final pendingLeaves = (results[1] as List).length;
     final pendingIncidents = (results[2] as List).length;
+    final approvedLeaves = (results[3] as List).length;
 
     return {
       'workingDays': workingDays,
-      'workingHours': (workingDays * 8).toString(), // Mocked for now: 8h per day
-      'leaveDays': '14', // Placeholder for now
+      'workingHours': (workingDays * 8).toString(), 
+      'leaveDays': approvedLeaves.toString(),
       'pendingRequests': pendingLeaves + pendingIncidents,
     };
   }
+
 
   Future<List<Map<String, dynamic>>> getAssetsForProfile(String profileId) async {
     return await _supabase
@@ -136,4 +149,45 @@ class HRRepository {
         .eq('profile_id', profileId)
         .order('expiry_date', ascending: true);
   }
+
+  Future<List<Map<String, dynamic>>> getOnboardingStaff() async {
+    final staff = await _supabase
+        .from('profiles')
+        .select('id, full_name, created_at, iqama_number, passport_number, roles(name)')
+        .order('created_at', ascending: false)
+        .limit(10);
+
+    if ((staff as List).isEmpty) return [];
+
+    return Future.wait((staff as List).map((p) async {
+      final id = p['id'] as String;
+
+      final assetAssignments = await _supabase
+          .from('asset_assignments')
+          .select('id')
+          .eq('profile_id', id)
+          .filter('returned_at', 'is', null)
+          .limit(1);
+
+      final roleData = p['roles'];
+      final roleName =
+          roleData is Map ? (roleData['name'] as String?) ?? 'Staff' : 'Staff';
+      final createdAt = p['created_at'] as String?;
+      final hasLegalDocs =
+          p['iqama_number'] != null && p['passport_number'] != null;
+
+      return {
+        'id': id,
+        'name': p['full_name'] ?? 'Unknown',
+        'role': roleName,
+        'contract': hasLegalDocs ? 'Signed' : 'Pending',
+        'training': 0.0,
+        'assets':
+            (assetAssignments as List).isNotEmpty ? 'Assigned' : 'Pending',
+        'startDate':
+            createdAt != null ? createdAt.split('T')[0] : 'Unknown',
+      };
+    }));
+  }
 }
+

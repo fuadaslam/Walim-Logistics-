@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'leave_request_notifier.dart';
 
 class LeaveRequestScreen extends ConsumerStatefulWidget {
@@ -376,21 +377,11 @@ class _LeaveRequestScreenState extends ConsumerState<LeaveRequestScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.requests.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 40),
-          child: Column(
-            children: [
-              Icon(Icons.event_available_rounded,
-                  size: 48,
-                  color: AppColors.textSecondary.withOpacity(0.3)),
-              const SizedBox(height: 16),
-              Text('No requests yet',
-                  style:
-                      GoogleFonts.outfit(color: AppColors.textSecondary)),
-            ],
-          ),
-        ),
+      return const EmptyStatePlaceholder(
+        icon: Icons.event_available_rounded,
+        title: 'No Requests Yet',
+        subtitle: 'You haven\'t submitted any leave or absence requests.',
+        color: Colors.blueGrey,
       );
     }
     return ListView.builder(

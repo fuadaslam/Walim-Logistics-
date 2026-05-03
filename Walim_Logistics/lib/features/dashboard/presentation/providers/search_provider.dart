@@ -100,11 +100,12 @@ class SearchNotifier extends StateNotifier<SearchState> {
     });
 
     // 3. Static Screens / Navigation
-    final screens = [
-      {'title': 'Live Operations', 'subtitle': 'Real-time tracking', 'route': 'Live Ops'},
+    const screens = [
+      {'title': 'Live GPS', 'subtitle': 'Real-time tracking', 'route': 'Live GPS'},
+      {'title': 'Live Rider Tracking', 'subtitle': 'Rider positioning', 'route': 'Live Rider'},
       {'title': 'HR Management', 'subtitle': 'Staff and Leaves', 'route': 'HR'},
       {'title': 'Asset Registry', 'subtitle': 'Fleet and Equipment', 'route': 'Assets'},
-      {'title': 'Finance Hub', 'subtitle': 'Reconciliation and COD', 'route': 'Finance'},
+      {'title': 'Finance Hub', 'subtitle': 'Payroll and Invoicing', 'route': 'Finance'},
       {'title': 'Performance Hub', 'subtitle': 'SLA Analytics', 'route': 'Performance'},
       {'title': 'Settings', 'subtitle': 'App Preferences', 'route': 'Settings'},
     ];

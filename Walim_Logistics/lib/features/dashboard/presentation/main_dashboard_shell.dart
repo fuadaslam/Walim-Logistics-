@@ -20,11 +20,12 @@ import 'package:walim_logistics/features/tracking/screens/home_screen.dart' as w
 import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
 import 'package:walim_logistics/features/tracking/theme/app_theme.dart' as tracking_theme;
 import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
-import 'package:walim_logistics/features/finance/presentation/reconciliation_dashboard.dart';
 import 'package:walim_logistics/features/inspections/presentation/inspection_screen.dart';
 import 'package:walim_logistics/features/support/presentation/support_tickets_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/document_vault_screen.dart';
 import 'package:walim_logistics/features/requests/presentation/leave_request_screen.dart' as rider_requests;
+import 'package:walim_logistics/features/fleet/presentation/live_tracking_screen.dart';
+import 'package:walim_logistics/features/tracking/presentation/widgets/live_rider_map.dart';
 
 class MainDashboardShell extends ConsumerWidget {
   const MainDashboardShell({super.key});
@@ -56,10 +57,10 @@ class MainDashboardShell extends ConsumerWidget {
         final tracker = ref.watch(trackingProvider);
         return _TabConfig(
           title: tracker.selectedCity == 'All' 
-            ? 'LIVE OPERATIONS' 
-            : 'LIVE OPERATIONS - ${tracker.selectedCity.toUpperCase()}',
+            ? 'LIVE GPS' 
+            : 'LIVE GPS - ${tracker.selectedCity.toUpperCase()}',
           subtitle: 'Real-time tracking and delivery monitoring',
-          activeItem: 'Live Ops',
+          activeItem: 'Live GPS',
           onSearchChanged: (v) => ref.read(trackingProvider.notifier).setFilter(v),
           searchHint: 'Search riders, vehicles, orders...',
           headerActions: [
@@ -71,6 +72,13 @@ class MainDashboardShell extends ConsumerWidget {
               : tracking_theme.AppTheme.lightTheme,
             child: const walim_tracking.HomeScreen(showScaffold: false),
           ),
+        );
+      case DashboardTab.liveRider:
+        return _TabConfig(
+          title: 'LIVE RIDER TRACKING',
+          subtitle: 'Real-time positioning of all active riders',
+          activeItem: 'Live Rider',
+          body: const LiveRiderMap(),
         );
       case DashboardTab.hr:
         return _TabConfig(
@@ -88,10 +96,10 @@ class MainDashboardShell extends ConsumerWidget {
         );
       case DashboardTab.finance:
         return _TabConfig(
-          title: 'FINANCIAL RECONCILIATION',
-          subtitle: 'Audit COD collections and platform reports',
+          title: 'FINANCIAL MANAGEMENT',
+          subtitle: 'Payroll, vendor invoicing, and expenses',
           activeItem: 'Finance',
-          body: const ReconciliationDashboard(showScaffold: false),
+          body: const FinanceDashboard(showScaffold: false),
         );
       case DashboardTab.support:
         return _TabConfig(
@@ -151,8 +159,8 @@ class MainDashboardShell extends ConsumerWidget {
         );
       case 'Finance Manager':
         return _TabConfig(
-          title: 'FINANCIAL CONTROL',
-          subtitle: 'COD reconciliation, payroll, and expenses',
+          title: 'FINANCIAL MANAGEMENT',
+          subtitle: 'Payroll, vendor invoicing, and expenses',
           activeItem: 'Dashboard',
           body: const FinanceDashboard(showScaffold: false),
         );
