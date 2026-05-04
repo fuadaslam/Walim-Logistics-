@@ -13,6 +13,7 @@ import 'package:walim_logistics/features/fleet/presentation/shift_assignment_scr
 
 import 'package:walim_logistics/features/fleet/data/fleet_repository.dart';
 import 'package:walim_logistics/features/hr/data/hr_repository.dart';
+import 'package:walim_logistics/shared/models/assigned_asset.dart';
 
 import 'package:walim_logistics/features/admin/data/operations_repository.dart';
 import 'package:walim_logistics/features/admin/data/office_repository.dart';
@@ -22,7 +23,7 @@ import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/rider_data_provider.dart';
 
-final _riderAssetsProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, id) {
+final _riderAssetsProvider = FutureProvider.autoDispose.family<List<AssignedAsset>, String>((ref, id) {
   return ref.watch(hrRepositoryProvider).getAssetsForProfile(id);
 });
 
@@ -325,17 +326,12 @@ class RiderDetailScreen extends ConsumerWidget {
           spacing: isMobile ? 6 : 10,
           runSpacing: isMobile ? 6 : 10,
           children: [
-            Consumer(
+        Consumer(
               builder: (context, ref, _) {
                 final zoneAsync = ref.watch(_riderZoneByIdProvider(profile?.id ?? ''));
                 final locationText = profile?.location ?? zoneAsync.value?['name'] ?? 'Riyadh';
                 return _buildHeaderTag(Icons.location_on_rounded, locationText);
               },
-            ),
-            _buildHeaderTag(Icons.star_rounded, profile?.rating?.toString() ?? '4.9'),
-            _buildHeaderTag(
-              profile?.status.toLowerCase() == 'active' ? Icons.verified_user_rounded : Icons.info_outline_rounded,
-              profile?.status.toLowerCase() == 'active' ? 'Verified' : 'Unverified',
             ),
           ],
         ),
@@ -343,74 +339,83 @@ class RiderDetailScreen extends ConsumerWidget {
       ],
     );
 
+    final currentUser = ref.watch(authProvider).profile;
+    final isOwnProfile = currentUser?.id == profile?.id;
+    final isStaff = ['Admin', 'HR', 'Supervisor', 'Operations Manager'].contains(currentUser?.role);
+    final canEdit = isOwnProfile || isStaff;
+
     final buttons = isMobile 
       ? Row(
           children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Profile coming soon')));
-                },
-                icon: Icon(Icons.edit_outlined, size: 14),
-                label: Text('Edit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.primary,
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 0,
+            if (canEdit)
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Profile coming soon')));
+                  },
+                  icon: Icon(Icons.edit_outlined, size: 14),
+                  label: Text('Edit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Messaging coming soon')));
-                },
-                icon: Icon(Icons.chat_bubble_outline_rounded, size: 14),
-                label: Text('Message', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withOpacity(0.2)),
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            if (canEdit && !isOwnProfile) SizedBox(width: 12),
+            if (!isOwnProfile)
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Messaging coming soon')));
+                  },
+                  icon: Icon(Icons.chat_bubble_outline_rounded, size: 14),
+                  label: Text('Message', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
                 ),
               ),
-            ),
           ],
         )
       : Column(
           children: [
-            ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Profile coming soon')));
-              },
-              icon: Icon(Icons.edit_outlined, size: 18),
-              label: Text('Edit Profile'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: AppColors.primary,
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                minimumSize: Size(0, 48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            if (canEdit)
+              ElevatedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Profile coming soon')));
+                },
+                icon: Icon(Icons.edit_outlined, size: 18),
+                label: Text('Edit Profile'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.primary,
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  minimumSize: Size(0, 48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
               ),
-            ),
-            SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Messaging coming soon')));
-              },
-              icon: Icon(Icons.chat_bubble_outline_rounded, size: 18),
-              label: Text('Message'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: BorderSide(color: Colors.white.withOpacity(0.2)),
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                minimumSize: Size(0, 48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            if (canEdit && !isOwnProfile) SizedBox(height: 12),
+            if (!isOwnProfile)
+              OutlinedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Messaging coming soon')));
+                },
+                icon: Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                label: Text('Message'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  minimumSize: Size(0, 48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
               ),
-            ),
           ],
         );
 
@@ -728,11 +733,11 @@ class RiderDetailScreen extends ConsumerWidget {
             children: assets.map((asset) {
               return _buildAssetItem(
                 context,
-                asset['category'] ?? 'Asset',
-                asset['name'] ?? 'Unknown',
-                'S/N: ${asset['serial_number'] ?? 'N/A'}',
-                _getAssetIcon(asset['category']),
-                _getAssetColor(asset['category']),
+                asset.assetCategory ?? 'Asset',
+                asset.assetName,
+                'S/N: ${asset.assetSerialNumber ?? 'N/A'}',
+                _getAssetIcon(asset.assetCategory),
+                _getAssetColor(asset.assetCategory),
               );
             }).toList(),
           );

@@ -20,18 +20,18 @@ class OfficeRepository {
   Future<List<Map<String, dynamic>>> getPendingOfficeRequests(String profileId) async {
     final response = await _supabase
         .from('office_requests')
-        .select('*, profiles!requested_by_profile_id(full_name, role)')
+        .select('*, profiles!requested_by_profile_id(full_name, roles(name))')
         .eq('target_profile_id', profileId)
         .eq('status', 'pending')
         .order('created_at', ascending: false);
-    
+
     return List<Map<String, dynamic>>.from(response as List);
   }
 
   Future<void> resolveRequest(String requestId) async {
     await _supabase
         .from('office_requests')
-        .update({'status': 'resolved'})
+        .update({'status': 'resolved', 'updated_at': DateTime.now().toIso8601String()})
         .eq('id', requestId);
   }
 }

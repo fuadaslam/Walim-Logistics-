@@ -7,6 +7,7 @@ import 'package:walim_logistics/features/tracking/screens/vehicle_detail_screen.
 import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/shared/widgets/add_asset_dialog.dart';
 
 class FleetAssetRegistryScreen extends ConsumerWidget {
   final bool showScaffold;
@@ -189,7 +190,12 @@ class FleetAssetRegistryScreen extends ConsumerWidget {
       showBackButton: true,
       actions: [
         IconButton(
-          onPressed: () {},
+          onPressed: () => showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const AddAssetDialog(),
+          ),
           icon: const Icon(Icons.add_circle_outline,
               size: 28, color: AppColors.primary),
         ),

@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/finance/presentation/finance_notifier.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
+import 'package:walim_logistics/features/dashboard/presentation/finance_dashboard.dart';
 
 class MatchingDataScreen extends ConsumerStatefulWidget {
   const MatchingDataScreen({super.key});
@@ -80,14 +82,66 @@ class _MatchingDataScreenState extends ConsumerState<MatchingDataScreen> {
             else
               Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(40),
-                  child: Text(
-                    platforms.isEmpty
-                        ? 'No platforms configured yet.\nAdd platforms in the Finance module.'
-                        : 'Select a platform to view reconciliation data.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
-                        color: AppColors.textSecondary, fontSize: 15),
+                  padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 40),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.account_tree_outlined,
+                          size: 64,
+                          color: AppColors.primary.withOpacity(0.5),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        platforms.isEmpty
+                            ? 'No Platforms Configured'
+                            : 'Select a Platform',
+                        style: GoogleFonts.outfit(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        platforms.isEmpty
+                            ? 'You need to configure at least one external platform (e.g., Talabat, Jahez) in the Finance module to start reconciliation.'
+                            : 'Select a platform from the dropdown above to view performance reconciliation data.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.outfit(
+                          color: AppColors.textSecondary,
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
+                      ),
+                      if (platforms.isEmpty) ...[
+                        const SizedBox(height: 32),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            // Navigate to Finance module while preserving history
+                            Navigator.push(
+                              context, 
+                              MaterialPageRoute(builder: (_) => const FinanceDashboard())
+                            );
+                          },
+                          icon: const Icon(Icons.settings_suggest_rounded),
+                          label: const Text('Configure Platforms Now'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
@@ -153,64 +207,169 @@ class _MatchingDataScreenState extends ConsumerState<MatchingDataScreen> {
   }
 
   Widget _buildComparisonTable(List<Map<String, dynamic>> rows) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: rows.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      itemBuilder: (context, index) {
+        final r = rows[index];
+        final name = r['profiles']?['full_name'] as String? ?? 'Unknown';
+        final role = r['profiles']?['role'] as String? ?? 'Rider';
+        final hrStatus = r['profiles']?['status'] as String? ?? 'active';
+        final collected = (r['collected_amount'] as num?)?.toDouble() ?? 0.0;
+        final expected = (r['expected_amount'] as num?)?.toDouble() ?? 0.0;
+        final status = r['status'] as String? ?? 'pending';
+        final discrepancy = collected - expected;
+        final hasDiscrepancy = discrepancy.abs() > 0.1;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: hasDiscrepancy ? Colors.orange.withOpacity(0.3) : AppColors.divider.withOpacity(0.5),
+              width: hasDiscrepancy ? 1.5 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: AppColors.primary.withOpacity(0.1),
+                      child: Text(name[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text(role, style: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    _buildHRStatusChip(hrStatus),
+                    const SizedBox(width: 12),
+                    _buildMatchIcon(status),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Divider(height: 1),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildAmountColumn('COLLECTED', collected, Colors.blue),
+                    _buildAmountColumn('EXPECTED', expected, Colors.indigo),
+                    _buildAmountColumn(
+                      'DISCREPANCY', 
+                      discrepancy, 
+                      hasDiscrepancy ? Colors.red : Colors.green,
+                      isDiscrepancy: true,
+                    ),
+                  ],
+                ),
+                if (hasDiscrepancy) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, size: 16, color: Colors.orange),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Platform report shows higher collection than internal record.',
+                            style: GoogleFonts.outfit(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('RECONCILE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMatchIcon(String status) {
+    IconData icon;
+    Color color;
+    switch (status) {
+      case 'matched':
+        icon = Icons.check_circle_rounded;
+        color = Colors.green;
+        break;
+      case 'flagged':
+        icon = Icons.warning_rounded;
+        color = Colors.orange;
+        break;
+      case 'resolved':
+        icon = Icons.task_alt_rounded;
+        color = Colors.blue;
+        break;
+      default:
+        icon = Icons.hourglass_top_rounded;
+        color = Colors.grey;
+    }
     return Container(
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: Theme.of(context).dividerColor.withOpacity(0.5)),
+        color: color.withOpacity(0.1),
+        shape: BoxShape.circle,
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columns: const [
-            DataColumn(label: Text('Rider')),
-            DataColumn(label: Text('Collected (SAR)')),
-            DataColumn(label: Text('Expected (SAR)')),
-            DataColumn(label: Text('HR Status')),
-            DataColumn(label: Text('Match')),
-          ],
-          rows: rows.map((r) {
-            final name =
-                r['profiles']?['full_name'] as String? ?? 'Unknown';
-            final hrStatus =
-                r['profiles']?['status'] as String? ?? '—';
-            final collected =
-                (r['collected_amount'] as num?)?.toStringAsFixed(0) ?? '—';
-            final expected =
-                (r['expected_amount'] as num?)?.toStringAsFixed(0) ?? '—';
-            final status = r['status'] as String? ?? 'pending';
+      child: Icon(icon, color: color, size: 20),
+    );
+  }
 
-            IconData matchIcon;
-            Color matchColor;
-            switch (status) {
-              case 'matched':
-                matchIcon = Icons.check_circle;
-                matchColor = Colors.green;
-                break;
-              case 'flagged':
-                matchIcon = Icons.warning;
-                matchColor = Colors.orange;
-                break;
-              case 'resolved':
-                matchIcon = Icons.task_alt;
-                matchColor = Colors.blue;
-                break;
-              default:
-                matchIcon = Icons.hourglass_top;
-                matchColor = Colors.grey;
-            }
-
-            return DataRow(cells: [
-              DataCell(Text(name)),
-              DataCell(Text(collected)),
-              DataCell(Text(expected)),
-              DataCell(_buildHRStatusChip(hrStatus)),
-              DataCell(Icon(matchIcon, color: matchColor)),
-            ]);
-          }).toList(),
+  Widget _buildAmountColumn(String label, double amount, Color color, {bool isDiscrepancy = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textSecondary,
+            letterSpacing: 0.5,
+          ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          'SAR ${amount.abs().toStringAsFixed(2)}',
+          style: GoogleFonts.outfit(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: isDiscrepancy && amount != 0 ? (amount > 0 ? Colors.red : Colors.green) : AppColors.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 

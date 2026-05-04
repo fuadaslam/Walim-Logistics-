@@ -100,10 +100,27 @@ class LeaderboardScreen extends ConsumerWidget {
             ),
           );
         }
-        return ListView.builder(
-          itemCount: board.length,
-          padding: const EdgeInsets.only(bottom: 16),
-          itemBuilder: (context, index) => _buildLeaderboardEntry(context, board[index], index),
+        return CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 32),
+                child: _buildPodium(context, board),
+              ),
+            ),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  // Skip top 3 for the list if there are enough entries
+                  final actualIndex = board.length > 3 ? index + 3 : -1;
+                  if (actualIndex == -1 || actualIndex >= board.length) return null;
+                  return _buildLeaderboardEntry(context, board[actualIndex], actualIndex);
+                },
+                childCount: board.length > 3 ? board.length - 3 : 0,
+              ),
+            ),
+            const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
+          ],
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -339,6 +356,104 @@ class LeaderboardScreen extends ConsumerWidget {
               minHeight: 5,
               backgroundColor: isDarkMode ? Colors.white12 : AppColors.divider,
               valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPodium(BuildContext context, List<Map<String, dynamic>> board) {
+    if (board.isEmpty) return const SizedBox.shrink();
+    
+    final first = board.isNotEmpty ? board[0] : null;
+    final second = board.length > 1 ? board[1] : null;
+    final third = board.length > 2 ? board[2] : null;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (second != null) _buildPodiumSpot(context, second, 2, 140),
+        const SizedBox(width: 12),
+        if (first != null) _buildPodiumSpot(context, first, 1, 180),
+        const SizedBox(width: 12),
+        if (third != null) _buildPodiumSpot(context, third, 3, 120),
+      ],
+    );
+  }
+
+  Widget _buildPodiumSpot(BuildContext context, Map<String, dynamic> entry, int rank, double height) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final name = entry['name'] as String? ?? 'Unknown';
+    final score = (entry['baseScore'] as double? ?? 0).round();
+    
+    Color color;
+    if (rank == 1) color = const Color(0xFFFFD700);
+    else if (rank == 2) color = const Color(0xFFC0C0C0);
+    else color = const Color(0xFFCD7F32);
+
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: color, width: 3),
+              image: const DecorationImage(
+                image: NetworkImage('https://ui-avatars.com/api/?name=User&background=random'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            name,
+            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$score pts',
+              style: GoogleFonts.outfit(color: color, fontWeight: FontWeight.w900, fontSize: 11),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            height: height,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color.withOpacity(0.8), color.withOpacity(0.4)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              boxShadow: [
+                BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, -4)),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                '#$rank',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 32,
+                  shadows: [Shadow(color: Colors.black26, blurRadius: 4, offset: const Offset(0, 2))],
+                ),
+              ),
             ),
           ),
         ],

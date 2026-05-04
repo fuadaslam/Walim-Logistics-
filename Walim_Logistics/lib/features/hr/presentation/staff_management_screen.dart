@@ -7,17 +7,28 @@ import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
 import 'package:walim_logistics/features/admin/data/operations_repository.dart';
 import 'package:walim_logistics/shared/models/profile.dart';
+import 'package:walim_logistics/shared/widgets/add_staff_dialog.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 
 class StaffManagementScreen extends ConsumerStatefulWidget {
-  const StaffManagementScreen({super.key});
+  final String? initialRole;
+  final String? initialStatus;
+  final String? initialSearch;
+  const StaffManagementScreen({
+    super.key,
+    this.initialRole,
+    this.initialStatus,
+    this.initialSearch,
+  });
 
   @override
   ConsumerState<StaffManagementScreen> createState() => _StaffManagementScreenState();
 }
 
 class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
-  String _searchQuery = '';
-  String _selectedRole = 'All';
+  late String _searchQuery;
+  late String _selectedRole;
+  late String? _selectedStatus;
   final List<String> _roles = [
     'All',
     'Admin',
@@ -32,9 +43,19 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _searchQuery = widget.initialSearch ?? '';
+    _selectedRole = widget.initialRole ?? 'All';
+    _selectedStatus = widget.initialStatus;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final staffAsync = ref.watch(allStaffProvider);
     final isDesktop = MediaQuery.of(context).size.width > 900;
+
+    final currentUserRole = ref.watch(authProvider).profile?.role;
 
     return DashboardScaffold(
       title: 'STAFF MONITORING',
@@ -43,16 +64,57 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
       onSearchChanged: (value) => setState(() => _searchQuery = value),
       searchHint: 'Search by name, ID or phone...',
       children: [
-        _buildRoleFilter(),
+        _buildRoleFilter(currentUserRole),
+        if (_selectedStatus != null) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text(
+                'Status: ',
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Chip(
+                label: Text(
+                  _selectedStatus!.toUpperCase(),
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                backgroundColor: AppColors.primary,
+                deleteIcon: const Icon(Icons.close, size: 14, color: Colors.white),
+                onDeleted: () => setState(() => _selectedStatus = null),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 24),
         staffAsync.when(
           data: (staff) {
             final filteredStaff = staff.where((member) {
               final profile = UserProfile.fromJson(member);
+              
+              // Apply role-based visibility restrictions
+              bool isVisibleByRole = true;
+              if (currentUserRole == 'Supervisor') {
+                isVisibleByRole = profile.role == 'Rider';
+              } else if (currentUserRole == 'Operations Manager') {
+                isVisibleByRole = profile.role == 'Rider' || profile.role == 'Supervisor';
+              }
+
+              if (!isVisibleByRole) return false;
+
               final matchesSearch = profile.fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
                   profile.id.toLowerCase().contains(_searchQuery.toLowerCase());
               final matchesRole = _selectedRole == 'All' || profile.role == _selectedRole;
-              return matchesSearch && matchesRole;
+              final matchesStatus = _selectedStatus == null || profile.status.toLowerCase() == _selectedStatus!.toLowerCase();
+              return matchesSearch && matchesRole && matchesStatus;
             }).toList();
 
             if (filteredStaff.isEmpty) {
@@ -75,17 +137,27 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
   }
 
   void _showAddStaffDialog(BuildContext context) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => const _AddStaffDialog(),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddStaffDialog(),
     ).then((_) => ref.invalidate(allStaffProvider));
   }
 
-  Widget _buildRoleFilter() {
+  Widget _buildRoleFilter(String? currentUserRole) {
+    List<String> visibleRoles = List.from(_roles);
+    
+    if (currentUserRole == 'Supervisor') {
+      visibleRoles = ['All', 'Rider'];
+    } else if (currentUserRole == 'Operations Manager') {
+      visibleRoles = ['All', 'Supervisor', 'Rider'];
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: _roles.map((role) {
+        children: visibleRoles.map((role) {
           final isSelected = _selectedRole == role;
           return Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -313,110 +385,3 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
   }
 }
 
-class _AddStaffDialog extends ConsumerStatefulWidget {
-  const _AddStaffDialog();
-
-  @override
-  ConsumerState<_AddStaffDialog> createState() => _AddStaffDialogState();
-}
-
-class _AddStaffDialogState extends ConsumerState<_AddStaffDialog> {
-  final _nameCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-  final _iqamaCtrl = TextEditingController();
-  String _selectedRole = 'Rider';
-  bool _loading = false;
-
-  final List<String> _roles = [
-    'Admin',
-    'Operations Manager',
-    'Supervisor',
-    'Leader',
-    'Rider',
-    'HR',
-    'Finance Manager',
-    'IT_Dev',
-    'Business Development',
-  ];
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    _emailCtrl.dispose();
-    _phoneCtrl.dispose();
-    _iqamaCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Add New Staff Member', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameCtrl,
-              decoration: const InputDecoration(labelText: 'Full Name', prefixIcon: Icon(Icons.person)),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _emailCtrl,
-              decoration: const InputDecoration(labelText: 'Email Address', prefixIcon: Icon(Icons.email)),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _phoneCtrl,
-              decoration: const InputDecoration(labelText: 'Phone Number', prefixIcon: Icon(Icons.phone)),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _iqamaCtrl,
-              decoration: const InputDecoration(labelText: 'Iqama Number (Optional)', prefixIcon: Icon(Icons.badge)),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedRole,
-              decoration: const InputDecoration(labelText: 'Role', border: OutlineInputBorder()),
-              items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-              onChanged: (v) => setState(() => _selectedRole = v!),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        ElevatedButton(
-          onPressed: _loading ? null : _save,
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-          child: _loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create'),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _save() async {
-    if (_nameCtrl.text.isEmpty || _emailCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Name and Email are required')));
-      return;
-    }
-
-    setState(() => _loading = true);
-    try {
-      await ref.read(operationsRepositoryProvider).createProfile(
-        fullName: _nameCtrl.text.trim(),
-        email: _emailCtrl.text.trim(),
-        phone: _phoneCtrl.text.trim(),
-        roleName: _selectedRole,
-        iqamaNumber: _iqamaCtrl.text.trim().isEmpty ? null : _iqamaCtrl.text.trim(),
-      );
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-}

@@ -178,4 +178,20 @@ class DashboardRepository {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     return '${diff.inDays}d ago';
   }
+
+  Future<void> createVehicle({
+    required String plateNumber,
+    required String type,
+    String status = 'available',
+    String? mvpiExpiry,
+    String? insuranceExpiry,
+  }) async {
+    await _supabase.from('vehicles').insert({
+      'plate_number': plateNumber,
+      'type': type.toLowerCase(),
+      'status': status.toLowerCase(),
+      'mvpi_expiry': mvpiExpiry,
+      'insurance_expiry': insuranceExpiry,
+    });
+  }
 }

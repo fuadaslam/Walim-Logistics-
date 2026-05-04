@@ -27,6 +27,7 @@ class OperationsRepository {
       'platform_id': platformId,
       'zone_id': zoneId,
       'supervisor_id': supervisorId,
+      'created_by': createdBy,
       'is_active': true,
     }).select().single();
     return res;
@@ -135,7 +136,8 @@ class OperationsRepository {
       'phone_number': phone,
       'role_id': roleId,
       'iqama_number': iqamaNumber,
-      'status': 'Active',
+      'created_by': Supabase.instance.client.auth.currentUser?.id,
+      'status': 'active',
     });
   }
 

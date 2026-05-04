@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:walim_logistics/shared/models/assigned_asset.dart';
 
 class HRRepository {
   final SupabaseClient _supabase;
@@ -115,7 +116,7 @@ class HRRepository {
   Future<Map<String, dynamic>> getProfileStats(String profileId) async {
     final results = await Future.wait([
       _supabase.from('attendance').select('id').eq('profile_id', profileId).eq('attendance_type', 'shift'),
-      _supabase.from('leave_requests').select('id').eq('profile_id', profileId).eq('status', 'pending'),
+      _supabase.from('leave_requests').select('id').eq('profile_id', profileId).eq('status', 'Pending'),
       _supabase.from('incidents').select('id').eq('reported_by', profileId).eq('status', 'pending'),
       _supabase.from('leave_requests').select('id').eq('profile_id', profileId).eq('status', 'Approved'),
     ]);
@@ -134,12 +135,13 @@ class HRRepository {
   }
 
 
-  Future<List<Map<String, dynamic>>> getAssetsForProfile(String profileId) async {
-    return await _supabase
-        .from('assets')
-        .select('*, asset_assignments!inner(*)')
-        .eq('asset_assignments.profile_id', profileId)
-        .filter('asset_assignments.returned_at', 'is', null);
+  Future<List<AssignedAsset>> getAssetsForProfile(String profileId) async {
+    final res = await _supabase
+        .from('profile_active_assets')
+        .select()
+        .eq('profile_id', profileId)
+        .order('assigned_at', ascending: false);
+    return (res as List).map((e) => AssignedAsset.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<List<Map<String, dynamic>>> getDocumentsForProfile(String profileId) async {

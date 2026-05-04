@@ -92,18 +92,18 @@ class _GroupCard extends StatelessWidget {
     final supervisor = group['profiles'] as Map<String, dynamic>?;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: theme.dividerColor.withOpacity(0.4)),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
                     color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2))
+                    blurRadius: 12,
+                    offset: const Offset(0, 4))
               ],
       ),
       child: Column(
@@ -112,15 +112,15 @@ class _GroupCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.groups_rounded,
-                    color: AppColors.primary, size: 22),
+                    color: AppColors.primary, size: 24),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,54 +128,61 @@ class _GroupCard extends StatelessWidget {
                     Text(
                       group['name'] as String,
                       style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.w700, fontSize: 16),
+                          fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: -0.5),
                     ),
                     if (platform != null)
-                      Text(
-                        platform['name'] as String,
-                        style: GoogleFonts.outfit(
-                            fontSize: 12, color: Colors.grey),
+                      Row(
+                        children: [
+                          const Icon(Icons.store_rounded, size: 12, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            platform['name'] as String,
+                            style: GoogleFonts.outfit(
+                                fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600),
+                          ),
+                        ],
                       ),
                   ],
                 ),
               ),
-              // Status badge
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: (group['is_active'] as bool? ?? true)
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.grey.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  (group['is_active'] as bool? ?? true) ? 'Active' : 'Inactive',
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: (group['is_active'] as bool? ?? true)
-                        ? Colors.green
-                        : Colors.grey,
-                  ),
-                ),
-              ),
+              _buildStatusBadge(group['is_active'] as bool? ?? true),
             ],
           ),
-          if (supervisor != null) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(Icons.manage_accounts_rounded,
-                    size: 14, color: Colors.grey),
-                const SizedBox(width: 6),
-                Text(
-                  'Supervisor: ${supervisor['full_name']}',
-                  style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey),
-                ),
-              ],
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildCompactStat('RIDERS', '12', Icons.person_outline_rounded, Colors.blue),
+              _buildCompactStat('SHIFTS', 'Active', Icons.event_available_rounded, Colors.green),
+              _buildCompactStat('ZONES', 'Riyadh Central', Icons.map_outlined, Colors.orange),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Divider(height: 1),
+          ),
+          if (supervisor != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 12,
+                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    child: const Icon(Icons.manage_accounts_rounded, size: 12, color: AppColors.primary),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Managed by: ',
+                    style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey),
+                  ),
+                  Text(
+                    supervisor['full_name'],
+                    style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
             ),
-          ],
           const SizedBox(height: 14),
           Row(
             children: [
@@ -214,6 +221,59 @@ class _GroupCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCompactStat(String label, String value, IconData icon, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: Colors.grey,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusBadge(bool isActive) {
+    final color = isActive ? Colors.green : Colors.grey;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Text(
+        isActive ? 'ACTIVE' : 'INACTIVE',
+        style: GoogleFonts.outfit(
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+          color: color,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }

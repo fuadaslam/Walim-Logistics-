@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:walim_logistics/shared/models/assigned_asset.dart';
 
 class FleetRepository {
   final SupabaseClient _supabase;
@@ -23,12 +24,13 @@ class FleetRepository {
     }).eq('id', assetId);
   }
 
-  Future<List<Map<String, dynamic>>> getAssetsForProfile(String profileId) async {
-    return await _supabase
-        .from('assets')
-        .select('*, asset_assignments!inner(*)')
-        .eq('asset_assignments.profile_id', profileId)
-        .filter('asset_assignments.returned_at', 'is', null);
+  Future<List<AssignedAsset>> getAssetsForProfile(String profileId) async {
+    final res = await _supabase
+        .from('profile_active_assets')
+        .select()
+        .eq('profile_id', profileId)
+        .order('assigned_at', ascending: false);
+    return (res as List).map((e) => AssignedAsset.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<void> assignToShift({

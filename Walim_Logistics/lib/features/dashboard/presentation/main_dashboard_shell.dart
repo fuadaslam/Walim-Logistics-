@@ -116,9 +116,12 @@ class MainDashboardShell extends ConsumerWidget {
           body: const DocumentVaultScreen(showScaffold: false),
         );
       case DashboardTab.attendance:
+        final isOpsOrAdmin = role == 'Admin' || role == 'Operations Manager';
         return _TabConfig(
-          title: 'PERFORMANCE HUB',
-          subtitle: 'Real-time SLA tracking and platform compliance',
+          title: isOpsOrAdmin ? 'FLEET PERFORMANCE HUB' : 'PERFORMANCE HUB',
+          subtitle: isOpsOrAdmin 
+            ? 'Global operational metrics and platform reconciliation'
+            : 'Real-time SLA tracking and platform compliance',
           activeItem: 'Performance',
           body: const SupervisorDashboard(showScaffold: false),
         );

@@ -3,6 +3,7 @@ import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/fleet/data/fleet_repository.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/features/hr/data/document_repository.dart';
+import 'package:walim_logistics/shared/models/assigned_asset.dart';
 
 final fleetRepositoryProvider = Provider((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -16,7 +17,7 @@ final riderZoneProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
 });
 
 final riderAssetsProvider =
-    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider<List<AssignedAsset>>((ref) async {
   final profile = ref.watch(authProvider).profile;
   if (profile == null) return [];
   return ref.watch(fleetRepositoryProvider).getAssetsForProfile(profile.id);

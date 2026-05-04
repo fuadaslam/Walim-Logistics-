@@ -20,6 +20,7 @@ import 'package:walim_logistics/features/dashboard/presentation/widgets/office_r
 import 'package:walim_logistics/features/tracking/services/location_providers.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/my_performance_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
+import 'package:walim_logistics/shared/models/assigned_asset.dart';
 import 'package:intl/intl.dart';
 
 class RiderDashboard extends ConsumerWidget {
@@ -606,8 +607,8 @@ class RiderDashboard extends ConsumerWidget {
                   if (i > 0) const SizedBox(height: 12),
                   _buildAssetCard(
                     context,
-                    assets[i]['name'] as String? ?? 'Asset',
-                    assets[i]['category'] as String? ?? '',
+                    assets[i].assetName,
+                    assets[i].assetCategory ?? '',
                     Icons.inventory_2_outlined,
                     Colors.blue,
                   ),

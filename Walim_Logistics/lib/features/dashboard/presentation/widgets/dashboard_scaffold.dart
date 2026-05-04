@@ -26,6 +26,10 @@ import 'package:walim_logistics/core/localization/locale_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/layout_settings_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/search_provider.dart';
+import 'package:walim_logistics/shared/widgets/quick_add_menu.dart';
+import 'package:walim_logistics/features/tracking/screens/vehicle_detail_screen.dart';
+import 'package:walim_logistics/shared/models/profile.dart';
+import 'package:walim_logistics/features/tracking/models/vehicle.dart';
 
 class DashboardScaffold extends ConsumerStatefulWidget {
   final String title;
@@ -222,11 +226,15 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const LayoutSettingsScreen()));
           break;
       }
-    } else {
-      // Show detail view for rider/staff
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Viewing detail for ${result.title}')),
-      );
+    } else if (result.type == SearchResultType.staff || result.type == SearchResultType.rider) {
+      if (result.data != null) {
+        final profile = UserProfile.fromJson(result.data as Map<String, dynamic>);
+        Navigator.push(context, MaterialPageRoute(builder: (_) => RiderDetailScreen(profile: profile)));
+      }
+    } else if (result.type == SearchResultType.vehicle) {
+      if (result.data is Vehicle) {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => VehicleDetailScreen(vehicle: result.data as Vehicle)));
+      }
     }
   }
 
@@ -524,6 +532,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
   PreferredSizeWidget _buildMobileAppBar(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final role = ref.watch(authProvider).profile?.role ?? 'Rider';
     
     return AppBar(
       backgroundColor: theme.cardColor.withValues(alpha: 0.8),
@@ -571,6 +580,11 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             )
           : null,
       actions: [
+        if (role == 'Admin' || role == 'Operations Manager')
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: QuickAddMenu(),
+          ),
         ...?widget.actions,
         IconButton(
           padding: const EdgeInsets.all(8),
@@ -726,7 +740,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
       child: Row(
 
         children: [
-          // Back Button for Desktop Detail Screens
+          // 0. Back Button for Desktop Detail Screens
           if (widget.showBackButton || widget.onBack != null) ...[
             IconButton(
               icon: Icon(Icons.arrow_back_rounded, color: theme.textTheme.bodyLarge?.color),
@@ -735,7 +749,34 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             const SizedBox(width: 16),
           ],
 
-          // 1. Search Bar
+          // 1. Title & Subtitle
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.title.toUpperCase(),
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: theme.textTheme.titleLarge?.color,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              if (widget.subtitle.isNotEmpty)
+                Text(
+                  widget.subtitle,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 48),
+
+          // 2. Search Bar
           Expanded(
             child: CompositedTransformTarget(
               link: _searchLayerLink,
@@ -764,7 +805,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                         },
                         style: GoogleFonts.outfit(fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: widget.searchHint ?? 'Search inventory, riders or staff (Cmd+K)',
+                          hintText: widget.searchHint ?? 'Search inventory, staff or screens (Cmd+K)',
                           hintStyle: GoogleFonts.outfit(
                             color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
                             fontSize: 14,
@@ -806,6 +847,12 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             const SizedBox(width: 24),
             ...widget.headerActions!,
           ],
+          
+          if (profile?.role == 'Admin' || profile?.role == 'Operations Manager') ...[
+            const SizedBox(width: 24),
+            const QuickAddMenu(),
+          ],
+
           const SizedBox(width: 40),
           
           // 2. Language Selector

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 
 enum SearchResultType {
   rider,
@@ -68,27 +68,34 @@ class SearchNotifier extends StateNotifier<SearchState> {
     final q = query.toLowerCase();
     final results = <SearchResult>[];
 
-    // 1. Search Vehicles / Live Riders
-    final tracking = _ref.read(trackingProvider);
-    final vehicles = tracking.vehicles;
-    for (final v in vehicles) {
-      if (v.name.toLowerCase().contains(q) || v.fullPlate.toLowerCase().contains(q)) {
-        results.add(SearchResult(
-          title: v.name,
-          subtitle: 'Vehicle: ${v.fullPlate} • ${v.status.toUpperCase()}',
-          type: SearchResultType.rider,
-          data: v,
-        ));
-      }
-    }
-
-    // 2. Search Staff
+    // 1. Search Staff
     final staffAsync = _ref.read(allStaffProvider);
+    final currentUserRole = _ref.read(authProvider).profile?.role;
+
     staffAsync.whenData((staffList) {
       for (final staff in staffList) {
-        final name = (staff['full_name'] ?? '').toString();
         final role = (staff['role'] ?? '').toString();
-        if (name.toLowerCase().contains(q) || role.toLowerCase().contains(q)) {
+        
+        // Apply role-based visibility restrictions
+        bool isVisibleByRole = true;
+        if (currentUserRole == 'Supervisor') {
+          isVisibleByRole = role == 'Rider';
+        } else if (currentUserRole == 'Operations Manager') {
+          isVisibleByRole = role == 'Rider' || role == 'Supervisor';
+        }
+
+        if (!isVisibleByRole) continue;
+
+        final name = (staff['full_name'] ?? '').toString();
+        final phone = (staff['phone_number'] ?? '').toString();
+        final iqama = (staff['iqama_number'] ?? '').toString();
+        final id = (staff['id'] ?? '').toString();
+        
+        if (name.toLowerCase().contains(q) || 
+            role.toLowerCase().contains(q) || 
+            phone.contains(q) || 
+            iqama.contains(q) ||
+            id.toLowerCase().contains(q)) {
           results.add(SearchResult(
             title: name,
             subtitle: 'Staff • $role',

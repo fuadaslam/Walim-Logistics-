@@ -112,32 +112,41 @@ class _ScheduleCard extends StatelessWidget {
         : null;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: theme.dividerColor.withOpacity(0.4)),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
                     color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2))
+                    blurRadius: 10,
+                    offset: const Offset(0, 4))
               ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.manage_accounts_rounded,
-                color: AppColors.primary, size: 24),
+            child: Center(
+              child: Text(
+                (supervisor?['full_name'] as String? ?? '?')[0].toUpperCase(),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+            ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,45 +154,75 @@ class _ScheduleCard extends StatelessWidget {
                 Text(
                   supervisor?['full_name'] as String? ?? 'Unknown Supervisor',
                   style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.w700, fontSize: 15),
+                      fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: -0.5),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${group?['name'] ?? '—'}  ·  ${platform?['name'] ?? '—'}',
-                  style:
-                      GoogleFonts.outfit(fontSize: 13, color: Colors.grey),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    _buildInfoBadge(group?['name'] ?? 'No Group', Colors.blue),
+                    const SizedBox(width: 8),
+                    _buildInfoBadge(platform?['name'] ?? 'No Platform', Colors.indigo),
+                  ],
                 ),
-                if (shiftStart != null && shiftEnd != null) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time_rounded,
-                          size: 13, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${DateFormat('HH:mm').format(shiftStart)} – ${DateFormat('HH:mm').format(shiftEnd)}',
-                        style: GoogleFonts.outfit(
-                            fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text('Assigned',
-                style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    color: Colors.green,
-                    fontWeight: FontWeight.w700)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (shiftStart != null && shiftEnd != null) ...[
+                Text(
+                  'SHIFT TIME',
+                  style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 0.5),
+                ),
+                Text(
+                  '${DateFormat('HH:mm').format(shiftStart)} – ${DateFormat('HH:mm').format(shiftEnd)}',
+                  style: GoogleFonts.outfit(
+                      fontSize: 13, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                ),
+              ],
+              const SizedBox(height: 8),
+              _buildStatusBadge(),
+            ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text.toUpperCase(),
+        style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.bold, color: color),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.green.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
+          const SizedBox(width: 6),
+          Text('ASSIGNED',
+              style: GoogleFonts.outfit(
+                  fontSize: 9,
+                  color: Colors.green,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5)),
         ],
       ),
     );
@@ -446,37 +485,49 @@ class _DateSelector extends StatelessWidget {
         return Expanded(
           child: GestureDetector(
             onTap: () => onChanged(d),
-            child: Container(
-              margin: EdgeInsets.only(right: i < 4 ? 8 : 0),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: EdgeInsets.only(right: i < 4 ? 12 : 0),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppColors.primary
                     : (isDark
                         ? Colors.white.withOpacity(0.05)
                         : Colors.white),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected
                       ? AppColors.primary
-                      : Colors.grey.withOpacity(0.3),
+                      : Colors.grey.withOpacity(0.2),
+                  width: isSelected ? 2 : 1,
                 ),
+                boxShadow: isSelected ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  )
+                ] : [],
               ),
               child: Column(
                 children: [
                   Text(
-                    DateFormat('E').format(d),
+                    DateFormat('EEE').format(d).toUpperCase(),
                     style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      color: isSelected ? Colors.white70 : Colors.grey,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                      color: isSelected ? Colors.white.withOpacity(0.8) : Colors.grey,
                     ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     d.day.toString(),
                     style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: isSelected ? Colors.white : null,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      color: isSelected ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                 ],

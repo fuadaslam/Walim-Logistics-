@@ -19,6 +19,9 @@ import 'package:walim_logistics/features/performance/presentation/screens/leader
 import 'package:walim_logistics/features/performance/presentation/screens/my_performance_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/performance_calculation_screen.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
+import 'package:walim_logistics/features/hr/presentation/staff_management_screen.dart';
+import 'package:walim_logistics/features/inspections/presentation/inspection_management_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/attendance_reports_screen.dart';
 
 class SupervisorDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -28,6 +31,9 @@ class SupervisorDashboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardData = ref.watch(dashboardDataProvider);
     final layout = ref.watch(dashboardLayoutProvider);
+    final authState = ref.watch(authProvider);
+    final profile = authState.profile;
+    final isOpsOrAdmin = profile?.role == 'Admin' || profile?.role == 'Operations Manager';
 
     if (dashboardData.isLoading && dashboardData.activeRiders == 0) {
       return const Scaffold(
@@ -42,7 +48,7 @@ class SupervisorDashboard extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildContent(context, ref, layout, dashboardData),
+                _buildContent(context, ref, layout, dashboardData, isOpsOrAdmin),
               ]),
             ),
           ),
@@ -51,16 +57,18 @@ class SupervisorDashboard extends ConsumerWidget {
     }
 
     return DashboardScaffold(
-      title: 'PERFORMANCE HUB',
-      subtitle: 'Oversee operations and resolve blockers',
+      title: isOpsOrAdmin ? 'FLEET PERFORMANCE HUB' : 'PERFORMANCE HUB',
+      subtitle: isOpsOrAdmin 
+          ? 'Global operational metrics and platform reconciliation'
+          : 'Oversee operations and resolve blockers',
       showBackButton: true,
       children: [
-        _buildContent(context, ref, layout, dashboardData),
+        _buildContent(context, ref, layout, dashboardData, isOpsOrAdmin),
       ],
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref, DashboardLayout layout, DashboardData data) {
+  Widget _buildContent(BuildContext context, WidgetRef ref, DashboardLayout layout, DashboardData data, bool isOpsOrAdmin) {
     final isDesktop = MediaQuery.of(context).size.width > 1200;
 
     if (!isDesktop) {
@@ -68,7 +76,7 @@ class SupervisorDashboard extends ConsumerWidget {
         children: [
           if (ref.watch(authProvider).profile != null)
             OfficeRequestAlert(profileId: ref.watch(authProvider).profile!.id),
-          ...layout.sections.map((section) => _buildSection(context, ref, section, data)).toList(),
+          ...layout.sections.map((section) => _buildSection(context, ref, section, data, isOpsOrAdmin)).toList(),
         ],
       );
     }
@@ -79,7 +87,7 @@ class SupervisorDashboard extends ConsumerWidget {
 
     for (var i = 0; i < layout.sections.length; i++) {
       final section = layout.sections[i];
-      final sectionWidget = _buildSection(context, ref, section, data);
+      final sectionWidget = _buildSection(context, ref, section, data, isOpsOrAdmin);
       
       if (section == DashboardSection.metrics || section == DashboardSection.actions) {
         leftColumn.add(sectionWidget);
@@ -117,12 +125,12 @@ class SupervisorDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildSection(BuildContext context, WidgetRef ref, DashboardSection section, DashboardData data) {
+  Widget _buildSection(BuildContext context, WidgetRef ref, DashboardSection section, DashboardData data, bool isOpsOrAdmin) {
     switch (section) {
       case DashboardSection.metrics:
-        return _buildMetricsSection(context, ref, data);
+        return _buildMetricsSection(context, ref, data, isOpsOrAdmin);
       case DashboardSection.actions:
-        return _buildActionsSection(context, ref);
+        return _buildActionsSection(context, ref, isOpsOrAdmin);
       case DashboardSection.activity:
         return _buildActivitySection(data);
       case DashboardSection.intelligence:
@@ -132,20 +140,25 @@ class SupervisorDashboard extends ConsumerWidget {
     }
   }
 
-  Widget _buildMetricsSection(BuildContext context, WidgetRef ref, DashboardData data) {
+  Widget _buildMetricsSection(BuildContext context, WidgetRef ref, DashboardData data, bool isOpsOrAdmin) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Primary action cards (Hero)
-        _buildDailyShiftHero(context),
-        const SizedBox(height: 12),
-        _buildMyGroupHero(context),
+        if (isOpsOrAdmin)
+          _buildOpsHero(context)
+        else ...[
+          _buildDailyShiftHero(context),
+          const SizedBox(height: 12),
+          _buildMyGroupHero(context),
+        ],
         const SizedBox(height: 32),
 
         _buildSectionHeader('Fleet Performance Metrics'),
         const SizedBox(height: 24),
         ResponsiveGrid(
           tabletCrossAxisCount: 4,
+          spacing: 16,
           children: [
             DashboardStatCard(
               label: 'Avg. Time/Deliv',
@@ -171,6 +184,9 @@ class SupervisorDashboard extends ConsumerWidget {
               color: AppColors.error,
               trend: data.activeIncidents > 0 ? 'Action Required' : 'All Clear',
               isPositive: data.activeIncidents == 0,
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const InspectionManagementScreen(initialTabIndex: 1),
+              )),
             ),
             DashboardStatCard(
               label: 'Active Riders',
@@ -178,6 +194,9 @@ class SupervisorDashboard extends ConsumerWidget {
               icon: Icons.motorcycle_rounded,
               color: Colors.blue,
               trend: 'Across all zones',
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const StaffManagementScreen(initialRole: 'Rider', initialStatus: 'active'),
+              )),
             ),
           ],
         ),
@@ -185,21 +204,22 @@ class SupervisorDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionsSection(BuildContext context, WidgetRef ref) {
+  Widget _buildActionsSection(BuildContext context, WidgetRef ref, bool isOpsOrAdmin) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Operations & Incident Hub'),
+        _buildSectionHeader(isOpsOrAdmin ? 'Strategic Operations & Intelligence' : 'Operations & Incident Hub'),
         const SizedBox(height: 24),
         ResponsiveGrid(
           mobileCrossAxisCount: 1,
-          tabletCrossAxisCount: 2,
-          desktopCrossAxisCount: 2,
-          childAspectRatio: 2.2,
+          tabletCrossAxisCount: 4,
+          desktopCrossAxisCount: 4,
+          spacing: 16,
+          childAspectRatio: 1.8,
           children: [
             DashboardActionCard(
               title: 'Live Rider Tracking',
-              subtitle: 'Monitor your group in real-time',
+              subtitle: isOpsOrAdmin ? 'Monitor all active riders' : 'Monitor your group in real-time',
               icon: Icons.my_location_rounded,
               color: Colors.orange,
               onTap: () {
@@ -249,8 +269,7 @@ class SupervisorDashboard extends ConsumerWidget {
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LeaderboardScreen()));
               },
             ),
-            if (ref.read(authProvider).profile?.role == 'Admin' || 
-                ref.read(authProvider).profile?.role == 'Operations Manager')
+            if (isOpsOrAdmin)
               DashboardActionCard(
                 title: 'Scoring Configuration',
                 subtitle: 'Design how performance scores are calculated',
@@ -260,8 +279,7 @@ class SupervisorDashboard extends ConsumerWidget {
                   Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PerformanceCalculationScreen()));
                 },
               ),
-            if (ref.read(authProvider).profile?.role != 'Admin' && 
-                ref.read(authProvider).profile?.role != 'Operations Manager')
+            if (!isOpsOrAdmin)
               DashboardActionCard(
                 title: 'My Performance',
                 subtitle: 'Your score, targets and adjustments',
@@ -271,9 +289,147 @@ class SupervisorDashboard extends ConsumerWidget {
                   Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyPerformanceScreen()));
                 },
               ),
+            if (isOpsOrAdmin)
+               DashboardActionCard(
+                title: 'Staff Performance Management',
+                subtitle: 'Issue bonuses, penalties & set targets',
+                icon: Icons.people_outline_rounded,
+                color: Colors.indigo,
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPerformanceScreen()));
+                },
+              ),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildOpsHero(BuildContext context) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const AttendanceReportsScreen()),
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary,
+                  AppColors.primary.withValues(alpha: 0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.analytics_rounded,
+                      size: 32, color: Colors.white),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Global Shift & Attendance Monitor',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Monitor all supervisor reports, shift validations, and real-time attendance across the entire fleet.',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded,
+                    color: Colors.white70, size: 18),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildOpsQuickAction(
+                context,
+                'Platform Reports',
+                'Verify external delivery data',
+                Icons.account_balance_wallet_outlined,
+                Colors.indigo,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchingDataScreen())),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildOpsQuickAction(
+                context,
+                'Staff Management',
+                'Manage roles and assignments',
+                Icons.people_alt_rounded,
+                Colors.teal,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOpsQuickAction(BuildContext context, String title, String sub, IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14, color: color)),
+                  Text(sub, style: GoogleFonts.outfit(fontSize: 11, color: color.withValues(alpha: 0.7))),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

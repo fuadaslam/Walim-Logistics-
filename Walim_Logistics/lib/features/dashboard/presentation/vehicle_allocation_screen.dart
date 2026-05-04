@@ -7,6 +7,7 @@ import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboar
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/tracking/models/vehicle.dart';
 import 'package:walim_logistics/features/tracking/screens/vehicle_detail_screen.dart';
+import 'package:walim_logistics/shared/widgets/add_asset_dialog.dart';
 
 class VehicleAllocationScreen extends ConsumerWidget {
   const VehicleAllocationScreen({super.key});
@@ -33,6 +34,37 @@ class VehicleAllocationScreen extends ConsumerWidget {
       title: 'VEHICLE ALLOCATION',
       subtitle: 'Balance fleet distribution and monitor asset assignment',
       showBackButton: true,
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: ElevatedButton.icon(
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => const AddAssetDialog(),
+            ),
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: Text(
+              'ADD VEHICLE',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+                letterSpacing: 0.5,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary.withOpacity(0.1),
+              foregroundColor: AppColors.primary,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ],
       children: [
         _buildBalanceOverview(context, vanPercentage, bikePercentage, vans.length, bikes.length),
         const SizedBox(height: 32),
@@ -313,15 +345,16 @@ class VehicleAllocationScreen extends ConsumerWidget {
               Text(
                 'Allocation Details',
                 style: GoogleFonts.outfit(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
                   color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
                 ),
               ),
               TextButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.filter_list_rounded, size: 18),
-                label: const Text('Filter'),
+                label: Text('FILTER ASSETS', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 12)),
               ),
             ],
           ),
@@ -335,78 +368,150 @@ class VehicleAllocationScreen extends ConsumerWidget {
             color: Colors.blueGrey,
           )
         else
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.divider),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: MediaQuery.of(context).size.width > 1200 ? 3 : (MediaQuery.of(context).size.width > 800 ? 2 : 1),
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              mainAxisExtent: 180,
             ),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: assets.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final asset = assets[index];
-                final isAssigned = asset['assignedTo'] != 'Unassigned';
+            itemCount: assets.length,
+            itemBuilder: (context, index) {
+              final asset = assets[index];
+              final isAssigned = asset['assignedTo'] != 'Unassigned';
+              final type = asset['type'] as String? ?? 'Van';
+              final status = asset['status'] as String? ?? 'Active';
 
-                return ListTile(
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: InkWell(
                   onTap: () {
                     final vehicle = Vehicle(
                       id: asset['id'].toString(),
                       name: '${asset['type']} — ${asset['plate']}',
                       plateNumber: asset['plate'].toString(),
                       status: asset['status'].toString().toLowerCase(),
-                      riderName: asset['assignedTo'] != 'Unassigned' ? asset['assignedTo'] : null,
+                      riderName: isAssigned ? asset['assignedTo'] : null,
                       iqamaNumber: asset['iqamaNumber'] != 'N/A' ? asset['iqamaNumber'] : null,
                     );
                     Navigator.push(context, MaterialPageRoute(builder: (_) => VehicleDetailScreen(vehicle: vehicle)));
                   },
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: (asset['type'] == 'Bike' ? Colors.teal : Colors.indigo).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      asset['type'] == 'Bike' ? Icons.motorcycle_rounded : Icons.local_shipping_rounded,
-                      color: asset['type'] == 'Bike' ? Colors.teal : Colors.indigo,
+                  borderRadius: BorderRadius.circular(24),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: (type == 'Bike' ? Colors.teal : Colors.indigo).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                type == 'Bike' ? Icons.motorcycle_rounded : Icons.local_shipping_rounded,
+                                color: type == 'Bike' ? Colors.teal : Colors.indigo,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    asset['plate'] ?? 'No Plate',
+                                    style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 16),
+                                  ),
+                                  Text(
+                                    type.toUpperCase(),
+                                    style: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            _buildStatusBadge(status),
+                          ],
+                        ),
+                        const Spacer(),
+                        const Divider(height: 1),
+                        const Spacer(),
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: AppColors.primary.withOpacity(0.1),
+                              child: Icon(isAssigned ? Icons.person_rounded : Icons.person_add_rounded, size: 14, color: AppColors.primary),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isAssigned ? 'Assigned To' : 'Availability',
+                                    style: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    isAssigned ? asset['assignedTo'] : 'Available for duty',
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.bold, 
+                                      fontSize: 13,
+                                      color: isAssigned ? AppColors.textPrimary : Colors.green,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.textSecondary),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  title: Text(
-                    '${asset['type']} — ${asset['plate']}',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    isAssigned ? 'Assigned to: ${asset['assignedTo']}' : 'Currently Available',
-                    style: GoogleFonts.outfit(
-                      color: isAssigned ? AppColors.textPrimary : Colors.green,
-                      fontSize: 13,
-                      fontWeight: isAssigned ? FontWeight.normal : FontWeight.bold,
-                    ),
-                  ),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(asset['status']).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      asset['status'].toUpperCase(),
-                      style: GoogleFonts.outfit(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        color: _getStatusColor(asset['status']),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
       ],
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    final color = _getStatusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: GoogleFonts.outfit(
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          color: color,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 

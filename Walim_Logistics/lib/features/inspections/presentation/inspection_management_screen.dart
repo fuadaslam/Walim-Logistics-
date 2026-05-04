@@ -8,7 +8,8 @@ import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboar
 import 'package:intl/intl.dart';
 
 class InspectionManagementScreen extends ConsumerWidget {
-  const InspectionManagementScreen({super.key});
+  final int initialTabIndex;
+  const InspectionManagementScreen({super.key, this.initialTabIndex = 0});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,6 +37,7 @@ class InspectionManagementScreen extends ConsumerWidget {
   Widget _buildContent(BuildContext context, InspectionStatus status) {
     return DefaultTabController(
       length: 2,
+      initialIndex: initialTabIndex,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

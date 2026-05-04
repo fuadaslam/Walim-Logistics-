@@ -18,7 +18,8 @@ final groupsProvider = FutureProvider.autoDispose((ref) async {
 });
 
 class AttendanceReportsScreen extends ConsumerStatefulWidget {
-  const AttendanceReportsScreen({super.key});
+  final String? initialStatus;
+  const AttendanceReportsScreen({super.key, this.initialStatus});
 
   @override
   ConsumerState<AttendanceReportsScreen> createState() => _AttendanceReportsScreenState();
@@ -28,6 +29,13 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
   DateTime? selectedDate;
   String? selectedPlatformId;
   String? selectedGroupId;
+  String? selectedStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedStatus = widget.initialStatus;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +71,9 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
                 return false;
               }
               if (selectedGroupId != null && r['group_id'] != selectedGroupId) {
+                return false;
+              }
+              if (selectedStatus != null && r['status'] != selectedStatus) {
                 return false;
               }
               return true;
@@ -181,6 +192,7 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
                 selectedDate = null;
                 selectedPlatformId = null;
                 selectedGroupId = null;
+                selectedStatus = null;
               });
             },
             icon: const Icon(Icons.clear_all_rounded),

@@ -7,24 +7,27 @@ import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dar
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/shared/models/profile.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 
 class OnboardingManagementScreen extends ConsumerWidget {
   const OnboardingManagementScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentUserRole = ref.watch(authProvider).profile?.role;
+    
     return DashboardScaffold(
       title: 'ONBOARDING & OFFBOARDING',
       subtitle: 'Digital contracts, training progress, and staff transitions',
       showBackButton: true,
       activeItem: 'HR',
       children: [
-        _buildPhaseTabs(context, ref),
+        _buildPhaseTabs(context, ref, currentUserRole),
       ],
     );
   }
 
-  Widget _buildPhaseTabs(BuildContext context, WidgetRef ref) {
+  Widget _buildPhaseTabs(BuildContext context, WidgetRef ref, String? currentUserRole) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return DefaultTabController(
       length: 2,
@@ -67,7 +70,7 @@ class OnboardingManagementScreen extends ConsumerWidget {
             height: 700,
             child: TabBarView(
               children: [
-                _buildOnboardingList(context, ref),
+                _buildOnboardingList(context, ref, currentUserRole),
                 _buildOffboardingList(),
               ],
             ),
@@ -77,12 +80,24 @@ class OnboardingManagementScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildOnboardingList(BuildContext context, WidgetRef ref) {
+  Widget _buildOnboardingList(BuildContext context, WidgetRef ref, String? currentUserRole) {
     final onboardingAsync = ref.watch(onboardingStaffProvider);
 
     return onboardingAsync.when(
       data: (onboardingStaff) {
-        if (onboardingStaff.isEmpty) {
+        final filteredStaff = onboardingStaff.where((staff) {
+          final role = staff['role'] as String? ?? '';
+          
+          // Apply role-based visibility restrictions
+          if (currentUserRole == 'Supervisor') {
+            return role == 'Rider';
+          } else if (currentUserRole == 'Operations Manager') {
+            return role == 'Rider' || role == 'Supervisor';
+          }
+          return true;
+        }).toList();
+
+        if (filteredStaff.isEmpty) {
           return const EmptyStatePlaceholder(
             icon: Icons.person_add_alt_1_rounded,
             title: 'No Active Onboarding',
@@ -92,10 +107,10 @@ class OnboardingManagementScreen extends ConsumerWidget {
         }
 
         return ListView.builder(
-          itemCount: onboardingStaff.length,
+          itemCount: filteredStaff.length,
           padding: const EdgeInsets.symmetric(vertical: 8),
           itemBuilder: (context, index) {
-            final staff = onboardingStaff[index];
+            final staff = filteredStaff[index];
             final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
             
             return Container(

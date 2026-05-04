@@ -85,6 +85,9 @@ class AdminDashboard extends ConsumerWidget {
                 trend: 'Live',
                 isPositive: true,
                 sparklineData: const [10, 15, 8, 20, 12, 25, 22],
+                onTap: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => const StaffManagementScreen(initialRole: 'Rider', initialStatus: 'active'),
+                )),
               ),
               DashboardStatCard(
                 label: 'On Duty Now',
@@ -94,6 +97,9 @@ class AdminDashboard extends ConsumerWidget {
                 trend: 'Open shifts',
                 isPositive: true,
                 sparklineData: const [50, 45, 60, 55, 70, 65, 80],
+                onTap: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => const AttendanceReportsScreen(),
+                )),
               ),
               DashboardStatCard(
                 label: 'On Leave',
@@ -103,6 +109,9 @@ class AdminDashboard extends ConsumerWidget {
                 trend: 'Current',
                 isPositive: stats.onLeave < 5,
                 sparklineData: const [2, 3, 2, 4, 3, 2, 2],
+                onTap: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => const StaffManagementScreen(initialRole: 'Rider', initialStatus: 'on leave'),
+                )),
               ),
               DashboardStatCard(
                 label: 'Requests',
@@ -112,6 +121,7 @@ class AdminDashboard extends ConsumerWidget {
                 trend: 'Pending',
                 isPositive: stats.pendingRequests == 0,
                 sparklineData: const [5, 8, 6, 10, 12, 11, 8],
+                onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.hr),
               ),
             ],
           ),

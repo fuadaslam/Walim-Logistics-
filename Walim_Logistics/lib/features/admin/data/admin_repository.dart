@@ -19,7 +19,7 @@ class AdminRepository {
           .filter('check_out_time', 'is', null)
           .gte('check_in_time', today),
       _supabase.from('profiles').select('id').eq('status', 'on_leave').count(CountOption.exact),
-      _supabase.from('leave_requests').select('id').eq('status', 'pending').count(CountOption.exact),
+      _supabase.from('leave_requests').select('id').eq('status', 'Pending').count(CountOption.exact),
     ]);
 
     final activeRiders = (results[0] as List).length;

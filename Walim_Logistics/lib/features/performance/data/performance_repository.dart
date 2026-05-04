@@ -106,7 +106,7 @@ class PerformanceRepository {
     // Attendance this month
     try {
       final attendance = await _supabase
-          .from('attendance_records')
+          .from('attendance')
           .select('check_in_time')
           .eq('profile_id', profileId)
           .gte('check_in_time', monthStart);
@@ -125,7 +125,7 @@ class PerformanceRepository {
       final incidents = await _supabase
           .from('incidents')
           .select('id')
-          .eq('profile_id', profileId)
+          .eq('reported_by', profileId)
           .gte('created_at', weekStartStr);
       incidentScore = (incidents as List).isEmpty ? weightInc : 0;
     } catch (e) {
@@ -215,7 +215,7 @@ class PerformanceRepository {
     Map<String, int> attendanceCounts = {};
     try {
       final att = await _supabase
-          .from('attendance_records')
+          .from('attendance')
           .select('profile_id')
           .inFilter('profile_id', profileIds)
           .gte('check_in_time', monthStart);
@@ -234,11 +234,11 @@ class PerformanceRepository {
     try {
       final inc = await _supabase
           .from('incidents')
-          .select('profile_id')
-          .inFilter('profile_id', profileIds)
+          .select('reported_by')
+          .inFilter('reported_by', profileIds)
           .gte('created_at', weekStartStr);
       for (final r in inc as List) {
-        profilesWithIncidents.add(r['profile_id'] as String);
+        profilesWithIncidents.add(r['reported_by'] as String);
       }
     } catch (e) {
       debugPrint('Bulk incidents error: $e');

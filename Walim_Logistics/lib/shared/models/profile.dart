@@ -2,6 +2,7 @@ class UserProfile {
   final String id;
   final String role;
   final String fullName;
+  final String? email;
   final String? phoneNumber;
   final String status;
   final String? iqamaNumber;
@@ -10,15 +11,28 @@ class UserProfile {
   final String? sponsorship;
   final String? emergencyContact;
   final String? location;
+  final String? avatarUrl;
   final double? rating;
   final double? lastLat;
   final double? lastLng;
   final DateTime? lastLocationUpdate;
 
+  // Group / platform / supervisor — populated via rider_full_profile view
+  final String? groupId;
+  final String? groupName;
+  final String? platformId;
+  final String? platformName;
+  final String? supervisorId;
+  final String? supervisorName;
+  final String? supervisorPhone;
+  final String? zoneId;
+  final String? zoneName;
+
   UserProfile({
     required this.id,
     required this.role,
     required this.fullName,
+    this.email,
     this.phoneNumber,
     required this.status,
     this.iqamaNumber,
@@ -27,10 +41,20 @@ class UserProfile {
     this.sponsorship,
     this.emergencyContact,
     this.location,
+    this.avatarUrl,
     this.rating,
     this.lastLat,
     this.lastLng,
     this.lastLocationUpdate,
+    this.groupId,
+    this.groupName,
+    this.platformId,
+    this.platformName,
+    this.supervisorId,
+    this.supervisorName,
+    this.supervisorPhone,
+    this.zoneId,
+    this.zoneName,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -42,6 +66,8 @@ class UserProfile {
       roleName = rolesData['name'].toString().trim();
     } else if (rolesData is List && rolesData.isNotEmpty && rolesData[0] is Map) {
       roleName = rolesData[0]['name'].toString().trim();
+    } else if (json['role_name'] != null) {
+      roleName = json['role_name'].toString().trim();
     } else if (json['role_id'] != null) {
       final roleId = json['role_id'].toString().toLowerCase();
       const Map<String, String> roleMap = {
@@ -62,6 +88,7 @@ class UserProfile {
       id: json['id'],
       role: roleName,
       fullName: json['full_name'] ?? 'User',
+      email: json['email'],
       phoneNumber: json['phone_number'],
       status: json['status'] ?? 'active',
       iqamaNumber: json['iqama_number'],
@@ -70,13 +97,22 @@ class UserProfile {
       sponsorship: json['sponsorship'],
       emergencyContact: json['emergency_contact'],
       location: json['location'],
+      avatarUrl: json['avatar_url'],
       rating: (json['rating'] as num?)?.toDouble(),
       lastLat: (json['last_lat'] as num?)?.toDouble(),
       lastLng: (json['last_lng'] as num?)?.toDouble(),
-      lastLocationUpdate: json['last_location_update'] != null 
-          ? DateTime.parse(json['last_location_update']) 
+      lastLocationUpdate: json['last_location_update'] != null
+          ? DateTime.parse(json['last_location_update'])
           : null,
+      groupId: json['group_id'],
+      groupName: json['group_name'],
+      platformId: json['platform_id'],
+      platformName: json['platform_name'],
+      supervisorId: json['supervisor_id'],
+      supervisorName: json['supervisor_name'],
+      supervisorPhone: json['supervisor_phone'],
+      zoneId: json['zone_id'],
+      zoneName: json['zone_name'],
     );
   }
 }
-

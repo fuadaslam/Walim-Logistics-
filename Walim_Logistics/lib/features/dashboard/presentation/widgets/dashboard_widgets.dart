@@ -370,7 +370,7 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
           borderRadius: BorderRadius.circular(20),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            padding: EdgeInsets.all(isMobile ? 10 : 12),
+            padding: EdgeInsets.all(isMobile ? 10 : 10),
             decoration: BoxDecoration(
               color: isDark ? AppColors.surfaceDark : Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -391,7 +391,7 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -401,22 +401,22 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: widget.color.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                        color: widget.color.withOpacity(0.2),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
                   child: Icon(
                     widget.icon, 
                     color: Colors.white, 
-                    size: isMobile ? 16 : 18,
+                    size: isMobile ? 14 : 15,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,25 +431,25 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.outfit(
-                                fontSize: isMobile ? 12 : 13,
+                                fontSize: isMobile ? 11 : 12,
                                 fontWeight: FontWeight.w800,
                                 color: isDark ? Colors.white : AppColors.textPrimary,
-                                letterSpacing: -0.3,
+                                letterSpacing: -0.2,
                               ),
                             ),
                           ),
                           if (widget.badge != null)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                               decoration: BoxDecoration(
                                 color: widget.color.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(4),
                                 border: Border.all(color: widget.color.withOpacity(0.2)),
                               ),
                               child: Text(
                                 widget.badge!,
                                 style: GoogleFonts.outfit(
-                                  fontSize: 8,
+                                  fontSize: 7,
                                   fontWeight: FontWeight.bold,
                                   color: widget.color,
                                 ),
@@ -457,14 +457,14 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
                             ),
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       Text(
                         widget.subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.outfit(
-                          fontSize: isMobile ? 10 : 11,
-                          color: (isDark ? Colors.white70 : AppColors.textSecondary).withOpacity(0.8),
+                          fontSize: isMobile ? 9 : 10,
+                          color: (isDark ? Colors.white70 : AppColors.textSecondary).withValues(alpha: 0.8),
                           fontWeight: FontWeight.w500,
                         ),
                       ),

@@ -176,7 +176,9 @@ class OpsManagerDashboard extends ConsumerWidget {
               icon: Icons.motorcycle_rounded,
               color: Colors.teal,
               trend: 'On duty',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const StaffManagementScreen(initialRole: 'Rider', initialStatus: 'active'),
+              )),
             ),
             DashboardStatCard(
               label: 'Riders on Leave',
@@ -184,7 +186,9 @@ class OpsManagerDashboard extends ConsumerWidget {
               icon: Icons.person_off_outlined,
               color: Colors.orange,
               trend: 'Scheduled absence',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const StaffManagementScreen(initialRole: 'Rider', initialStatus: 'on leave'),
+              )),
             ),
             DashboardStatCard(
               label: 'Active Incidents',
@@ -193,7 +197,9 @@ class OpsManagerDashboard extends ConsumerWidget {
               color: Colors.red,
               trend: '${data.activeIncidents} Critical',
               isPositive: data.activeIncidents == 0,
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InspectionManagementScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const InspectionManagementScreen(initialTabIndex: 1),
+              )),
             ),
             DashboardStatCard(
               label: 'Supervisors',
@@ -201,7 +207,9 @@ class OpsManagerDashboard extends ConsumerWidget {
               icon: Icons.admin_panel_settings_rounded,
               color: Colors.indigo,
               trend: 'Field management',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const StaffManagementScreen(initialRole: 'Supervisor'),
+              )),
             ),
             DashboardStatCard(
               label: 'SOS',
@@ -209,7 +217,9 @@ class OpsManagerDashboard extends ConsumerWidget {
               icon: Icons.login_rounded,
               color: Colors.green,
               trend: 'Start of Shift',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceReportsScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const AttendanceReportsScreen(initialStatus: 'SOS_SUBMITTED'),
+              )),
             ),
             DashboardStatCard(
               label: 'EOS',
@@ -217,7 +227,9 @@ class OpsManagerDashboard extends ConsumerWidget {
               icon: Icons.logout_rounded,
               color: Colors.blueGrey,
               trend: 'End of Shift',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceReportsScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const AttendanceReportsScreen(initialStatus: 'EOS_SUBMITTED'),
+              )),
             ),
           ],
         ),
