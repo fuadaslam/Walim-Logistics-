@@ -614,11 +614,51 @@ class _SOSSectionState extends ConsumerState<_SOSSection> {
         ),
         const SizedBox(height: 20),
 
+        const SizedBox(height: 12),
+        
+        // Handover Verification Checklist
+        _Card(
+          isDark: widget.isDark,
+          child: _VerificationChecklist(
+            checklist: state.verificationChecklist,
+            onToggle: notifier.toggleVerification,
+            title: 'Shift Handover Verification',
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Handover Notes
+        _Card(
+          isDark: widget.isDark,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SectionHeader(
+                icon: Icons.note_alt_rounded,
+                label: 'Handover Notes',
+                isDark: widget.isDark,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                onChanged: notifier.updateHandoverNotes,
+                maxLines: 3,
+                style: GoogleFonts.outfit(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Add any specific instructions or issues for the next shift...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
         // Submit SOS
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: state.loading
+            onPressed: (state.loading || !state.allVerified)
                 ? null
                 : () async {
                     final err =
@@ -645,7 +685,7 @@ class _SOSSectionState extends ConsumerState<_SOSSection> {
                   fontWeight: FontWeight.w800, letterSpacing: 1),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: state.allVerified ? AppColors.primary : Colors.grey,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -653,6 +693,16 @@ class _SOSSectionState extends ConsumerState<_SOSSection> {
             ),
           ),
         ),
+        if (!state.allVerified)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Center(
+              child: Text(
+                'Complete all verification checks above to submit SOS',
+                style: GoogleFonts.outfit(fontSize: 11, color: Colors.amber, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -919,6 +969,46 @@ class _EOSSection extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
 
+        const SizedBox(height: 12),
+
+        // EOS Verification
+        _Card(
+          isDark: isDark,
+          child: _VerificationChecklist(
+            checklist: state.verificationChecklist,
+            onToggle: notifier.toggleVerification,
+            title: 'End of Shift Verification',
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Handover Notes (for EOS)
+        _Card(
+          isDark: isDark,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SectionHeader(
+                icon: Icons.note_alt_rounded,
+                label: 'Handover Notes',
+                isDark: isDark,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                onChanged: notifier.updateHandoverNotes,
+                maxLines: 3,
+                style: GoogleFonts.outfit(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Summarize shift results and any items requiring follow-up...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
         // EOS handover gate
         _Card(
           isDark: isDark,
@@ -927,7 +1017,7 @@ class _EOSSection extends ConsumerWidget {
             children: [
               _SectionHeader(
                 icon: Icons.logout_rounded,
-                label: 'End of Shift (EOS) — Handover',
+                label: 'Submit EOS',
                 isDark: isDark,
               ),
               const SizedBox(height: 16),
@@ -992,6 +1082,7 @@ class _EOSSection extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: state.nextSupervisorSosSubmitted &&
+                              state.allVerified &&
                               !state.loading
                           ? () => notifier.submitEOS()
                           : null,
@@ -1009,7 +1100,7 @@ class _EOSSection extends ConsumerWidget {
                             letterSpacing: 0.8),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: (state.nextSupervisorSosSubmitted && state.allVerified) ? AppColors.primary : Colors.grey,
                         foregroundColor: Colors.white,
                         padding:
                             const EdgeInsets.symmetric(vertical: 12),
@@ -1020,6 +1111,16 @@ class _EOSSection extends ConsumerWidget {
                   ),
                 ],
               ),
+              if (!state.allVerified)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Center(
+                    child: Text(
+                      'Complete all verification checks to submit EOS',
+                      style: GoogleFonts.outfit(fontSize: 11, color: Colors.amber, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -1437,6 +1538,96 @@ class _FlagRow extends StatelessWidget {
   }
 
   String _formatFlagType(String t) => t.replaceAll('_', ' ');
+}
+
+// ---------------------------------------------------------------------------
+// Verification Checklist Component
+// ---------------------------------------------------------------------------
+
+class _VerificationChecklist extends StatelessWidget {
+  final Map<String, bool> checklist;
+  final ValueChanged<String> onToggle;
+  final String title;
+
+  const _VerificationChecklist({
+    required this.checklist,
+    required this.onToggle,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.verified_user_rounded, size: 20, color: AppColors.primary),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Please verify the following data points before proceeding:',
+          style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey),
+        ),
+        const SizedBox(height: 12),
+        ...checklist.keys.map((key) => _VerificationItem(
+              label: _getLabel(key),
+              value: checklist[key] ?? false,
+              onChanged: (_) => onToggle(key),
+            )),
+      ],
+    );
+  }
+
+  String _getLabel(String key) {
+    switch (key) {
+      case 'riders':
+        return 'Verify Rider Attendance & Availability';
+      case 'leave':
+        return 'Check Approved Leaves & Documentation';
+      case 'vehicles':
+        return 'Verify Vehicle Status & Handover Records';
+      case 'issues':
+        return 'Review Active Incidents & Maintenance Needs';
+      default:
+        return key;
+    }
+  }
+}
+
+class _VerificationItem extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool?> onChanged;
+
+  const _VerificationItem({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: CheckboxListTile(
+        value: value,
+        onChanged: onChanged,
+        title: Text(label, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w500)),
+        controlAffinity: ListTileControlAffinity.leading,
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        activeColor: AppColors.primary,
+        checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------

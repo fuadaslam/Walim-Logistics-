@@ -9,19 +9,25 @@ class DashboardRepository {
   Future<Map<String, dynamic>> getGlobalMetrics() async {
     final rolesResponse = await _supabase.from('roles').select('id, name');
     final roles = rolesResponse as List;
-    final riderRoleId = roles.firstWhere((r) => r['name'] == 'Rider', orElse: () => {'id': ''})['id'];
-    final supervisorRoleId = roles.firstWhere((r) => r['name'] == 'Supervisor', orElse: () => {'id': ''})['id'];
+    final riderRoleId = roles.firstWhere(
+      (r) => r['name'].toString().toLowerCase() == 'rider', 
+      orElse: () => {'id': ''}
+    )['id'];
+    final supervisorRoleId = roles.firstWhere(
+      (r) => r['name'].toString().toLowerCase() == 'supervisor', 
+      orElse: () => {'id': ''}
+    )['id'];
 
     final today = DateTime.now();
     final dateStr = today.toIso8601String().split('T')[0];
     final startOfDay = DateTime(today.year, today.month, today.day).toIso8601String();
 
     final results = await Future.wait<dynamic>([
-      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).eq('status', 'active'),
-      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).eq('status', 'inactive'),
-      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).eq('status', 'leave'),
-      _supabase.from('profiles').select('id').eq('role_id', supervisorRoleId).eq('status', 'active'),
-      _supabase.from('incidents').select('id').or('status.eq.pending,status.eq.investigating'),
+      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).ilike('status', 'active'),
+      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).ilike('status', 'inactive'),
+      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).or('status.ilike.leave,status.ilike.on leave'),
+      _supabase.from('profiles').select('id').eq('role_id', supervisorRoleId).ilike('status', 'active'),
+      _supabase.from('incidents').select('id').or('status.ilike.pending,status.ilike.investigating,status.ilike.open'),
       _supabase.from('groups').select('id').eq('is_active', true),
       _supabase.from('vehicles').select('status'),
       _supabase.from('platforms').select('id, name'),

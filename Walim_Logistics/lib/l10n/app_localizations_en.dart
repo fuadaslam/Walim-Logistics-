@@ -79,4 +79,178 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logoutConfirm => 'Are you sure you want to log out?';
+
+  @override
+  String get fleetOperations => 'Fleet Operations';
+
+  @override
+  String get signInPrompt => 'Enter your credentials to sign in';
+
+  @override
+  String get dontHaveAccount => 'Don\'t have an account?';
+
+  @override
+  String get signUp => 'Sign Up';
+
+  @override
+  String get opsControl => 'Operations Control';
+
+  @override
+  String get opsSubtitle =>
+      'Real-time fleet intelligence and strategic allocation';
+
+  @override
+  String get corePerformanceMetrics => 'Core Performance Metrics';
+
+  @override
+  String get managementConsole => 'Management Console';
+
+  @override
+  String get liveActivity => 'Live Activity';
+
+  @override
+  String get activeRiders => 'Active Riders';
+
+  @override
+  String get ridersOnLeave => 'Riders on Leave';
+
+  @override
+  String get activeIncidents => 'Active Incidents';
+
+  @override
+  String get supervisors => 'Supervisors';
+
+  @override
+  String get sos => 'SOS';
+
+  @override
+  String get eos => 'EOS';
+
+  @override
+  String get vehicleAllocation => 'Vehicle Allocation';
+
+  @override
+  String get liveRiderTracking => 'Live Rider Tracking';
+
+  @override
+  String get capacityPlanning => 'Capacity Planning';
+
+  @override
+  String get groupManagement => 'Group Management';
+
+  @override
+  String get shiftPlanner => 'Shift Planner';
+
+  @override
+  String get supervisorSchedule => 'Supervisor Schedule';
+
+  @override
+  String get matchingDataCenter => 'Matching Data Center';
+
+  @override
+  String get globalAssetView => 'Global Asset View';
+
+  @override
+  String get staffMonitoring => 'Staff Monitoring';
+
+  @override
+  String get safetyInspections => 'Safety & Inspections';
+
+  @override
+  String get performanceManagement => 'Performance Management';
+
+  @override
+  String get leaderboard => 'Leaderboard';
+
+  @override
+  String get sosEosMonitoring => 'SOS/EOS Monitoring';
+
+  @override
+  String get controlTower => 'Control Tower';
+
+  @override
+  String get opsStrategy => 'Operations Strategy';
+
+  @override
+  String get liveGPS => 'Live GPS';
+
+  @override
+  String get hrManagement => 'HR Management';
+
+  @override
+  String get assetManagement => 'Asset Management';
+
+  @override
+  String get financialManagement => 'Financial Management';
+
+  @override
+  String get fleetPerformanceHub => 'Fleet Performance Hub';
+
+  @override
+  String get myRequests => 'My Requests';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get myDashboard => 'My Dashboard';
+
+  @override
+  String get itDevelopment => 'IT & Development';
+
+  @override
+  String get teamLeadership => 'Team Leadership';
+
+  @override
+  String get businessGrowth => 'Business Growth';
+
+  @override
+  String get opsStrategySubtitle =>
+      'Fleet allocation, SLA monitoring, and planning';
+
+  @override
+  String get controlTowerSubtitle =>
+      'Real-time metrics across all zones and platforms';
+
+  @override
+  String get hrManagementSubtitle =>
+      'Manage staff, government regulations, housing, and assets';
+
+  @override
+  String get financialManagementSubtitle =>
+      'Payroll, vendor invoicing, and expenses';
+
+  @override
+  String get supervisorDashboardSubtitle =>
+      'Oversee operations and resolve blockers';
+
+  @override
+  String get itDevDashboardSubtitle => 'System health and API monitoring';
+
+  @override
+  String get teamLeadershipSubtitle => 'Manage your team and performance';
+
+  @override
+  String get riderDashboardSubtitle => 'Your daily stats and tasks';
+
+  @override
+  String get bizDevDashboardSubtitle => 'Sales and partnership metrics';
+
+  @override
+  String get home => 'Home';
+
+  @override
+  String get gps => 'GPS';
+
+  @override
+  String get riders => 'Riders';
+
+  @override
+  String get dashboard => 'Dashboard';
+
+  @override
+  String get performance => 'Performance';
+
+  @override
+  String get commandCenter => 'Command Center';
 }

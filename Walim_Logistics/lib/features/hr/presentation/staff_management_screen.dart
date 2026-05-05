@@ -54,6 +54,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
   Widget build(BuildContext context) {
     final staffAsync = ref.watch(allStaffProvider);
     final isDesktop = MediaQuery.of(context).size.width > 900;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final currentUserRole = ref.watch(authProvider).profile?.role;
 
@@ -121,7 +122,9 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
               return _buildEmptyState();
             }
 
-            return _buildStaffGrid(filteredStaff, isDesktop);
+            return isDesktop 
+                ? _buildStaffTable(filteredStaff, isDark)
+                : _buildStaffGrid(filteredStaff, isDesktop);
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text('Error: $err')),
@@ -185,6 +188,152 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
           );
         }).toList(),
       ),
+    );
+  }
+
+  Widget _buildStaffTable(List<Map<String, dynamic>> staff, bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width - 100),
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.background),
+              dataRowMaxHeight: 70,
+              dividerThickness: 0.5,
+              columns: [
+                DataColumn(label: _buildHeaderLabel('Staff Member')),
+                DataColumn(label: _buildHeaderLabel('Role')),
+                DataColumn(label: _buildHeaderLabel('Status')),
+                DataColumn(label: _buildHeaderLabel('Contact')),
+                DataColumn(label: _buildHeaderLabel('Actions')),
+              ],
+              rows: staff.map((member) {
+                final profile = UserProfile.fromJson(member);
+                return DataRow(
+                  cells: [
+                    DataCell(_buildStaffInfo(profile)),
+                    DataCell(_buildRoleBadge(profile.role)),
+                    DataCell(_buildStatusBadge(profile.status)),
+                    DataCell(Text(profile.phoneNumber ?? 'N/A', style: GoogleFonts.outfit())),
+                    DataCell(_buildTableActions(profile)),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderLabel(String label) {
+    return Text(
+      label,
+      style: GoogleFonts.outfit(
+        fontWeight: FontWeight.w900,
+        fontSize: 13,
+        letterSpacing: 0.5,
+        color: AppColors.textSecondary,
+      ),
+    );
+  }
+
+  Widget _buildStaffInfo(UserProfile profile) {
+    return Row(
+      children: [
+        _buildAvatar(profile),
+        const SizedBox(width: 12),
+        Text(
+          profile.fullName,
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleBadge(String role) {
+    final color = _getRoleColor(role);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        role.toUpperCase(),
+        style: GoogleFonts.outfit(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color color;
+    switch (status.toLowerCase()) {
+      case 'active': color = Colors.green; break;
+      case 'on leave': color = Colors.orange; break;
+      case 'inactive': color = Colors.red; break;
+      default: color = Colors.grey;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: GoogleFonts.outfit(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableActions(UserProfile profile) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RiderDetailScreen(profile: profile),
+              ),
+            );
+          },
+          child: Text('View', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.primary)),
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+          onPressed: () => _confirmDelete(profile),
+          visualDensity: VisualDensity.compact,
+        ),
+      ],
     );
   }
 
@@ -254,27 +403,12 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _getRoleColor(profile.role).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      profile.role.toUpperCase(),
-                      style: GoogleFonts.outfit(
-                        color: _getRoleColor(profile.role),
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
+                  _buildRoleBadge(profile.role),
                 ],
               ),
             ),
             IconButton(
-              icon: Icon(Icons.delete_outline_rounded, color: Colors.red.withOpacity(0.3), size: 20),
+              icon: Icon(Icons.delete_outline_rounded, color: Colors.red.withValues(alpha: 0.3), size: 20),
               onPressed: () => _confirmDelete(profile),
             ),
             Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary.withValues(alpha: 0.3)),

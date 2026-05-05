@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/core/theme/theme_provider.dart';
 import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
@@ -342,11 +343,14 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     final role = authState.profile?.role ?? 'Rider';
     final navNotifier = ref.read(navigationProvider.notifier);
 
+
+    final l10n = AppLocalizations.of(context)!;
+
     // Define items based on role (similar logic to sidebar)
     final items = <_BottomNavItem>[
       _BottomNavItem(
         icon: Icons.dashboard_rounded,
-        label: 'Home',
+        label: l10n.home,
         tab: DashboardTab.dashboard,
         isActive: navState.activeTab == DashboardTab.dashboard,
       ),
@@ -356,7 +360,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     if ((role == 'Admin' || role == 'Supervisor' || role == 'Operations Manager' || role == 'IT_Dev' || role == 'Leader') && items.length < 5) {
       items.add(_BottomNavItem(
         icon: Icons.map_rounded,
-        label: 'GPS',
+        label: l10n.gps,
         tab: DashboardTab.liveOps,
         isActive: navState.activeTab == DashboardTab.liveOps,
       ));
@@ -366,7 +370,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     if ((role == 'Admin' || role == 'Supervisor' || role == 'Operations Manager') && items.length < 5) {
       items.add(_BottomNavItem(
         icon: Icons.motorcycle_rounded,
-        label: 'Riders',
+        label: l10n.riders,
         tab: DashboardTab.liveRider,
         isActive: navState.activeTab == DashboardTab.liveRider,
       ));
@@ -389,7 +393,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     } else if ((role == 'Rider' || role == 'Leader') && items.length < 5) {
       items.add(_BottomNavItem(
         icon: Icons.contact_support_rounded,
-        label: 'Support',
+        label: l10n.support,
         tab: DashboardTab.support,
         isActive: navState.activeTab == DashboardTab.support,
       ));
@@ -410,6 +414,15 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
         label: 'Requests',
         tab: DashboardTab.requests,
         isActive: navState.activeTab == DashboardTab.requests,
+      ));
+    }
+
+    if ((role == 'Admin' || role == 'Operations Manager' || role == 'Supervisor') && items.length < 5) {
+      items.add(_BottomNavItem(
+        icon: Icons.assessment_rounded,
+        label: 'Reports',
+        tab: DashboardTab.reports,
+        isActive: navState.activeTab == DashboardTab.reports,
       ));
     }
 
@@ -611,6 +624,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
   }
 
   Widget _buildSidebar(BuildContext context, bool isSidebarCollapsed, AuthState authState, NavigationState navState) {
+    final l10n = AppLocalizations.of(context)!;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       width: isSidebarCollapsed ? 80 : 280,
@@ -663,7 +677,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
               child: _buildSidebarItems(context, authState, navState, isSidebarCollapsed),
             ),
           ),
-          _buildSidebarItem(context, Icons.settings_rounded, 'Settings', widget.activeItem == 'Settings', isSidebarCollapsed, onTap: () {
+          _buildSidebarItem(context, Icons.settings_rounded, l10n.settings, widget.activeItem == 'Settings', isSidebarCollapsed, onTap: () {
             if (widget.activeItem == 'Settings') return;
             Navigator.push(context, MaterialPageRoute(builder: (_) => const LayoutSettingsScreen()));
           }),
@@ -671,7 +685,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           _buildSidebarItem(
             context, 
             Icons.logout_rounded, 
-            'Logout', 
+            l10n.logout, 
             false, 
             isSidebarCollapsed,
             onTap: _handleLogout,
@@ -856,9 +870,51 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           const SizedBox(width: 40),
           
           // 2. Language Selector
-          InkWell(
-            onTap: () => ref.read(localeProvider.notifier).toggleLocale(),
-            borderRadius: BorderRadius.circular(12),
+          PopupMenuButton<String>(
+            tooltip: 'Select Language',
+            onSelected: (String code) {
+              ref.read(localeProvider.notifier).setLocale(Locale(code));
+            },
+            offset: const Offset(0, 48),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'en',
+                child: Row(
+                  children: [
+                    Text('English', style: GoogleFonts.outfit(fontWeight: FontWeight.w500)),
+                    if (ref.read(localeProvider).languageCode == 'en') ...[
+                      const Spacer(),
+                      const Icon(Icons.check_circle, size: 16, color: AppColors.primary),
+                    ],
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'ar',
+                child: Row(
+                  children: [
+                    Text('العربية', style: GoogleFonts.outfit(fontWeight: FontWeight.w500)),
+                    if (ref.read(localeProvider).languageCode == 'ar') ...[
+                      const Spacer(),
+                      const Icon(Icons.check_circle, size: 16, color: AppColors.primary),
+                    ],
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'hi',
+                child: Row(
+                  children: [
+                    Text('हिन्दी', style: GoogleFonts.outfit(fontWeight: FontWeight.w500)),
+                    if (ref.read(localeProvider).languageCode == 'hi') ...[
+                      const Spacer(),
+                      const Icon(Icons.check_circle, size: 16, color: AppColors.primary),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -866,13 +922,16 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: theme.dividerColor.withOpacity(0.3)),
               ),
-
               child: Row(
                 children: [
                   const Icon(Icons.language_rounded, size: 18, color: Colors.orange),
                   const SizedBox(width: 8),
                   Text(
-                    ref.watch(localeProvider).languageCode == 'en' ? 'English' : 'العربية',
+                    ref.watch(localeProvider).languageCode == 'en' 
+                        ? 'English' 
+                        : ref.watch(localeProvider).languageCode == 'ar' 
+                            ? 'العربية' 
+                            : 'हिन्दी',
                     style: GoogleFonts.outfit(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -968,13 +1027,14 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
   Widget _buildSidebarItems(BuildContext context, AuthState authState, NavigationState navState, bool isSidebarCollapsed) {
     final role = authState.profile?.role ?? 'Rider';
     final navNotifier = ref.read(navigationProvider.notifier);
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       children: [
         _buildSidebarItem(
           context, 
           Icons.dashboard_rounded, 
-          'Dashboard', 
+          l10n.dashboard, 
           navState.activeTab == DashboardTab.dashboard, 
           isSidebarCollapsed,
           onTap: () => navNotifier.setTab(DashboardTab.dashboard),
@@ -984,7 +1044,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           _buildSidebarItem(
             context, 
             Icons.map_rounded, 
-            'Live GPS', 
+            l10n.liveGPS, 
             navState.activeTab == DashboardTab.liveOps, 
             isSidebarCollapsed,
             onTap: () => navNotifier.setTab(DashboardTab.liveOps),
@@ -994,7 +1054,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           _buildSidebarItem(
             context, 
             Icons.motorcycle_rounded, 
-            'Live Rider', 
+            l10n.liveRiderTracking, 
             navState.activeTab == DashboardTab.liveRider, 
             isSidebarCollapsed,
             onTap: () => navNotifier.setTab(DashboardTab.liveRider),
@@ -1004,17 +1064,55 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           _buildSidebarItem(
             context, 
             Icons.speed_rounded, 
-            'Performance', 
+            l10n.performance, 
             navState.activeTab == DashboardTab.attendance, // Reusing attendance tab for Performance Hub
             isSidebarCollapsed,
             onTap: () => navNotifier.setTab(DashboardTab.attendance),
           ),
 
+        if (role == 'Admin' || role == 'Operations Manager' || role == 'Supervisor')
+          _buildSidebarItem(
+            context, 
+            Icons.assessment_rounded, 
+            'Reports', 
+            navState.activeTab == DashboardTab.reports, 
+            isSidebarCollapsed,
+            onTap: () => navNotifier.setTab(DashboardTab.reports),
+          ),
+
+        if (role == 'Admin' || role == 'Operations Manager' || role == 'Supervisor') ...[
+          _buildSidebarItem(
+            context, 
+            Icons.motorcycle_rounded, 
+            'Riders', 
+            navState.activeTab == DashboardTab.riders, 
+            isSidebarCollapsed,
+            onTap: () => navNotifier.setTab(DashboardTab.riders),
+          ),
+          if (role != 'Supervisor')
+            _buildSidebarItem(
+              context, 
+              Icons.supervisor_account_rounded, 
+              'Supervisors', 
+              navState.activeTab == DashboardTab.supervisors, 
+              isSidebarCollapsed,
+              onTap: () => navNotifier.setTab(DashboardTab.supervisors),
+            ),
+          _buildSidebarItem(
+            context, 
+            Icons.business_rounded, 
+            'Platforms', 
+            navState.activeTab == DashboardTab.platforms, 
+            isSidebarCollapsed,
+            onTap: () => navNotifier.setTab(DashboardTab.platforms),
+          ),
+        ],
+
         if (role == 'Admin' || role == 'HR')
           _buildSidebarItem(
             context, 
             Icons.people_rounded, 
-            'HR Management', 
+            l10n.hrManagement, 
             navState.activeTab == DashboardTab.hr, 
             isSidebarCollapsed,
             onTap: () => navNotifier.setTab(DashboardTab.hr),
@@ -1024,7 +1122,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           _buildSidebarItem(
             context, 
             Icons.inventory_2_rounded, 
-            'Assets', 
+            l10n.assetManagement, 
             navState.activeTab == DashboardTab.assets, 
             isSidebarCollapsed,
             onTap: () => navNotifier.setTab(DashboardTab.assets),
@@ -1034,7 +1132,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           _buildSidebarItem(
             context, 
             Icons.payments_rounded, 
-            'Finance', 
+            l10n.financialManagement, 
             navState.activeTab == DashboardTab.finance, 
             isSidebarCollapsed,
             onTap: () => navNotifier.setTab(DashboardTab.finance),
@@ -1044,7 +1142,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           _buildSidebarItem(
             context, 
             Icons.help_outline, 
-            'Support', 
+            l10n.support, 
             navState.activeTab == DashboardTab.support, 
             isSidebarCollapsed,
             onTap: () => navNotifier.setTab(DashboardTab.support),
@@ -1052,7 +1150,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           _buildSidebarItem(
             context, 
             Icons.article_outlined, 
-            'Documents', 
+            l10n.documentVault, 
             navState.activeTab == DashboardTab.documents, 
             isSidebarCollapsed,
             onTap: () => navNotifier.setTab(DashboardTab.documents),
@@ -1060,7 +1158,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           _buildSidebarItem(
             context, 
             Icons.history_edu_outlined, 
-            'Requests', 
+            l10n.myRequests, 
             navState.activeTab == DashboardTab.requests, 
             isSidebarCollapsed,
             onTap: () => navNotifier.setTab(DashboardTab.requests),

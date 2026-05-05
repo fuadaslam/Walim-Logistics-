@@ -22,6 +22,7 @@ import 'package:walim_logistics/features/inspections/presentation/inspection_scr
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/rider_data_provider.dart';
+import 'package:walim_logistics/features/hr/presentation/edit_profile_screen.dart';
 
 final _riderAssetsProvider = FutureProvider.autoDispose.family<List<AssignedAsset>, String>((ref, id) {
   return ref.watch(hrRepositoryProvider).getAssetsForProfile(id);
@@ -48,24 +49,36 @@ class RiderDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(profileByIdProvider(profile?.id ?? ''));
+    final currentProfile = profileAsync.value ?? profile;
+
+    if (currentProfile == null) {
+      return const DashboardScaffold(
+        title: 'Rider Profile',
+        subtitle: 'Loading profile...',
+        showBackButton: true,
+        children: [Center(child: CircularProgressIndicator())],
+      );
+    }
+
     final isMobile = MediaQuery.of(context).size.width < 900;
-    final name = profile?.fullName ?? "Ahmed Ali";
+    final name = currentProfile.fullName;
     
     return DashboardScaffold(
       title: 'Rider Profile',
       subtitle: 'Managing details and performance for $name',
       showBackButton: true,
       children: [
-        _buildHeader(context, ref, profile),
+        _buildHeader(context, ref, currentProfile),
         SizedBox(height: isMobile ? 16 : 32),
-        _buildStatsGrid(context, ref, profile?.id),
+        _buildStatsGrid(context, ref, currentProfile.id),
         SizedBox(height: isMobile ? 16 : 32),
         if (isMobile)
           Column(
             children: [
-              _buildMainContent(context, ref),
+              _buildMainContent(context, ref, currentProfile),
               const SizedBox(height: 24),
-              _buildSecondaryContent(context, ref),
+              _buildSecondaryContent(context, ref, currentProfile),
             ],
           )
         else
@@ -74,11 +87,11 @@ class RiderDetailScreen extends ConsumerWidget {
             children: [
               Expanded(
                 flex: 2,
-                child: _buildMainContent(context, ref),
+                child: _buildMainContent(context, ref, currentProfile),
               ),
               const SizedBox(width: 24),
               Expanded(
-                child: _buildSecondaryContent(context, ref),
+                child: _buildSecondaryContent(context, ref, currentProfile),
               ),
             ],
           ),
@@ -132,21 +145,21 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMainContent(BuildContext context, WidgetRef ref) {
+  Widget _buildMainContent(BuildContext context, WidgetRef ref, UserProfile currentProfile) {
     return Column(
       children: [
         _buildSectionCard(
           context: context,
           title: 'Personal & Legal Identity',
           icon: Icons.badge_outlined,
-          child: _buildIdentityDetails(context),
+          child: _buildIdentityDetails(context, currentProfile),
         ),
         const SizedBox(height: 24),
         _buildSectionCard(
           context: context,
           title: 'Asset Assignments',
           icon: Icons.motorcycle_outlined,
-          child: _buildAssetDetails(context),
+          child: _buildAssetDetails(context, currentProfile),
         ),
         const SizedBox(height: 24),
         _buildSectionCard(
@@ -159,7 +172,7 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSecondaryContent(BuildContext context, WidgetRef ref) {
+  Widget _buildSecondaryContent(BuildContext context, WidgetRef ref, UserProfile currentProfile) {
     final currentUser = ref.watch(authProvider).profile;
     final isRider = currentUser?.role == 'Rider';
 
@@ -211,15 +224,15 @@ class RiderDetailScreen extends ConsumerWidget {
             context: context,
             title: 'Quick Actions',
             icon: Icons.bolt_rounded,
-            child: _buildQuickActions(context, ref),
+            child: _buildQuickActions(context, ref, currentProfile),
           ),
       ],
     );
   }
-  Widget _buildHeader(BuildContext context, WidgetRef ref, UserProfile? profile) {
+  Widget _buildHeader(BuildContext context, WidgetRef ref, UserProfile currentProfile) {
     final isMobile = MediaQuery.of(context).size.width < 900;
-    final name = profile?.fullName ?? "Ahmed Ali";
-    final id = profile?.id ?? "WAL-78921";
+    final name = currentProfile.fullName;
+    final id = currentProfile.id;
     final displayId = id.length > 8 ? id.substring(0, 8).toUpperCase() : id;
     
     final avatar = Stack(
@@ -307,12 +320,12 @@ class RiderDetailScreen extends ConsumerWidget {
                 letterSpacing: -0.5,
               ),
             ),
-            _buildStatusDropdown(context, ref, profile),
+            _buildStatusDropdown(context, ref, currentProfile),
           ],
         ),
         SizedBox(height: 4),
         Text(
-          'ID: $id • ${profile?.role ?? "Rider"}',
+          'ID: $id • ${currentProfile.role}',
           textAlign: TextAlign.start,
           style: GoogleFonts.outfit(
             color: Colors.white.withValues(alpha: 0.6),
@@ -328,8 +341,8 @@ class RiderDetailScreen extends ConsumerWidget {
           children: [
         Consumer(
               builder: (context, ref, _) {
-                final zoneAsync = ref.watch(_riderZoneByIdProvider(profile?.id ?? ''));
-                final locationText = profile?.location ?? zoneAsync.value?['name'] ?? 'Riyadh';
+                final zoneAsync = ref.watch(_riderZoneByIdProvider(currentProfile.id));
+                final locationText = currentProfile.location ?? zoneAsync.value?['name'] ?? 'Riyadh';
                 return _buildHeaderTag(Icons.location_on_rounded, locationText);
               },
             ),
@@ -340,7 +353,7 @@ class RiderDetailScreen extends ConsumerWidget {
     );
 
     final currentUser = ref.watch(authProvider).profile;
-    final isOwnProfile = currentUser?.id == profile?.id;
+    final isOwnProfile = currentUser?.id == currentProfile.id;
     final isStaff = ['Admin', 'HR', 'Supervisor', 'Operations Manager'].contains(currentUser?.role);
     final canEdit = isOwnProfile || isStaff;
 
@@ -350,8 +363,16 @@ class RiderDetailScreen extends ConsumerWidget {
             if (canEdit)
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Profile coming soon')));
+                  onPressed: () async {
+                    final updated = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditProfileScreen(profile: currentProfile),
+                      ),
+                    );
+                    if (updated == true) {
+                      ref.invalidate(profileByIdProvider(currentProfile.id));
+                    }
                   },
                   icon: Icon(Icons.edit_outlined, size: 14),
                   label: Text('Edit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
@@ -387,8 +408,16 @@ class RiderDetailScreen extends ConsumerWidget {
           children: [
             if (canEdit)
               ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Profile coming soon')));
+                onPressed: () async {
+                  final updated = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditProfileScreen(profile: currentProfile),
+                    ),
+                  );
+                  if (updated == true) {
+                    ref.invalidate(profileByIdProvider(currentProfile.id));
+                  }
                 },
                 icon: Icon(Icons.edit_outlined, size: 18),
                 label: Text('Edit Profile'),
@@ -619,7 +648,7 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildIdentityDetails(BuildContext context) {
+  Widget _buildIdentityDetails(BuildContext context, UserProfile? profile) {
     return Column(
       children: [
         _buildDetailRow(context, 'Iqama Number', profile?.iqamaNumber ?? 'N/A', isCopyable: true),
@@ -713,11 +742,11 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAssetDetails(BuildContext context) {
+  Widget _buildAssetDetails(BuildContext context, UserProfile? profile) {
     if (profile == null) return const Center(child: Text('No profile data'));
     
     return Consumer(builder: (context, ref, _) {
-      final assetsAsync = ref.watch(_riderAssetsProvider(profile!.id));
+      final assetsAsync = ref.watch(_riderAssetsProvider(profile.id));
       
       return assetsAsync.when(
         data: (assets) {
@@ -975,39 +1004,39 @@ class RiderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, WidgetRef ref) {
+  Widget _buildQuickActions(BuildContext context, WidgetRef ref, UserProfile currentProfile) {
     final currentUser = ref.watch(authProvider).profile;
     
-    bool canRequestOffice = false;
-    if (currentUser != null && profile != null) {
-      final myRole = currentUser.role;
-      final targetRole = profile!.role;
-      
-      if (myRole == 'Admin' || myRole == 'Operations Manager') {
-        if (targetRole == 'Rider' || targetRole == 'Supervisor') {
-          canRequestOffice = true;
-        }
-      } else if (myRole == 'Supervisor') {
-        if (targetRole == 'Rider') {
-          canRequestOffice = true;
-        }
+    final canRequestOfficeVisit = () {
+      if (currentUser == null) return false;
+      final userRole = currentUser.role;
+      final targetRole = currentProfile.role;
+
+      if (userRole == 'Admin' || userRole == 'Operations Manager') {
+        return targetRole == 'Rider' || targetRole == 'Supervisor';
       }
-    }
+      
+      if (userRole == 'Supervisor') {
+        return targetRole == 'Rider' && currentProfile.supervisorId == currentUser.id;
+      }
+      
+      return false;
+    }();
 
     return Column(
       children: [
-        if (canRequestOffice) ...[
-          _buildActionRow(context, 'Request to Office', Icons.business_rounded, AppColors.primary, () async {
+        if (canRequestOfficeVisit) ...[
+          _buildActionRow(context, 'Request Office Visit', Icons.meeting_room_rounded, Colors.purple, () async {
             final confirm = await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
-                title: Text('Request to Office', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-                content: Text('Are you sure you want to request ${profile?.fullName} to come to the office? An alert will be shown on their dashboard.'),
+                title: Text('Request Office Visit', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                content: Text('Are you sure you want to request ${currentProfile.fullName} to visit the office?'),
                 actions: [
                   TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
                   TextButton(
                     onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Request', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    child: const Text('Request', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -1016,7 +1045,7 @@ class RiderDetailScreen extends ConsumerWidget {
             if (confirm == true) {
               try {
                 await ref.read(officeRepositoryProvider).requestOfficeCall(
-                  targetProfileId: profile!.id,
+                  targetProfileId: currentProfile.id,
                   requestedByProfileId: currentUser!.id,
                 );
                 if (context.mounted) {
@@ -1091,6 +1120,7 @@ class RiderDetailScreen extends ConsumerWidget {
           await ref.read(operationsRepositoryProvider).updateProfileStatus(profile.id, status);
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Status updated to $status')));
           ref.invalidate(allStaffProvider);
+          ref.invalidate(profileByIdProvider(profile.id));
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
         }

@@ -7,6 +7,7 @@ import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboar
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/it_dev/presentation/system_health_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/layout_provider.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 
 class ITDevDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -15,6 +16,7 @@ class ITDevDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final layout = ref.watch(dashboardLayoutProvider);
+    final dashboardData = ref.watch(dashboardDataProvider);
 
     if (!showScaffold) {
       return CustomScrollView(
@@ -23,7 +25,7 @@ class ITDevDashboard extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildContent(context, ref, layout),
+                _buildContent(context, ref, layout, dashboardData),
               ]),
             ),
           ),
@@ -35,17 +37,17 @@ class ITDevDashboard extends ConsumerWidget {
       title: 'SYSTEM BACKBONE',
       subtitle: 'API status, system health, and deployments',
       children: [
-        _buildContent(context, ref, layout),
+        _buildContent(context, ref, layout, dashboardData),
       ],
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref, DashboardLayout layout) {
+  Widget _buildContent(BuildContext context, WidgetRef ref, DashboardLayout layout, DashboardData data) {
     final isDesktop = MediaQuery.of(context).size.width > 1200;
 
     if (!isDesktop) {
       return Column(
-        children: layout.sections.map((section) => _buildSection(context, ref, section)).toList(),
+        children: layout.sections.map((section) => _buildSection(context, ref, section, data)).toList(),
       );
     }
 
@@ -55,7 +57,7 @@ class ITDevDashboard extends ConsumerWidget {
 
     for (var i = 0; i < layout.sections.length; i++) {
       final section = layout.sections[i];
-      final sectionWidget = _buildSection(context, ref, section);
+      final sectionWidget = _buildSection(context, ref, section, data);
       
       if (section == DashboardSection.metrics || section == DashboardSection.actions) {
         leftColumn.add(sectionWidget);
@@ -89,20 +91,19 @@ class ITDevDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildSection(BuildContext context, WidgetRef ref, DashboardSection section) {
+  Widget _buildSection(BuildContext context, WidgetRef ref, DashboardSection section, DashboardData data) {
     switch (section) {
       case DashboardSection.metrics:
-        return _buildMetricsSection();
+        return _buildMetricsSection(data);
       case DashboardSection.actions:
         return _buildActionsSection(context);
-      case DashboardSection.intelligence:
-        return _buildIntelligenceSection();
+
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildMetricsSection() {
+  Widget _buildMetricsSection(DashboardData data) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -110,7 +111,7 @@ class ITDevDashboard extends ConsumerWidget {
         const SizedBox(height: 24),
         ResponsiveGrid(
           tabletCrossAxisCount: 4,
-          children: const [
+          children: [
             DashboardStatCard(
               label: 'Server Uptime',
               value: '99.99%',
@@ -136,10 +137,10 @@ class ITDevDashboard extends ConsumerWidget {
             ),
             DashboardStatCard(
               label: 'Active Errors',
-              value: '0',
+              value: data.activeIncidents.toString(),
               icon: Icons.bug_report_outlined,
               color: AppColors.error,
-              trend: 'No critical alerts',
+              trend: data.activeIncidents > 0 ? 'Action required' : 'No critical alerts',
             ),
           ],
         ),
@@ -195,22 +196,7 @@ class ITDevDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildIntelligenceSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader('API Integrations'),
-        const SizedBox(height: 24),
-        _buildAPIStatusItem('Amazon Logistics Bridge', true),
-        const SizedBox(height: 12),
-        _buildAPIStatusItem('Noon Partner API', true),
-        const SizedBox(height: 12),
-        _buildAPIStatusItem('Keeta (Meituan) SDK', true),
-        const SizedBox(height: 12),
-        _buildAPIStatusItem('Tookan Task Bridge', false), // Simulated offline/alert
-      ],
-    );
-  }
+
 
   Widget _buildAPIStatusItem(String name, bool isOnline) {
     return Container(

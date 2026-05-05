@@ -4,7 +4,6 @@ enum DashboardSection {
   metrics,
   actions,
   activity,
-  intelligence,
   compliance,
   performance,
 }
@@ -59,7 +58,6 @@ class DashboardLayout {
           DashboardSection.metrics,
           DashboardSection.actions,
           DashboardSection.activity,
-          DashboardSection.intelligence,
         ]);
       case 'HR':
         return DashboardLayout(sections: [

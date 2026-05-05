@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/l10n/app_localizations.dart';
 import 'package:walim_logistics/features/dashboard/data/models/dashboard_layout.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
@@ -17,6 +18,7 @@ import 'package:walim_logistics/features/admin/presentation/shift_planner_screen
 import 'package:walim_logistics/features/admin/presentation/supervisor_schedule_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/layout_provider.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
 import 'package:walim_logistics/features/tracking/screens/rider_tracking_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
@@ -30,6 +32,7 @@ class OpsManagerDashboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardData = ref.watch(dashboardDataProvider);
     final layout = ref.watch(dashboardLayoutProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     if (dashboardData.isLoading && dashboardData.activeRiders == 0) {
       return const Scaffold(
@@ -46,7 +49,7 @@ class OpsManagerDashboard extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildContent(context, dashboardData, layout),
+                _buildContent(context, ref, dashboardData, layout, l10n),
               ]),
             ),
           ),
@@ -55,12 +58,12 @@ class OpsManagerDashboard extends ConsumerWidget {
     }
 
     return DashboardScaffold(
-      title: 'OPERATIONS CONTROL',
-      subtitle: 'Real-time fleet intelligence and strategic allocation',
+      title: l10n.opsControl.toUpperCase(),
+      subtitle: l10n.opsSubtitle,
       children: [
         _buildHeader(context, dashboardData),
         const SizedBox(height: 32),
-        _buildContent(context, dashboardData, layout),
+        _buildContent(context, ref, dashboardData, layout, l10n),
       ],
     );
   }
@@ -90,12 +93,12 @@ class OpsManagerDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, DashboardData data, DashboardLayout layout) {
+  Widget _buildContent(BuildContext context, WidgetRef ref, DashboardData data, DashboardLayout layout, AppLocalizations l10n) {
     final isDesktop = MediaQuery.of(context).size.width > 1200;
 
     if (!isDesktop) {
       return Column(
-        children: layout.sections.map((section) => _buildSection(context, data, section)).toList(),
+        children: layout.sections.map((section) => _buildSection(context, ref, data, section, l10n)).toList(),
       );
     }
 
@@ -106,7 +109,7 @@ class OpsManagerDashboard extends ConsumerWidget {
 
     for (var i = 0; i < layout.sections.length; i++) {
       final section = layout.sections[i];
-      final sectionWidget = _buildSection(context, data, section);
+      final sectionWidget = _buildSection(context, ref, data, section, l10n);
       
       // Heuristic: metrics and actions go to left, activity and intelligence to right
       if (section == DashboardSection.metrics || section == DashboardSection.actions) {
@@ -142,26 +145,24 @@ class OpsManagerDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildSection(BuildContext context, DashboardData data, DashboardSection section) {
+  Widget _buildSection(BuildContext context, WidgetRef ref, DashboardData data, DashboardSection section, AppLocalizations l10n) {
     switch (section) {
       case DashboardSection.metrics:
-        return _buildMetricsSection(context, data);
+        return _buildMetricsSection(context, data, l10n);
       case DashboardSection.actions:
-        return _buildActionsSection(context, data);
+        return _buildActionsSection(context, ref, data, l10n);
       case DashboardSection.activity:
-        return _buildActivitySection(context, data);
-      case DashboardSection.intelligence:
-        return _buildIntelligenceSection(context, data);
+        return _buildActivitySection(context, data, l10n);
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildMetricsSection(BuildContext context, DashboardData data) {
+  Widget _buildMetricsSection(BuildContext context, DashboardData data, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Core Performance Metrics'),
+        _buildSectionHeader(l10n.corePerformanceMetrics),
         const SizedBox(height: 20),
         ResponsiveGrid(
           desktopCrossAxisCount: 3,
@@ -171,7 +172,7 @@ class OpsManagerDashboard extends ConsumerWidget {
           childAspectRatio: 2.1,
           children: [
             DashboardStatCard(
-              label: 'Active Riders',
+              label: l10n.activeRiders,
               value: _formatCount(data.activeRiders),
               icon: Icons.motorcycle_rounded,
               color: Colors.teal,
@@ -181,7 +182,7 @@ class OpsManagerDashboard extends ConsumerWidget {
               )),
             ),
             DashboardStatCard(
-              label: 'Riders on Leave',
+              label: l10n.ridersOnLeave,
               value: data.ridersOnLeave.toString(),
               icon: Icons.person_off_outlined,
               color: Colors.orange,
@@ -191,7 +192,7 @@ class OpsManagerDashboard extends ConsumerWidget {
               )),
             ),
             DashboardStatCard(
-              label: 'Active Incidents',
+              label: l10n.activeIncidents,
               value: data.activeIncidents.toString(),
               icon: Icons.warning_amber_rounded,
               color: Colors.red,
@@ -202,7 +203,7 @@ class OpsManagerDashboard extends ConsumerWidget {
               )),
             ),
             DashboardStatCard(
-              label: 'Supervisors',
+              label: l10n.supervisors,
               value: data.supervisorsCount.toString(),
               icon: Icons.admin_panel_settings_rounded,
               color: Colors.indigo,
@@ -212,7 +213,7 @@ class OpsManagerDashboard extends ConsumerWidget {
               )),
             ),
             DashboardStatCard(
-              label: 'SOS',
+              label: l10n.sos,
               value: data.checkedInToday.toString(),
               icon: Icons.login_rounded,
               color: Colors.green,
@@ -222,7 +223,7 @@ class OpsManagerDashboard extends ConsumerWidget {
               )),
             ),
             DashboardStatCard(
-              label: 'EOS',
+              label: l10n.eos,
               value: data.checkedOutToday.toString(),
               icon: Icons.logout_rounded,
               color: Colors.blueGrey,
@@ -237,11 +238,11 @@ class OpsManagerDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionsSection(BuildContext context, DashboardData data) {
+  Widget _buildActionsSection(BuildContext context, WidgetRef ref, DashboardData data, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Management Console'),
+        _buildSectionHeader(l10n.managementConsole),
         const SizedBox(height: 20),
         ResponsiveGrid(
           mobileCrossAxisCount: 2,
@@ -251,14 +252,14 @@ class OpsManagerDashboard extends ConsumerWidget {
           spacing: 16,
           children: [
             DashboardActionCard(
-              title: 'Vehicle Allocation',
+              title: l10n.vehicleAllocation,
               subtitle: 'Balance Vans vs Bikes',
               icon: Icons.swap_horiz_outlined,
               color: Colors.indigo,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VehicleAllocationScreen())),
             ),
             DashboardActionCard(
-              title: 'Live Rider Tracking',
+              title: l10n.liveRiderTracking,
               subtitle: 'Monitor all active riders',
               icon: Icons.my_location_rounded,
               color: Colors.green,
@@ -266,78 +267,92 @@ class OpsManagerDashboard extends ConsumerWidget {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderTrackingScreen())),
             ),
             DashboardActionCard(
-              title: 'Capacity Planning',
+              title: l10n.capacityPlanning,
               subtitle: 'Peak season forecasting',
               icon: Icons.calendar_today_outlined,
               color: Colors.orange,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CapacityPlanningScreen())),
             ),
             DashboardActionCard(
-              title: 'Group Management',
+              title: l10n.groupManagement,
               subtitle: 'Create groups and assign riders',
               icon: Icons.groups_rounded,
               color: Colors.blue,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GroupSetupScreen())),
             ),
             DashboardActionCard(
-              title: 'Shift Planner',
+              title: l10n.shiftPlanner,
               subtitle: 'Generate rider shift plans',
               icon: Icons.event_note_rounded,
               color: Colors.teal,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShiftPlannerScreen())),
             ),
             DashboardActionCard(
-              title: 'Supervisor Schedule',
+              title: l10n.supervisorSchedule,
               subtitle: 'Assign supervisors to groups',
               icon: Icons.assignment_ind_rounded,
               color: Colors.indigo,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupervisorScheduleScreen())),
             ),
             DashboardActionCard(
-              title: 'Matching Data Center',
-              subtitle: 'Platform report reconciliation',
-              icon: Icons.analytics_outlined,
+              title: 'Platform Reports',
+              subtitle: 'Daily/Weekly/Monthly submissions',
+              icon: Icons.assessment_rounded,
               color: Colors.purple,
               badge: 'NEW',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchingDataScreen())),
+              onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.reports),
             ),
             DashboardActionCard(
-              title: 'Global Asset View',
+              title: l10n.globalAssetView,
               subtitle: 'Accountability for all equipment',
               icon: Icons.inventory_2_outlined,
               color: Colors.teal,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen())),
             ),
             DashboardActionCard(
-              title: 'Staff Monitoring',
-              subtitle: 'Manage all organization roles',
-              icon: Icons.people_outline_rounded,
-              color: Colors.blueGrey,
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
+              title: 'Rider Monitoring',
+              subtitle: 'Status, vehicle, and iqama details',
+              icon: Icons.motorcycle_rounded,
+              color: Colors.teal,
+              onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.riders),
             ),
             DashboardActionCard(
-              title: 'Safety & Inspections',
+              title: 'Supervisor Monitoring',
+              subtitle: 'Platforms and groups managed',
+              icon: Icons.supervisor_account_rounded,
+              color: Colors.blue,
+              onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.supervisors),
+            ),
+            DashboardActionCard(
+              title: 'Platform Monitoring',
+              subtitle: 'Shifts, allocations and supervisors',
+              icon: Icons.business_rounded,
+              color: Colors.indigo,
+              onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.platforms),
+            ),
+            DashboardActionCard(
+              title: l10n.safetyInspections,
               subtitle: 'Daily vehicle safety checks',
               icon: Icons.security_rounded,
               color: Colors.redAccent,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InspectionManagementScreen())),
             ),
             DashboardActionCard(
-              title: 'Performance Management',
+              title: l10n.performanceManagement,
               subtitle: 'Bonuses, penalties, targets & leaderboard',
               icon: Icons.military_tech_rounded,
               color: Colors.indigo,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminPerformanceScreen())),
             ),
                           DashboardActionCard(
-                            title: 'Leaderboard',
+                            title: l10n.leaderboard,
                             subtitle: 'Top performers — riders and supervisors',
                             icon: Icons.leaderboard_rounded,
                             color: Colors.amber,
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
                           ),
                           DashboardActionCard(
-                            title: 'SOS/EOS Monitoring',
+                            title: l10n.sosEosMonitoring,
                             subtitle: 'View daily supervisor shift reports',
                             icon: Icons.assignment_turned_in_rounded,
                             color: Colors.deepPurple,
@@ -349,11 +364,11 @@ class OpsManagerDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildActivitySection(BuildContext context, DashboardData data) {
+  Widget _buildActivitySection(BuildContext context, DashboardData data, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Live Activity'),
+        _buildSectionHeader(l10n.liveActivity),
         const SizedBox(height: 20),
         ActivityFeed(
           onViewAll: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InspectionManagementScreen())),
@@ -376,236 +391,14 @@ class OpsManagerDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildIntelligenceSection(BuildContext context, DashboardData data) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader('Intelligence Hub'),
-        const SizedBox(height: 20),
-        Text(
-          'PLATFORM SLA',
-          style: GoogleFonts.outfit(
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            color: AppColors.textSecondary,
-            letterSpacing: 1,
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (data.platforms.isEmpty)
-          const EmptyStatePlaceholder(
-            icon: Icons.hub_outlined,
-            title: 'No platforms registered',
-            subtitle: 'You haven\'t linked any external delivery platforms yet.',
-            color: Colors.teal,
-          )
-        else
-          ...data.platforms.map((p) => Column(
-            children: [
-              InkWell(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupervisorDashboard())),
-                child: _buildSLACard(p['name'], 0.98, _getPlatformColor(p['name'])),
-              ),
-              const SizedBox(height: 12),
-            ],
-          )),
-        const SizedBox(height: 32),
-        Text(
-          'CAPACITY FORECAST',
-          style: GoogleFonts.outfit(
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            color: AppColors.textSecondary,
-            letterSpacing: 1,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildForecastChart(data),
-      ],
-    );
-  }
+
 
   String _formatCount(int count) {
     if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}k';
     return count.toString();
   }
 
-  Color _getPlatformColor(String name) {
-    final lowerName = name.toLowerCase();
-    if (lowerName.contains('amazon')) return Colors.blue;
-    if (lowerName.contains('keeta')) return Colors.orange;
-    if (lowerName.contains('noon')) return Colors.amber;
-    return Colors.teal;
-  }
 
-  Widget _buildSLACard(String platform, double score, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.divider.withOpacity(0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                platform, 
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.w800, 
-                  fontSize: 16,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${(score * 100).toInt()}%', 
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w900, 
-                    color: color,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Stack(
-            children: [
-              Container(
-                height: 8,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return AnimatedContainer(
-                    duration: const Duration(seconds: 1),
-                    height: 8,
-                    width: constraints.maxWidth * score,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [color, color.withOpacity(0.7)],
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withOpacity(0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Target: 97%',
-            style: GoogleFonts.outfit(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildForecastChart(DashboardData data) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Recommended Hiring',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  Text(
-                    '${(data.peakCapacity * 0.15).toInt()} Riders Needed',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              const Icon(Icons.trending_up, color: AppColors.primary, size: 32),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Current', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                    Text('${data.activeRiders}', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Target', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                    Text('${data.peakCapacity}', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Buffer', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                    Text('15%', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSectionHeader(String title) {
     return Text(

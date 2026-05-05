@@ -7,10 +7,26 @@ import 'package:walim_logistics/features/performance/presentation/performance_no
 import 'package:intl/intl.dart';
 
 class MyPerformanceScreen extends ConsumerWidget {
-  const MyPerformanceScreen({super.key});
+  final bool showScaffold;
+  const MyPerformanceScreen({super.key, this.showScaffold = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!showScaffold) {
+      return CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildContent(context, ref),
+              ]),
+            ),
+          ),
+        ],
+      );
+    }
+
     return DashboardScaffold(
       title: 'MY PERFORMANCE',
       subtitle: 'Your score, targets, and this month\'s adjustments',

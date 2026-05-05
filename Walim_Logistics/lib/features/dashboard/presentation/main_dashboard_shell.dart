@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
+import 'package:walim_logistics/l10n/app_localizations.dart';
 
 // Import dashboards
 import 'package:walim_logistics/features/dashboard/presentation/admin_dashboard.dart';
@@ -26,6 +27,13 @@ import 'package:walim_logistics/features/hr/presentation/document_vault_screen.d
 import 'package:walim_logistics/features/requests/presentation/leave_request_screen.dart' as rider_requests;
 import 'package:walim_logistics/features/fleet/presentation/live_tracking_screen.dart';
 import 'package:walim_logistics/features/tracking/presentation/widgets/live_rider_map.dart';
+import 'package:walim_logistics/features/reports/presentation/reports_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
+import 'package:walim_logistics/features/performance/presentation/screens/my_performance_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/riders_list_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/supervisors_list_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/platforms_list_screen.dart';
+import 'package:walim_logistics/features/admin/presentation/monitoring_providers.dart';
 
 class MainDashboardShell extends ConsumerWidget {
   const MainDashboardShell({super.key});
@@ -36,7 +44,8 @@ class MainDashboardShell extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final role = authState.profile?.role ?? 'Rider';
 
-    final config = _getTabConfig(context, ref, navState.activeTab, role);
+    final l10n = AppLocalizations.of(context)!;
+    final config = _getTabConfig(context, ref, navState.activeTab, role, l10n);
 
     return DashboardScaffold(
       title: config.title,
@@ -46,19 +55,21 @@ class MainDashboardShell extends ConsumerWidget {
       onSearchChanged: config.onSearchChanged,
       searchHint: config.searchHint,
       headerActions: config.headerActions,
+      showBackButton: config.showBackButton,
+      onBack: config.onBack,
     );
   }
 
-  _TabConfig _getTabConfig(BuildContext context, WidgetRef ref, DashboardTab tab, String role) {
+  _TabConfig _getTabConfig(BuildContext context, WidgetRef ref, DashboardTab tab, String role, AppLocalizations l10n) {
     switch (tab) {
       case DashboardTab.dashboard:
-        return _getDashboardConfig(role);
+        return _getDashboardConfig(role, l10n);
       case DashboardTab.liveOps:
         final tracker = ref.watch(trackingProvider);
         return _TabConfig(
           title: tracker.selectedCity == 'All' 
-            ? 'LIVE GPS' 
-            : 'LIVE GPS - ${tracker.selectedCity.toUpperCase()}',
+            ? l10n.liveGPS.toUpperCase() 
+            : '${l10n.liveGPS.toUpperCase()} - ${tracker.selectedCity.toUpperCase()}',
           subtitle: 'Real-time tracking and delivery monitoring',
           activeItem: 'Live GPS',
           onSearchChanged: (v) => ref.read(trackingProvider.notifier).setFilter(v),
@@ -66,6 +77,8 @@ class MainDashboardShell extends ConsumerWidget {
           headerActions: [
             _buildLiveStatusIndicator(tracker),
           ],
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
           body: Theme(
             data: Theme.of(context).brightness == Brightness.dark 
               ? tracking_theme.AppTheme.darkTheme 
@@ -75,137 +88,201 @@ class MainDashboardShell extends ConsumerWidget {
         );
       case DashboardTab.liveRider:
         return _TabConfig(
-          title: 'LIVE RIDER TRACKING',
+          title: l10n.liveRiderTracking.toUpperCase(),
           subtitle: 'Real-time positioning of all active riders',
           activeItem: 'Live Rider',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
           body: const LiveRiderMap(),
         );
       case DashboardTab.hr:
         return _TabConfig(
-          title: 'HR Management',
+          title: l10n.hrManagement,
           subtitle: 'Manage staff, government regulations, housing, and assets',
           activeItem: 'HR',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
           body: const HRDashboard(showScaffold: false),
         );
       case DashboardTab.assets:
         return _TabConfig(
-          title: 'ASSET MANAGEMENT',
+          title: l10n.assetManagement.toUpperCase(),
           subtitle: 'Track and assign fleet assets',
           activeItem: 'Assets',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
           body: const FleetAssetRegistryScreen(showScaffold: false),
         );
       case DashboardTab.finance:
         return _TabConfig(
-          title: 'FINANCIAL MANAGEMENT',
+          title: l10n.financialManagement.toUpperCase(),
           subtitle: 'Payroll, vendor invoicing, and expenses',
           activeItem: 'Finance',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
           body: const FinanceDashboard(showScaffold: false),
         );
       case DashboardTab.support:
         return _TabConfig(
-          title: 'SUPPORT',
+          title: l10n.support.toUpperCase(),
           subtitle: 'Report issues and track your tickets',
           activeItem: 'Support',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
           body: const SupportTicketsScreen(showScaffold: false),
         );
       case DashboardTab.documents:
         return _TabConfig(
-          title: 'DOCUMENT VAULT',
+          title: l10n.documentVault.toUpperCase(),
           subtitle: 'Your personal documents and permits',
           activeItem: 'Documents',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
           body: const DocumentVaultScreen(showScaffold: false),
         );
       case DashboardTab.attendance:
         final isOpsOrAdmin = role == 'Admin' || role == 'Operations Manager';
+        final isSupervisor = role == 'Supervisor';
         return _TabConfig(
-          title: isOpsOrAdmin ? 'FLEET PERFORMANCE HUB' : 'PERFORMANCE HUB',
+          title: isOpsOrAdmin ? l10n.fleetPerformanceHub.toUpperCase() : l10n.performanceManagement.toUpperCase(),
           subtitle: isOpsOrAdmin 
             ? 'Global operational metrics and platform reconciliation'
             : 'Real-time SLA tracking and platform compliance',
           activeItem: 'Performance',
-          body: const SupervisorDashboard(showScaffold: false),
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
+          body: (isOpsOrAdmin || isSupervisor)
+            ? const AdminPerformanceScreen(showScaffold: false)
+            : (role == 'Rider' 
+                ? const MyPerformanceScreen(showScaffold: false) 
+                : const SupervisorDashboard(showScaffold: false)),
+        );
+      case DashboardTab.reports:
+        final isOpsOrAdmin = role == 'Admin' || role == 'Operations Manager';
+        return _TabConfig(
+          title: 'PLATFORM REPORTS',
+          subtitle: isOpsOrAdmin 
+            ? 'Compliance tracking and multi-platform performance audit'
+            : 'Daily, weekly, and monthly platform report submissions',
+          activeItem: 'Reports',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
+          body: const ReportsScreen(showScaffold: false),
         );
       case DashboardTab.requests:
         return _TabConfig(
-          title: 'MY REQUESTS',
+          title: l10n.myRequests.toUpperCase(),
           subtitle: 'Manage leave and salary advance requests',
           activeItem: 'Requests',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
           body: const rider_requests.LeaveRequestScreen(showScaffold: false),
         );
       case DashboardTab.settings:
         return _TabConfig(
-          title: 'SETTINGS',
+          title: l10n.settings.toUpperCase(),
           subtitle: 'Manage your application preferences',
           activeItem: 'Settings',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
           body: const Center(child: Text('Settings Screen')),
         );
+      case DashboardTab.riders:
+        return _TabConfig(
+          title: 'ALL RIDERS',
+          subtitle: 'Monitor status, vehicle and legal details for all riders',
+          activeItem: 'Riders',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
+          onSearchChanged: (v) => ref.read(riderSearchQueryProvider.notifier).state = v,
+          searchHint: 'Search by name, iqama or phone...',
+          body: const RidersListScreen(),
+        );
+      case DashboardTab.supervisors:
+        return _TabConfig(
+          title: 'ALL SUPERVISORS',
+          subtitle: 'Monitor platforms and groups managed by all supervisors',
+          activeItem: 'Supervisors',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
+          body: const SupervisorsListScreen(),
+        );
+      case DashboardTab.platforms:
+        return _TabConfig(
+          title: 'ALL PLATFORMS',
+          subtitle: 'Monitor active shifts, allocated riders and supervisors per platform',
+          activeItem: 'Platforms',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
+          body: const PlatformsListScreen(),
+        );
       default:
-        return _getDashboardConfig(role);
+        return _getDashboardConfig(role, l10n);
     }
   }
 
-  _TabConfig _getDashboardConfig(String role) {
+  _TabConfig _getDashboardConfig(String role, AppLocalizations l10n) {
     switch (role) {
       case 'Admin':
         return _TabConfig(
-          title: 'CONTROL TOWER',
-          subtitle: 'Real-time metrics across all zones and platforms',
+          title: l10n.controlTower.toUpperCase(),
+          subtitle: l10n.controlTowerSubtitle,
           activeItem: 'Dashboard',
           body: const AdminDashboard(showScaffold: false),
         );
       case 'HR':
         return _TabConfig(
-          title: 'HR Management',
-          subtitle: 'Manage staff, government regulations, housing, and assets',
+          title: l10n.hrManagement,
+          subtitle: l10n.hrManagementSubtitle,
           activeItem: 'Dashboard',
           body: const HRDashboard(showScaffold: false),
         );
       case 'Finance Manager':
         return _TabConfig(
-          title: 'FINANCIAL MANAGEMENT',
-          subtitle: 'Payroll, vendor invoicing, and expenses',
+          title: l10n.financialManagement.toUpperCase(),
+          subtitle: l10n.financialManagementSubtitle,
           activeItem: 'Dashboard',
           body: const FinanceDashboard(showScaffold: false),
         );
       case 'Operations Manager':
         return _TabConfig(
-          title: 'OPERATIONS STRATEGY',
-          subtitle: 'Fleet allocation, SLA monitoring, and planning',
+          title: l10n.opsStrategy.toUpperCase(),
+          subtitle: l10n.opsStrategySubtitle,
           activeItem: 'Dashboard',
           body: const OpsManagerDashboard(showScaffold: false),
         );
       case 'Supervisor':
         return _TabConfig(
-          title: 'PERFORMANCE HUB',
-          subtitle: 'Oversee operations and resolve blockers',
+          title: l10n.commandCenter.toUpperCase(),
+          subtitle: l10n.supervisorDashboardSubtitle,
           activeItem: 'Dashboard',
           body: const SupervisorDashboard(showScaffold: false),
         );
       case 'IT_Dev':
         return _TabConfig(
-          title: 'IT & DEVELOPMENT',
-          subtitle: 'System health and API monitoring',
+          title: l10n.itDevelopment.toUpperCase(),
+          subtitle: l10n.itDevDashboardSubtitle,
           activeItem: 'Dashboard',
           body: const ITDevDashboard(showScaffold: false),
         );
       case 'Leader':
         return _TabConfig(
-          title: 'TEAM LEADERSHIP',
-          subtitle: 'Manage your team and performance',
+          title: l10n.teamLeadership.toUpperCase(),
+          subtitle: l10n.teamLeadershipSubtitle,
           activeItem: 'Dashboard',
           body: const LeaderDashboard(showScaffold: false),
         );
       case 'Rider':
         return _TabConfig(
-          title: 'MY DASHBOARD',
-          subtitle: 'Your daily stats and tasks',
+          title: l10n.myDashboard.toUpperCase(),
+          subtitle: l10n.riderDashboardSubtitle,
           activeItem: 'Dashboard',
           body: const RiderDashboard(showScaffold: false),
         );
       case 'Business Development':
         return _TabConfig(
-          title: 'BUSINESS GROWTH',
-          subtitle: 'Sales and partnership metrics',
+          title: l10n.businessGrowth.toUpperCase(),
+          subtitle: l10n.bizDevDashboardSubtitle,
           activeItem: 'Dashboard',
           body: const BizDevDashboard(showScaffold: false),
         );
@@ -280,7 +357,9 @@ class _TabConfig {
   final ValueChanged<String>? onSearchChanged;
   final String? searchHint;
   final List<Widget>? headerActions;
-
+  final bool showBackButton;
+  final VoidCallback? onBack;
+  
   _TabConfig({
     required this.title,
     required this.subtitle,
@@ -289,5 +368,7 @@ class _TabConfig {
     this.onSearchChanged,
     this.searchHint,
     this.headerActions,
+    this.showBackButton = false,
+    this.onBack,
   });
 }

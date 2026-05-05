@@ -114,11 +114,13 @@ class SupervisorRepository {
     required String reportId,
     required List<Map<String, dynamic>> items,
     required String markedBy,
+    String? handoverNotes,
   }) async {
     await upsertReportItems(reportId: reportId, items: items, markedBy: markedBy);
     await _supabase.from('attendance_reports').update({
       'status': 'SOS_SUBMITTED',
       'sos_submitted_at': DateTime.now().toIso8601String(),
+      'handover_notes': handoverNotes,
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', reportId);
   }
@@ -145,10 +147,11 @@ class SupervisorRepository {
     }
   }
 
-  Future<void> submitEOS(String reportId) async {
+  Future<void> submitEOS(String reportId, {String? handoverNotes}) async {
     await _supabase.from('attendance_reports').update({
       'status': 'EOS_SUBMITTED',
       'eos_submitted_at': DateTime.now().toIso8601String(),
+      'handover_notes': handoverNotes,
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', reportId);
   }
@@ -184,7 +187,9 @@ class SupervisorRepository {
         .from('attendance_reports')
         .select()
         .eq('id', reportId)
-        .single();
+        .maybeSingle();
+
+    if (report == null) return [];
 
     final items = await _supabase
         .from('attendance_report_items')

@@ -10,10 +10,14 @@ enum DashboardTab {
   assets,
   finance,
   attendance,
+  reports,
   support,
   documents,
   requests,
   settings,
+  riders,
+  supervisors,
+  platforms,
 }
 
 class NavigationState {

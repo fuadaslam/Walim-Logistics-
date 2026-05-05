@@ -10,16 +10,16 @@ class AdminRepository {
     final today = DateTime(now.year, now.month, now.day).toIso8601String();
 
     final results = await Future.wait<dynamic>([
-      _supabase.from('profiles').select('id').eq('status', 'active'),
+      _supabase.from('profiles').select('id').ilike('status', 'active'),
       _supabase.from('vehicles').select('status'),
-      _supabase.from('cod_reconciliation').select('collected_amount').eq('status', 'pending'),
+      _supabase.from('cod_reconciliation').select('collected_amount').ilike('status', 'pending'),
       _supabase
           .from('attendance')
           .select('id')
           .filter('check_out_time', 'is', null)
           .gte('check_in_time', today),
-      _supabase.from('profiles').select('id').eq('status', 'on_leave').count(CountOption.exact),
-      _supabase.from('leave_requests').select('id').eq('status', 'Pending').count(CountOption.exact),
+      _supabase.from('profiles').select('id').or('status.ilike.on leave,status.ilike.on_leave,status.ilike.leave').count(CountOption.exact),
+      _supabase.from('leave_requests').select('id').ilike('status', 'pending').count(CountOption.exact),
     ]);
 
     final activeRiders = (results[0] as List).length;

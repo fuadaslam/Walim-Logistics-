@@ -89,19 +89,25 @@ class OperationsRepository {
   // ── Riders & Supervisors ──────────────────────────────────────────────────
 
   Future<List<Map<String, dynamic>>> fetchRiders() async {
+    final roleId = await _getRoleId('Rider');
+    if (roleId == null) return [];
+
     final res = await _db
         .from('profiles')
         .select('id, full_name, iqama_number, phone_number, status')
-        .eq('role_id', await _getRoleId('Rider'))
+        .eq('role_id', roleId)
         .order('full_name');
     return List<Map<String, dynamic>>.from(res as List);
   }
 
   Future<List<Map<String, dynamic>>> fetchSupervisors() async {
+    final roleId = await _getRoleId('Supervisor');
+    if (roleId == null) return [];
+
     final res = await _db
         .from('profiles')
         .select('id, full_name, phone_number')
-        .eq('role_id', await _getRoleId('Supervisor'))
+        .eq('role_id', roleId)
         .order('full_name');
     return List<Map<String, dynamic>>.from(res as List);
   }
@@ -128,6 +134,8 @@ class OperationsRepository {
     String? iqamaNumber,
   }) async {
     final roleId = await _getRoleId(roleName);
+    if (roleId == null) throw Exception('Role "$roleName" not found');
+
     // Note: This only creates the profile record. 
     // In a real app, you'd use admin auth to create the user.
     await _db.from('profiles').insert({
@@ -145,13 +153,24 @@ class OperationsRepository {
     await _db.from('profiles').delete().eq('id', profileId);
   }
 
-  Future<String> _getRoleId(String roleName) async {
+  Future<String?> _getRoleId(String roleName) async {
+    // Try exact match first
     final res = await _db
         .from('roles')
         .select('id')
         .eq('name', roleName)
-        .single();
-    return res['id'] as String;
+        .maybeSingle();
+    
+    if (res != null) return res['id'] as String;
+
+    // Fallback to case-insensitive match
+    final resAlt = await _db
+        .from('roles')
+        .select('id')
+        .ilike('name', roleName)
+        .maybeSingle();
+    
+    return resAlt?['id'] as String?;
   }
 
   // ── Shift Plans ───────────────────────────────────────────────────────────

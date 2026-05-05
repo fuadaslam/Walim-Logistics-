@@ -33,7 +33,7 @@ class AttendanceRepository {
         .filter('check_out_time', 'is', null)
         .order('check_in_time', ascending: false)
         .limit(1)
-        .single();
+        .maybeSingle();
 
     if (response != null) {
       await _supabase

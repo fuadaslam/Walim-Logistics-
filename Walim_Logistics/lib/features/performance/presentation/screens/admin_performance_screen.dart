@@ -9,9 +9,11 @@ import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:intl/intl.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
+import 'package:walim_logistics/shared/models/profile.dart';
 
 class AdminPerformanceScreen extends ConsumerStatefulWidget {
-  const AdminPerformanceScreen({super.key});
+  final bool showScaffold;
+  const AdminPerformanceScreen({super.key, this.showScaffold = true});
 
   @override
   ConsumerState<AdminPerformanceScreen> createState() => _AdminPerformanceScreenState();
@@ -23,6 +25,21 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.showScaffold) {
+      return CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildContent(context),
+              ]),
+            ),
+          ),
+        ],
+      );
+    }
+
     return DashboardScaffold(
       title: 'PERFORMANCE MANAGEMENT',
       subtitle: 'Set targets, issue bonuses and penalties for your team',
@@ -57,12 +74,25 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
                   const SizedBox(height: 16),
                   staffAsync.when(
                     data: (staff) {
-                      final filtered = _selectedRoleFilter == 'All'
-                          ? staff
-                          : staff.where((s) {
-                              final role = s['role'] as String? ?? '';
-                              return role == _selectedRoleFilter;
-                            }).toList();
+                      final currentUserRole = ref.watch(authProvider).profile?.role;
+                      
+                      final filtered = staff.where((s) {
+                        final profile = UserProfile.fromJson(s);
+                        
+                        // Apply role-based visibility restrictions
+                        bool isVisibleByRole = true;
+                        if (currentUserRole == 'Supervisor') {
+                          isVisibleByRole = profile.role == 'Rider';
+                        } else if (currentUserRole == 'Operations Manager') {
+                          isVisibleByRole = profile.role == 'Rider' || profile.role == 'Supervisor';
+                        }
+
+                        if (!isVisibleByRole) return false;
+
+                        if (_selectedRoleFilter == 'All') return true;
+                        return profile.role == _selectedRoleFilter;
+                      }).toList();
+
                       if (filtered.isEmpty) {
                         return const EmptyStatePlaceholder(
                           icon: Icons.person_search_outlined,
@@ -199,11 +229,12 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
     );
   }
 
-  Widget _buildStaffCard(BuildContext context, Map<String, dynamic> staff) {
+  Widget _buildStaffCard(BuildContext context, Map<String, dynamic> staffData) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final name = staff['full_name'] as String? ?? 'Unknown';
-    final role = staff['role'] as String? ?? '';
-    final id = staff['id'] as String? ?? '';
+    final profile = UserProfile.fromJson(staffData);
+    final name = profile.fullName;
+    final role = profile.role;
+    final id = profile.id;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

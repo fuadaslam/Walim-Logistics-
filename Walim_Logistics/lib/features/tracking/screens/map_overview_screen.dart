@@ -59,7 +59,18 @@ class _MapOverviewScreenState extends State<MapOverviewScreen> {
         Positioned(
           top: 20,
           left: 20,
-          child: _MapOverlayHeader(count: withPositions.length),
+          child: Row(
+            children: [
+              if (Navigator.canPop(context)) ...[
+                _MapButton(
+                  icon: Icons.arrow_back_rounded,
+                  onTap: () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 12),
+              ],
+              _MapOverlayHeader(count: withPositions.length),
+            ],
+          ),
         ),
         Positioned(
           bottom: 30,

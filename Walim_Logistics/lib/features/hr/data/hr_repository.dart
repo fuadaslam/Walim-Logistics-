@@ -12,7 +12,7 @@ class HRRepository {
 
     final results = await Future.wait([
       _supabase.from('profiles').select('id'),
-      _supabase.from('leave_requests').select('id').eq('status', 'Pending'),
+      _supabase.from('leave_requests').select('id').ilike('status', 'pending'),
       _supabase
           .from('documents')
           .select('id')
@@ -32,7 +32,7 @@ class HRRepository {
     final thirtyDaysLater = now.add(const Duration(days: 30));
     return await _supabase
         .from('documents')
-        .select('*, profiles(full_name)')
+        .select('*, profiles!profile_id(full_name)')
         .lte('expiry_date', thirtyDaysLater.toIso8601String().split('T')[0])
         .gte('expiry_date', now.toIso8601String().split('T')[0])
         .order('expiry_date', ascending: true);
@@ -41,7 +41,7 @@ class HRRepository {
   Future<List<Map<String, dynamic>>> getAllLeaveRequests({int limit = 20}) async {
     return await _supabase
         .from('leave_requests')
-        .select('*, profiles(full_name)')
+        .select('*, profiles!profile_id(full_name)')
         .order('created_at', ascending: false)
         .limit(limit);
   }
@@ -90,7 +90,7 @@ class HRRepository {
   Future<List<Map<String, dynamic>>> getRecentActivity({int limit = 5}) async {
     return await _supabase
         .from('leave_requests')
-        .select('*, profiles(full_name)')
+        .select('*, profiles!profile_id(full_name)')
         .order('created_at', ascending: false)
         .limit(limit);
   }
@@ -116,9 +116,9 @@ class HRRepository {
   Future<Map<String, dynamic>> getProfileStats(String profileId) async {
     final results = await Future.wait([
       _supabase.from('attendance').select('id').eq('profile_id', profileId).eq('attendance_type', 'shift'),
-      _supabase.from('leave_requests').select('id').eq('profile_id', profileId).eq('status', 'Pending'),
-      _supabase.from('incidents').select('id').eq('reported_by', profileId).eq('status', 'pending'),
-      _supabase.from('leave_requests').select('id').eq('profile_id', profileId).eq('status', 'Approved'),
+      _supabase.from('leave_requests').select('id').eq('profile_id', profileId).ilike('status', 'pending'),
+      _supabase.from('incidents').select('id').eq('reported_by', profileId).ilike('status', 'pending'),
+      _supabase.from('leave_requests').select('id').eq('profile_id', profileId).ilike('status', 'approved'),
     ]);
 
     final workingDays = (results[0] as List).length;
@@ -190,6 +190,10 @@ class HRRepository {
             createdAt != null ? createdAt.split('T')[0] : 'Unknown',
       };
     }));
+  }
+
+  Future<void> updateProfile(String profileId, Map<String, dynamic> data) async {
+    await _supabase.from('profiles').update(data).eq('id', profileId);
   }
 }
 

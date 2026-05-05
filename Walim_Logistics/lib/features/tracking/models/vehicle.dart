@@ -82,6 +82,14 @@ class Vehicle {
     }
   }
 
+  String getDisplayStatus() {
+    if (status == 'offline' && position != null) {
+      final diff = DateTime.now().difference(position!.timestamp);
+      if (diff.inHours <= 48) return 'stopped';
+    }
+    return status;
+  }
+
 }
 
 class VehiclePosition {

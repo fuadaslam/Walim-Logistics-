@@ -64,9 +64,51 @@ class LoginScreen extends ConsumerWidget {
                     right: 16,
                     child: Material(
                       color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => ref.read(localeProvider.notifier).toggleLocale(),
-                        borderRadius: BorderRadius.circular(12),
+                      child: PopupMenuButton<String>(
+                        tooltip: 'Select Language',
+                        onSelected: (String code) {
+                          ref.read(localeProvider.notifier).setLocale(Locale(code));
+                        },
+                        offset: const Offset(0, 40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'en',
+                            child: Row(
+                              children: [
+                                Text('English', style: GoogleFonts.outfit(fontWeight: FontWeight.w500)),
+                                if (currentLocale.languageCode == 'en') ...[
+                                  const Spacer(),
+                                  const Icon(Icons.check_circle, size: 16, color: AppColors.primary),
+                                ],
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'ar',
+                            child: Row(
+                              children: [
+                                Text('العربية', style: GoogleFonts.outfit(fontWeight: FontWeight.w500)),
+                                if (currentLocale.languageCode == 'ar') ...[
+                                  const Spacer(),
+                                  const Icon(Icons.check_circle, size: 16, color: AppColors.primary),
+                                ],
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'hi',
+                            child: Row(
+                              children: [
+                                Text('हिन्दी', style: GoogleFonts.outfit(fontWeight: FontWeight.w500)),
+                                if (currentLocale.languageCode == 'hi') ...[
+                                  const Spacer(),
+                                  const Icon(Icons.check_circle, size: 16, color: AppColors.primary),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
@@ -95,6 +137,8 @@ class LoginScreen extends ConsumerWidget {
                                   letterSpacing: 0.5,
                                 ),
                               ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: AppColors.textSecondary),
                             ],
                           ),
                         ),
@@ -139,7 +183,7 @@ class LoginScreen extends ConsumerWidget {
 
                               // Headers
                               Text(
-                                'Fleet Operations'.toUpperCase(),
+                                l10n.fleetOperations.toUpperCase(),
                                 style: GoogleFonts.outfit(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -159,7 +203,7 @@ class LoginScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'Enter your credentials to sign in',
+                                l10n.signInPrompt,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,
@@ -179,7 +223,7 @@ class LoginScreen extends ConsumerWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "Don't have an account? ",
+                                    "${l10n.dontHaveAccount} ",
                                     style: TextStyle(
                                       color: AppColors.textSecondary.withOpacity(0.8),
                                       fontSize: 14,
@@ -194,9 +238,9 @@ class LoginScreen extends ConsumerWidget {
                                       minimumSize: Size.zero,
                                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
-                                    child: const Text(
-                                      'Sign Up',
-                                      style: TextStyle(
+                                    child: Text(
+                                      l10n.signUp,
+                                      style: const TextStyle(
                                         color: AppColors.primary,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,

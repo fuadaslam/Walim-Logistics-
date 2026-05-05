@@ -201,12 +201,7 @@ class VehicleDetailScreen extends ConsumerWidget {
   Widget _buildStatusHighlight(VehiclePosition? pos) {
     final isMoving = pos?.moving ?? false;
     final hasIgnition = pos?.ignition ?? false;
-    String displayStatus = vehicle.status;
-    if (displayStatus == 'offline' && pos != null) {
-      if (DateTime.now().difference(pos.timestamp).inHours <= 48) {
-        displayStatus = 'stopped';
-      }
-    }
+    final displayStatus = vehicle.getDisplayStatus();
     final color = AppTheme.statusColor(vehicle.status, moving: isMoving, ignition: hasIgnition, timestamp: pos?.timestamp);
     
     return Container(

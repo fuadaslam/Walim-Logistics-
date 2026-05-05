@@ -72,6 +72,8 @@ class ShiftControlState {
   final bool loading;
   final String? error;
   final bool nextSupervisorSosSubmitted;
+  final Map<String, bool> verificationChecklist;
+  final String handoverNotes;
 
   const ShiftControlState({
     this.report,
@@ -85,12 +87,21 @@ class ShiftControlState {
     this.loading = false,
     this.error,
     this.nextSupervisorSosSubmitted = false,
+    this.verificationChecklist = const {
+      'riders': false,
+      'leave': false,
+      'vehicles': false,
+      'issues': false,
+    },
+    this.handoverNotes = '',
   });
 
   String get reportStatus => report?['status'] as String? ?? 'DRAFT';
 
   bool get canLoadReport =>
       selectedPlatformId != null && selectedGroupId != null;
+
+  bool get allVerified => verificationChecklist.values.every((v) => v);
 
   ShiftControlState copyWith({
     Map<String, dynamic>? report,
@@ -106,6 +117,8 @@ class ShiftControlState {
     String? error,
     bool clearError = false,
     bool? nextSupervisorSosSubmitted,
+    Map<String, bool>? verificationChecklist,
+    String? handoverNotes,
   }) {
     return ShiftControlState(
       report: clearReport ? null : (report ?? this.report),
@@ -120,6 +133,9 @@ class ShiftControlState {
       error: clearError ? null : (error ?? this.error),
       nextSupervisorSosSubmitted:
           nextSupervisorSosSubmitted ?? this.nextSupervisorSosSubmitted,
+      verificationChecklist:
+          verificationChecklist ?? this.verificationChecklist,
+      handoverNotes: handoverNotes ?? this.handoverNotes,
     );
   }
 }
@@ -133,6 +149,13 @@ class ShiftControlNotifier extends StateNotifier<ShiftControlState> {
       : super(ShiftControlState(selectedDate: DateTime.now())) {
     _init();
   }
+
+  final Map<String, bool> _initialChecklist = {
+    'riders': false,
+    'leave': false,
+    'vehicles': false,
+    'issues': false,
+  };
 
   Future<void> _init() async {
     state = state.copyWith(loading: true);
@@ -257,6 +280,8 @@ class ShiftControlNotifier extends StateNotifier<ShiftControlState> {
         attendanceItems: items,
         validationFlags: flags,
         loading: false,
+        verificationChecklist: _initialChecklist,
+        handoverNotes: report['handover_notes'] as String? ?? '',
       );
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
@@ -323,6 +348,16 @@ class ShiftControlNotifier extends StateNotifier<ShiftControlState> {
     state = state.copyWith(attendanceItems: items);
   }
 
+  void toggleVerification(String key) {
+    final checklist = Map<String, bool>.from(state.verificationChecklist);
+    checklist[key] = !(checklist[key] ?? false);
+    state = state.copyWith(verificationChecklist: checklist);
+  }
+
+  void updateHandoverNotes(String notes) {
+    state = state.copyWith(handoverNotes: notes);
+  }
+
   void addManualRider({
     required String name,
     required String iqama,
@@ -358,8 +393,10 @@ class ShiftControlNotifier extends StateNotifier<ShiftControlState> {
         reportId: state.report!['id'] as String,
         items: state.attendanceItems.map((i) => i.toMap()).toList(),
         markedBy: supervisorId,
+        handoverNotes: state.handoverNotes,
       );
       await loadReport();
+      state = state.copyWith(verificationChecklist: _initialChecklist);
       return null;
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
@@ -380,8 +417,12 @@ class ShiftControlNotifier extends StateNotifier<ShiftControlState> {
   Future<void> submitEOS() async {
     state = state.copyWith(loading: true, clearError: true);
     try {
-      await _repo.submitEOS(state.report!['id'] as String);
+      await _repo.submitEOS(
+        state.report!['id'] as String,
+        handoverNotes: state.handoverNotes,
+      );
       await loadReport();
+      state = state.copyWith(verificationChecklist: _initialChecklist);
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
     }

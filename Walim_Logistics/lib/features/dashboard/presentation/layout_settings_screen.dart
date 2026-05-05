@@ -176,7 +176,7 @@ class LayoutSettingsScreen extends ConsumerWidget {
       case DashboardSection.metrics: return 'Core Metrics';
       case DashboardSection.actions: return 'Management Console';
       case DashboardSection.activity: return 'Live Activity Feed';
-      case DashboardSection.intelligence: return 'Intelligence Hub';
+
       case DashboardSection.compliance: return 'Compliance Watch';
       case DashboardSection.performance: return 'Performance Analysis';
     }
@@ -187,7 +187,7 @@ class LayoutSettingsScreen extends ConsumerWidget {
       case DashboardSection.metrics: return 'Key performance indicators and status overview';
       case DashboardSection.actions: return 'Quick access to management tools and modules';
       case DashboardSection.activity: return 'Real-time log of recent platform events';
-      case DashboardSection.intelligence: return 'SLA monitoring and capacity forecasting';
+
       case DashboardSection.compliance: return 'Regulatory status and document expiration alerts';
       case DashboardSection.performance: return 'Detailed revenue and margin analysis';
     }
@@ -198,7 +198,7 @@ class LayoutSettingsScreen extends ConsumerWidget {
       case DashboardSection.metrics: return Icons.analytics_rounded;
       case DashboardSection.actions: return Icons.grid_view_rounded;
       case DashboardSection.activity: return Icons.notifications_active_rounded;
-      case DashboardSection.intelligence: return Icons.psychology_rounded;
+
       case DashboardSection.compliance: return Icons.verified_user_rounded;
       case DashboardSection.performance: return Icons.trending_up_rounded;
     }
@@ -209,7 +209,7 @@ class LayoutSettingsScreen extends ConsumerWidget {
       case DashboardSection.metrics: return Colors.blue;
       case DashboardSection.actions: return Colors.indigo;
       case DashboardSection.activity: return Colors.orange;
-      case DashboardSection.intelligence: return Colors.purple;
+
       case DashboardSection.compliance: return Colors.red;
       case DashboardSection.performance: return Colors.green;
     }

@@ -49,7 +49,7 @@ class ApiService {
 
   Future<List<Vehicle>> getDevices() async {
     const pageSize = 250; // API hard limit
-    final all = <Vehicle>[];
+    final Map<String, Vehicle> uniqueVehicles = {};
     int page = 1;
 
     while (true) {
@@ -74,14 +74,32 @@ class ApiService {
       final data = jsonDecode(body) as Map<String, dynamic>;
       final items = data['data'] as List<dynamic>? ?? [];
 
-      all.addAll(items.map((json) => Vehicle.fromJson(json as Map<String, dynamic>)));
+      for (final json in items) {
+        final vehicle = Vehicle.fromJson(json as Map<String, dynamic>);
+        if (vehicle.id.isEmpty) continue;
+
+        // Deduplicate by name and plate number to handle tracker swaps or duplicate registrations
+        final key = '${vehicle.name}_${vehicle.plateNumber}';
+        final existing = uniqueVehicles[key];
+        
+        if (existing == null) {
+          uniqueVehicles[key] = vehicle;
+        } else {
+          // Keep the one with the most recent timestamp
+          final newTs = vehicle.position?.timestamp;
+          final oldTs = existing.position?.timestamp;
+          if (newTs != null && (oldTs == null || newTs.isAfter(oldTs))) {
+            uniqueVehicles[key] = vehicle;
+          }
+        }
+      }
 
       // Stop when this page returned fewer items than the page size
       if (items.length < pageSize) break;
       page++;
     }
 
-    return all;
+    return uniqueVehicles.values.toList();
   }
 
   Future<String> reverseGeocode(double lat, double lng) async {

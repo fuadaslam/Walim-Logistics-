@@ -12,6 +12,7 @@ import 'package:walim_logistics/features/dashboard/presentation/widgets/office_r
 import 'package:walim_logistics/features/supervisor/presentation/daily_shift_control_screen.dart';
 import 'package:walim_logistics/features/supervisor/presentation/supervisor_group_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/layout_provider.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:walim_logistics/features/tracking/screens/rider_tracking_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
@@ -22,6 +23,9 @@ import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/hr/presentation/staff_management_screen.dart';
 import 'package:walim_logistics/features/inspections/presentation/inspection_management_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/attendance_reports_screen.dart';
+import 'package:walim_logistics/features/dashboard/presentation/vehicle_allocation_screen.dart';
+import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
+import 'package:walim_logistics/features/supervisor/presentation/shift_cluster_manager_screen.dart';
 
 class SupervisorDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -57,10 +61,10 @@ class SupervisorDashboard extends ConsumerWidget {
     }
 
     return DashboardScaffold(
-      title: isOpsOrAdmin ? 'FLEET PERFORMANCE HUB' : 'PERFORMANCE HUB',
+      title: isOpsOrAdmin ? 'FLEET PERFORMANCE HUB' : 'SUPERVISOR COMMAND CENTER',
       subtitle: isOpsOrAdmin 
           ? 'Global operational metrics and platform reconciliation'
-          : 'Oversee operations and resolve blockers',
+          : 'Manage your group, assets, and performance',
       showBackButton: true,
       children: [
         _buildContent(context, ref, layout, dashboardData, isOpsOrAdmin),
@@ -133,8 +137,7 @@ class SupervisorDashboard extends ConsumerWidget {
         return _buildActionsSection(context, ref, isOpsOrAdmin);
       case DashboardSection.activity:
         return _buildActivitySection(data);
-      case DashboardSection.intelligence:
-        return _buildIntelligenceSection(data);
+
       default:
         return const SizedBox.shrink();
     }
@@ -146,15 +149,30 @@ class SupervisorDashboard extends ConsumerWidget {
       children: [
         // Primary action cards (Hero)
         if (isOpsOrAdmin)
-          _buildOpsHero(context)
+          _buildOpsHero(context, ref)
         else ...[
           _buildDailyShiftHero(context),
           const SizedBox(height: 12),
-          _buildMyGroupHero(context),
+          Row(
+            children: [
+              Expanded(child: _buildMyGroupHero(context)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionCard(
+                  context, 
+                  'Team Performance', 
+                  'Detailed group analytics', 
+                  Icons.analytics_rounded, 
+                  Colors.indigo, 
+                  () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminPerformanceScreen())),
+                ),
+              ),
+            ],
+          ),
         ],
         const SizedBox(height: 32),
 
-        _buildSectionHeader('Fleet Performance Metrics'),
+        _buildSectionHeader('Fleet & Operational Metrics'),
         const SizedBox(height: 24),
         ResponsiveGrid(
           tabletCrossAxisCount: 4,
@@ -205,107 +223,232 @@ class SupervisorDashboard extends ConsumerWidget {
   }
 
   Widget _buildActionsSection(BuildContext context, WidgetRef ref, bool isOpsOrAdmin) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(isOpsOrAdmin ? 'Strategic Operations & Intelligence' : 'Operations & Incident Hub'),
-        const SizedBox(height: 24),
-        ResponsiveGrid(
-          mobileCrossAxisCount: 1,
-          tabletCrossAxisCount: 4,
-          desktopCrossAxisCount: 4,
-          spacing: 16,
-          childAspectRatio: 1.8,
-          children: [
-            DashboardActionCard(
-              title: 'Live Rider Tracking',
-              subtitle: isOpsOrAdmin ? 'Monitor all active riders' : 'Monitor your group in real-time',
-              icon: Icons.my_location_rounded,
-              color: Colors.orange,
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RiderTrackingScreen()));
-              },
-            ),
-            DashboardActionCard(
-              title: 'Incident Approvals',
-              subtitle: 'Approve delay & accident justifications',
-              icon: Icons.fact_check_outlined,
-              color: Colors.red,
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const IncidentApprovalScreen()));
-              },
-            ),
-            DashboardActionCard(
-              title: 'Matching Data reports',
-              subtitle: 'Daily/Weekly platform reconciliation',
-              icon: Icons.analytics_outlined,
-              color: Colors.indigo,
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MatchingDataScreen()));
-              },
-            ),
-            DashboardActionCard(
-              title: 'Shift Cluster Manager',
-              subtitle: 'Assign riders to high-demand zones',
-              icon: Icons.grid_view_rounded,
-              color: Colors.blue,
-              onTap: () {},
-            ),
-            DashboardActionCard(
-              title: 'Performance Management',
-              subtitle: 'Issue bonuses, penalties & set targets',
-              icon: Icons.military_tech_rounded,
-              color: Colors.indigo,
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPerformanceScreen()));
-              },
-            ),
-            DashboardActionCard(
-              title: 'Leaderboard',
-              subtitle: 'Top riders and supervisors this month',
-              icon: Icons.leaderboard_rounded,
-              color: Colors.amber,
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LeaderboardScreen()));
-              },
-            ),
-            if (isOpsOrAdmin)
+    if (isOpsOrAdmin) {
+       return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('Strategic Operations & Intelligence'),
+          const SizedBox(height: 24),
+          ResponsiveGrid(
+            mobileCrossAxisCount: 1,
+            tabletCrossAxisCount: 4,
+            desktopCrossAxisCount: 4,
+            spacing: 16,
+            childAspectRatio: 1.8,
+            children: [
+              DashboardActionCard(
+                title: 'Live Rider Tracking',
+                subtitle: 'Monitor all active riders',
+                icon: Icons.my_location_rounded,
+                color: Colors.orange,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RiderTrackingScreen())),
+              ),
+              DashboardActionCard(
+                title: 'Incident Approvals',
+                subtitle: 'Approve delay & accident justifications',
+                icon: Icons.fact_check_outlined,
+                color: Colors.red,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const IncidentApprovalScreen())),
+              ),
+              DashboardActionCard(
+                title: 'Platform Reports',
+                subtitle: 'Daily/Weekly/Monthly submissions',
+                icon: Icons.assessment_rounded,
+                color: Colors.indigo,
+                onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.reports),
+              ),
+              DashboardActionCard(
+                title: 'Shift Cluster Manager',
+                subtitle: 'Assign riders to high-demand zones',
+                icon: Icons.grid_view_rounded,
+                color: Colors.blue,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ShiftClusterManagerScreen())),
+              ),
+              DashboardActionCard(
+                title: 'Staff Performance Management',
+                subtitle: 'Issue bonuses, penalties & set targets',
+                icon: Icons.people_outline_rounded,
+                color: Colors.indigo,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPerformanceScreen())),
+              ),
+              DashboardActionCard(
+                title: 'Leaderboard',
+                subtitle: 'Top riders and supervisors this month',
+                icon: Icons.leaderboard_rounded,
+                color: Colors.amber,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
+              ),
               DashboardActionCard(
                 title: 'Scoring Configuration',
                 subtitle: 'Design how performance scores are calculated',
                 icon: Icons.settings_suggest_rounded,
                 color: Colors.deepPurple,
-                onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PerformanceCalculationScreen()));
-                },
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PerformanceCalculationScreen())),
               ),
-            if (!isOpsOrAdmin)
-              DashboardActionCard(
-                title: 'My Performance',
-                subtitle: 'Your score, targets and adjustments',
-                icon: Icons.bar_chart_rounded,
-                color: Colors.teal,
-                onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyPerformanceScreen()));
-                },
-              ),
-            if (isOpsOrAdmin)
-               DashboardActionCard(
-                title: 'Staff Performance Management',
-                subtitle: 'Issue bonuses, penalties & set targets',
-                icon: Icons.people_outline_rounded,
-                color: Colors.indigo,
-                onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPerformanceScreen()));
-                },
-              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    // Specialized Supervisor Actions
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('Group & Rider Management'),
+        const SizedBox(height: 16),
+        ResponsiveGrid(
+          mobileCrossAxisCount: 1,
+          tabletCrossAxisCount: 3,
+          spacing: 16,
+          childAspectRatio: 2.2,
+          children: [
+            DashboardActionCard(
+              title: 'My Group',
+              subtitle: 'Manage your assigned team',
+              icon: Icons.groups_rounded,
+              color: Colors.teal,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupervisorGroupScreen())),
+            ),
+            DashboardActionCard(
+              title: 'Add New Rider',
+              subtitle: 'Onboard a new member to fleet',
+              icon: Icons.person_add_rounded,
+              color: Colors.blue,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StaffManagementScreen(initialRole: 'Rider'))),
+            ),
+            DashboardActionCard(
+              title: 'Live Rider Tracking',
+              subtitle: 'Monitor your group in real-time',
+              icon: Icons.my_location_rounded,
+              color: Colors.orange,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RiderTrackingScreen())),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        
+        _buildSectionHeader('Fleet Monitoring'),
+        const SizedBox(height: 16),
+        ResponsiveGrid(
+          mobileCrossAxisCount: 1,
+          tabletCrossAxisCount: 3,
+          spacing: 16,
+          childAspectRatio: 2.2,
+          children: [
+            DashboardActionCard(
+              title: 'All Riders',
+              subtitle: 'Status, vehicle and iqama',
+              icon: Icons.motorcycle_rounded,
+              color: Colors.teal,
+              onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.riders),
+            ),
+            DashboardActionCard(
+              title: 'All Platforms',
+              subtitle: 'Shifts and allocations',
+              icon: Icons.business_rounded,
+              color: Colors.indigo,
+              onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.platforms),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+
+        _buildSectionHeader('Fleet & Asset Control'),
+        const SizedBox(height: 16),
+        ResponsiveGrid(
+          mobileCrossAxisCount: 1,
+          tabletCrossAxisCount: 2,
+          spacing: 16,
+          childAspectRatio: 2.5,
+          children: [
+            DashboardActionCard(
+              title: 'Vehicle Allocation',
+              subtitle: 'Assign, change or unassign vehicles',
+              icon: Icons.swap_horiz_rounded,
+              color: Colors.indigo,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const VehicleAllocationScreen())),
+            ),
+            DashboardActionCard(
+              title: 'Fleet Asset Registry',
+              subtitle: 'View all vehicles and status',
+              icon: Icons.local_shipping_rounded,
+              color: Colors.blueGrey,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen())),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+
+        _buildSectionHeader('Performance & Leadership'),
+        const SizedBox(height: 16),
+        ResponsiveGrid(
+          mobileCrossAxisCount: 1,
+          tabletCrossAxisCount: 3,
+          spacing: 16,
+          childAspectRatio: 2.2,
+          children: [
+             DashboardActionCard(
+              title: 'Leaderboard',
+              subtitle: 'Top riders and rankings',
+              icon: Icons.leaderboard_rounded,
+              color: Colors.amber,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
+            ),
+            DashboardActionCard(
+              title: 'Team Performance',
+              subtitle: 'Issue bonuses & penalties',
+              icon: Icons.military_tech_rounded,
+              color: Colors.indigo,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPerformanceScreen())),
+            ),
+            DashboardActionCard(
+              title: 'My Performance',
+              subtitle: 'Your score and targets',
+              icon: Icons.bar_chart_rounded,
+              color: Colors.teal,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyPerformanceScreen())),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+
+        _buildSectionHeader('Operational Approvals'),
+        const SizedBox(height: 16),
+        ResponsiveGrid(
+          mobileCrossAxisCount: 1,
+          tabletCrossAxisCount: 3,
+          spacing: 16,
+          childAspectRatio: 2.2,
+          children: [
+            DashboardActionCard(
+              title: 'Incident Approvals',
+              subtitle: 'Approve delay justifications',
+              icon: Icons.fact_check_outlined,
+              color: Colors.red,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const IncidentApprovalScreen())),
+            ),
+            DashboardActionCard(
+              title: 'Platform Reports',
+              subtitle: 'Submit daily operational logs',
+              icon: Icons.assessment_rounded,
+              color: Colors.indigo,
+              onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.reports),
+            ),
+            DashboardActionCard(
+              title: 'Shift Cluster Manager',
+              subtitle: 'Demand-based positioning',
+              icon: Icons.grid_view_rounded,
+              color: Colors.blue,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ShiftClusterManagerScreen())),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildOpsHero(BuildContext context) {
+  Widget _buildOpsHero(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         GestureDetector(
@@ -381,21 +524,32 @@ class SupervisorDashboard extends ConsumerWidget {
               child: _buildOpsQuickAction(
                 context,
                 'Platform Reports',
-                'Verify external delivery data',
-                Icons.account_balance_wallet_outlined,
+                'Daily/Weekly/Monthly submissions',
+                Icons.assessment_rounded,
                 Colors.indigo,
-                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchingDataScreen())),
+                () => ref.read(navigationProvider.notifier).setTab(DashboardTab.reports),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildOpsQuickAction(
                 context,
-                'Staff Management',
-                'Manage roles and assignments',
-                Icons.people_alt_rounded,
+                'Rider Monitoring',
+                'Status, vehicle, and iqama',
+                Icons.motorcycle_rounded,
                 Colors.teal,
-                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffManagementScreen())),
+                () => ref.read(navigationProvider.notifier).setTab(DashboardTab.riders),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildOpsQuickAction(
+                context,
+                'Platform Monitoring',
+                'Shifts and allocations',
+                Icons.business_rounded,
+                Colors.indigo,
+                () => ref.read(navigationProvider.notifier).setTab(DashboardTab.platforms),
               ),
             ),
           ],
@@ -433,6 +587,42 @@ class SupervisorDashboard extends ConsumerWidget {
     );
   }
 
+  Widget _buildQuickActionCard(BuildContext context, String title, String sub, IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: color)),
+                  Text(sub, style: GoogleFonts.outfit(fontSize: 10, color: color.withValues(alpha: 0.7)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildActivitySection(DashboardData data) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,29 +651,7 @@ class SupervisorDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildIntelligenceSection(DashboardData data) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader('Platform Distribution'),
-        const SizedBox(height: 24),
-        if (data.platformShare.isEmpty)
-          const EmptyStatePlaceholder(
-            icon: Icons.pie_chart_outline_rounded,
-            title: 'No data available',
-            subtitle: 'Waiting for platform distribution data to be processed.',
-            color: Colors.indigo,
-          )
-        else
-          ...data.platformShare.map((p) => Column(
-            children: [
-              _buildPlatformShare(p['name'], p['share'], p['color']),
-              const SizedBox(height: 12),
-            ],
-          )),
-      ],
-    );
-  }
+
 
   Widget _buildMyGroupHero(BuildContext context) {
     return GestureDetector(
@@ -492,7 +660,7 @@ class SupervisorDashboard extends ConsumerWidget {
       ),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.teal.withOpacity(0.08),
           borderRadius: BorderRadius.circular(16),
@@ -501,15 +669,15 @@ class SupervisorDashboard extends ConsumerWidget {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.teal.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.groups_rounded,
-                  size: 26, color: Colors.teal),
+                  size: 20, color: Colors.teal),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -518,14 +686,14 @@ class SupervisorDashboard extends ConsumerWidget {
                     'My Group',
                     style: GoogleFonts.outfit(
                       fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                      fontSize: 14,
                       color: Colors.teal,
                     ),
                   ),
                   Text(
-                    'View riders, today\'s attendance status and shift details',
+                    'Manage riders & shifts',
                     style: GoogleFonts.outfit(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: Colors.teal.withOpacity(0.8),
                     ),
                   ),
@@ -533,7 +701,7 @@ class SupervisorDashboard extends ConsumerWidget {
               ),
             ),
             const Icon(Icons.arrow_forward_ios_rounded,
-                color: Colors.teal, size: 16),
+                color: Colors.teal, size: 14),
           ],
         ),
       ),
@@ -675,9 +843,10 @@ class SupervisorDashboard extends ConsumerWidget {
     return Text(
       title,
       style: GoogleFonts.outfit(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
+        fontSize: 18,
+        fontWeight: FontWeight.w900,
         color: AppColors.textPrimary,
+        letterSpacing: -0.2,
       ),
     );
   }

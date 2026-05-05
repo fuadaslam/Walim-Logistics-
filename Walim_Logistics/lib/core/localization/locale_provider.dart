@@ -26,6 +26,8 @@ class LocaleNotifier extends StateNotifier<Locale> {
   Future<void> toggleLocale() async {
     if (state.languageCode == 'en') {
       await setLocale(const Locale('ar'));
+    } else if (state.languageCode == 'ar') {
+      await setLocale(const Locale('hi'));
     } else {
       await setLocale(const Locale('en'));
     }

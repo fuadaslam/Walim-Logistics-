@@ -4,6 +4,7 @@ import 'package:walim_logistics/features/fleet/data/fleet_repository.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/features/hr/data/document_repository.dart';
 import 'package:walim_logistics/shared/models/assigned_asset.dart';
+import 'package:walim_logistics/shared/models/profile.dart';
 
 final fleetRepositoryProvider = Provider((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -54,4 +55,18 @@ final riderRecentAttendanceProvider =
       .gte('check_in_time', startOfDay)
       .order('check_in_time', ascending: false)
       .limit(3);
+});
+
+final profileByIdProvider = FutureProvider.family<UserProfile?, String>((ref, id) async {
+  final supabase = ref.watch(supabaseProvider);
+  final response = await supabase
+      .from('profiles')
+      .select('*, roles(name)')
+      .eq('id', id)
+      .maybeSingle();
+  
+  if (response != null) {
+    return UserProfile.fromJson(response);
+  }
+  return null;
 });

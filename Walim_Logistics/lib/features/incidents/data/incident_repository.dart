@@ -23,8 +23,8 @@ class IncidentRepository {
   Future<List<Map<String, dynamic>>> getPendingIncidents() async {
     return await _supabase
         .from('incidents')
-        .select('*, profiles!inner(full_name)')
-        .eq('status', 'pending')
+        .select('*, profiles!incidents_reported_by_fkey!inner(full_name)')
+        .ilike('status', 'pending')
         .order('created_at', ascending: false);
   }
 

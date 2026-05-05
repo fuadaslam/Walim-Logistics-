@@ -55,6 +55,7 @@ class WalimLogisticsApp extends ConsumerWidget {
       supportedLocales: const [
         Locale('en'),
         Locale('ar'),
+        Locale('hi'),
       ],
       locale: currentLocale,
       home: const AuthGate(),

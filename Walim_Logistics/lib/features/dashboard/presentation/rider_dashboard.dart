@@ -135,14 +135,52 @@ class RiderDashboard extends ConsumerWidget {
             ),
           ),
         if (!isMobile) const SizedBox(width: 12),
-        IconButton(
-          padding: const EdgeInsets.all(8),
-          constraints: const BoxConstraints(),
-          onPressed: () => ref.read(localeProvider.notifier).toggleLocale(),
+        PopupMenuButton<String>(
+          tooltip: 'Select Language',
+          onSelected: (String code) {
+            ref.read(localeProvider.notifier).setLocale(Locale(code));
+          },
+          offset: const Offset(0, 40),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'en',
+              child: Row(
+                children: [
+                  Text('English', style: GoogleFonts.outfit(fontWeight: FontWeight.w500)),
+                  if (currentLocale.languageCode == 'en') ...[
+                    const Spacer(),
+                    const Icon(Icons.check_circle, size: 16, color: Colors.blue),
+                  ],
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'ar',
+              child: Row(
+                children: [
+                  Text('العربية', style: GoogleFonts.outfit(fontWeight: FontWeight.w500)),
+                  if (currentLocale.languageCode == 'ar') ...[
+                    const Spacer(),
+                    const Icon(Icons.check_circle, size: 16, color: Colors.blue),
+                  ],
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'hi',
+              child: Row(
+                children: [
+                  Text('हिन्दी', style: GoogleFonts.outfit(fontWeight: FontWeight.w500)),
+                  if (currentLocale.languageCode == 'hi') ...[
+                    const Spacer(),
+                    const Icon(Icons.check_circle, size: 16, color: Colors.blue),
+                  ],
+                ],
+              ),
+            ),
+          ],
           icon: const Icon(Icons.language, size: 22),
-          tooltip: currentLocale.languageCode == 'en'
-              ? 'Switch to Arabic'
-              : 'Switch to English',
         ),
       ],
       children: [

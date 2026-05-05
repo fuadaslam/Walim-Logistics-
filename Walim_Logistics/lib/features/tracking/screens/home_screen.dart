@@ -1286,7 +1286,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
-            _buildTag(pos?.moving == true ? 'Moving' : 'Idle', pos?.moving == true ? AppTheme.onlineColor : AppTheme.warning),
+            _buildTag(
+              vehicle.getDisplayStatus()[0].toUpperCase() + vehicle.getDisplayStatus().substring(1), 
+              AppTheme.statusColor(vehicle.status, moving: pos?.moving ?? false, ignition: pos?.ignition ?? false, timestamp: pos?.timestamp)
+            ),
             const SizedBox(width: 24),
             SizedBox(
               width: 100,
