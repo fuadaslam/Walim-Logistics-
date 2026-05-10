@@ -6,7 +6,8 @@ import 'package:walim_logistics/features/admin/data/operations_repository.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 
 class AddStaffDialog extends ConsumerStatefulWidget {
-  const AddStaffDialog({super.key});
+  final String? initialRole;
+  const AddStaffDialog({super.key, this.initialRole});
 
   @override
   ConsumerState<AddStaffDialog> createState() => _AddStaffDialogState();
@@ -17,7 +18,7 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _iqamaCtrl = TextEditingController();
-  String _selectedRole = 'Rider';
+  late String _selectedRole;
   bool _loading = false;
 
   final List<String> _roles = [
@@ -31,6 +32,12 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
     'IT_Dev',
     'Business Development',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedRole = widget.initialRole ?? 'Rider';
+  }
 
   @override
   void dispose() {

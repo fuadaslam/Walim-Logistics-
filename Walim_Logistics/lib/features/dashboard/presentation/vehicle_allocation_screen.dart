@@ -406,6 +406,9 @@ class VehicleAllocationScreen extends ConsumerWidget {
                       status: asset['status'].toString().toLowerCase(),
                       riderName: isAssigned ? asset['assignedTo'] : null,
                       iqamaNumber: asset['iqamaNumber'] != 'N/A' ? asset['iqamaNumber'] : null,
+                      make: asset['make']?.toString() ?? '',
+                      model: asset['model']?.toString() ?? '',
+                      vin: asset['vin']?.toString() ?? '',
                     );
                     Navigator.push(context, MaterialPageRoute(builder: (_) => VehicleDetailScreen(vehicle: vehicle)));
                   },

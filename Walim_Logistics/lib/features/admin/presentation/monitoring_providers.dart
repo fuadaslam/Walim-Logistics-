@@ -1,26 +1,64 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:walim_logistics/features/admin/data/operations_repository.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/shared/models/profile.dart';
 
 final riderSearchQueryProvider = StateProvider<String>((ref) => '');
 final riderFilterStatusProvider = StateProvider<String?>((ref) => null);
 
+final supervisorSearchQueryProvider = StateProvider<String>((ref) => '');
+final platformSearchQueryProvider = StateProvider<String>((ref) => '');
+
 final detailedRidersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final repo = ref.watch(operationsRepositoryProvider);
   final hrRepo = ref.watch(hrRepositoryProvider);
+  final supabase = ref.watch(supabaseProvider);
   
   // Fetch riders with iqama and other details
   final riders = await repo.fetchRiders();
   
+  // Fetch all vehicles with assignments to build a lookup map
+  Map<String, String> assignedVehicleMap = {};
+  try {
+    final List<dynamic> vehiclesData = await supabase
+        .from('vehicles')
+        .select('assigned_profile_id, plate_number, type, make, model')
+        .not('assigned_profile_id', 'is', null);
+        
+    for (var v in vehiclesData) {
+      final profileId = v['assigned_profile_id'];
+      if (profileId != null) {
+        final plate = v['plate_number']?.toString() ?? '';
+        final make = v['make']?.toString() ?? '';
+        final model = v['model']?.toString() ?? '';
+        final type = v['type']?.toString() ?? '';
+        
+        String vehicleName = plate;
+        if (vehicleName.isEmpty && make.isNotEmpty) {
+          vehicleName = '$make $model';
+        }
+        if (vehicleName.isEmpty) {
+          vehicleName = type.toUpperCase();
+        }
+        assignedVehicleMap[profileId.toString()] = vehicleName;
+      }
+    }
+  } catch (e) {
+    // Fallback if query fails
+  }
+  
   // For each rider, try to find their active vehicle
   return Future.wait(riders.map((rider) async {
-    final assets = await hrRepo.getAssetsForProfile(rider['id']);
+    final riderId = rider['id'];
+    final assets = await hrRepo.getAssetsForProfile(riderId);
     final vehicle = assets.where((a) => a.assetCategory == 'vehicle').firstOrNull;
+    
+    final vehicleName = vehicle?.assetName ?? assignedVehicleMap[riderId] ?? 'No vehicle';
     
     return {
       ...rider,
-      'vehicle': vehicle?.assetName ?? 'No vehicle',
+      'vehicle': vehicleName,
     };
   }));
 });

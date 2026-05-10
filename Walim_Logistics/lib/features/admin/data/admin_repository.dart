@@ -9,8 +9,11 @@ class AdminRepository {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day).toIso8601String();
 
+    final riderRole = await _supabase.from('roles').select('id').eq('name', 'Rider').single();
+    final riderRoleId = riderRole['id'];
+
     final results = await Future.wait<dynamic>([
-      _supabase.from('profiles').select('id').ilike('status', 'active'),
+      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).ilike('status', 'active'),
       _supabase.from('vehicles').select('status'),
       _supabase.from('cod_reconciliation').select('collected_amount').ilike('status', 'pending'),
       _supabase

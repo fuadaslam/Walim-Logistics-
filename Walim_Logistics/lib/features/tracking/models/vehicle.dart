@@ -7,14 +7,15 @@ class Vehicle {
   final bool active;
   final String? riderName;
   final String? iqamaNumber;
+  final String make;
+  final String model;
+  final String vin;
   VehiclePosition? position;
 
   // Retained for UI compatibility
   String get fullPlate => plateNumber.isNotEmpty ? plateNumber : '-';
   double get odometer => position?.odometer ?? 0;
   double get engineHours => 0;
-  String get model => '';
-  String get vin => '';
 
   Vehicle({
     required this.id,
@@ -25,6 +26,9 @@ class Vehicle {
     this.active = true,
     this.riderName,
     this.iqamaNumber,
+    this.make = '',
+    this.model = '',
+    this.vin = '',
     this.position,
   });
 
@@ -57,6 +61,9 @@ class Vehicle {
       active: true,
       riderName: json['rider_name'] ?? json['assigned_to_name'] ?? json['full_name'],
       iqamaNumber: json['iqama_number'],
+      make: json['make']?.toString() ?? '',
+      model: json['model']?.toString() ?? '',
+      vin: (json['vin'] ?? json['vin_number'])?.toString() ?? '',
       position: hasLocation ? VehiclePosition.fromDeviceJson(json) : null,
     );
   }

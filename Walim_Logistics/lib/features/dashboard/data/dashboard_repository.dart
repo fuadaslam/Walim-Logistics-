@@ -23,10 +23,10 @@ class DashboardRepository {
     final startOfDay = DateTime(today.year, today.month, today.day).toIso8601String();
 
     final results = await Future.wait<dynamic>([
-      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).ilike('status', 'active'),
-      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).ilike('status', 'inactive'),
-      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).or('status.ilike.leave,status.ilike.on leave'),
-      _supabase.from('profiles').select('id').eq('role_id', supervisorRoleId).ilike('status', 'active'),
+      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).eq('status', 'Active_Completed'),
+      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).or('status.eq.inactive,status.eq.Inactive_Completed,status.eq.Inactive_Pending'),
+      _supabase.from('profiles').select('id').eq('role_id', riderRoleId).eq('status', 'on_leave'),
+      _supabase.from('profiles').select('id').eq('role_id', supervisorRoleId),
       _supabase.from('incidents').select('id').or('status.ilike.pending,status.ilike.investigating,status.ilike.open'),
       _supabase.from('groups').select('id').eq('is_active', true),
       _supabase.from('vehicles').select('status'),
@@ -115,7 +115,7 @@ class DashboardRepository {
     return (response as List).map((v) => {
       'id': v['id'],
       'plate': v['plate_number'],
-      'type': v['type'] == 'bike' ? 'Bike' : 'Van',
+      'type': _mapVehicleType(v['type']),
       'status': v['status'][0].toUpperCase() + v['status'].substring(1),
       'mvpi': v['mvpi_expiry'] ?? 'N/A',
       'insurance': v['insurance_expiry'] ?? 'N/A',
@@ -123,7 +123,25 @@ class DashboardRepository {
       'iqamaNumber': v['profiles']?['iqama_number'] ?? 'N/A',
       'role': v['profiles']?['roles']?['name'] ?? '',
       'avatar': v['profiles']?['avatar_url'] ?? 'https://i.pravatar.cc/150?u=${v['id']}',
+      'make': v['make'] ?? '',
+      'model': v['model'] ?? '',
+      'vin': v['vin_number'] ?? '',
     }).toList();
+  }
+
+  String _mapVehicleType(String? type) {
+    if (type == null) return 'Other';
+    switch (type.toLowerCase()) {
+      case 'bike': return 'Bike';
+      case 'scooter': return 'Scooter';
+      case 'electric_bike': return 'E-Bike';
+      case 'van': return 'Van';
+      case 'car': return 'Car';
+      case 'truck': return 'Truck';
+      case 'bus': return 'Bus';
+      case 'pickup': return 'Pickup';
+      default: return type[0].toUpperCase() + type.substring(1);
+    }
   }
 
   Color _getPlatformColor(String name) {

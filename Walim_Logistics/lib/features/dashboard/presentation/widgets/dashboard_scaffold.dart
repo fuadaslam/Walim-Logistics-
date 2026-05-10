@@ -5,20 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/core/theme/theme_provider.dart';
-import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
-import 'package:walim_logistics/features/tracking/screens/home_screen.dart' as walim_tracking;
-import 'package:walim_logistics/features/dashboard/presentation/admin_dashboard.dart';
-import 'package:walim_logistics/features/fleet/presentation/inventory_handover_screen.dart';
 import 'package:walim_logistics/features/notifications/presentation/notification_settings_screen.dart';
-import 'package:walim_logistics/features/tracking/theme/app_theme.dart' as tracking_theme;
-import 'package:walim_logistics/features/dashboard/presentation/hr_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/finance_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/ops_manager_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/supervisor_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/it_dev_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/leader_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/rider_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/biz_dev_dashboard.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/l10n/app_localizations.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
@@ -73,6 +60,13 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
   final LayerLink _searchLayerLink = LayerLink();
   OverlayEntry? _searchOverlayEntry;
   bool _isSearchFocused = false;
+  bool? _isStaffsExpanded;
+
+  bool get _staffsExpanded {
+    if (_isStaffsExpanded != null) return _isStaffsExpanded!;
+    return widget.activeItem == 'Riders' || 
+           widget.activeItem == 'Supervisors';
+  }
 
   @override
   void initState() {
@@ -215,15 +209,18 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     
     if (result.type == SearchResultType.screen && result.route != null) {
       // Handle navigation
-      final nav = ref.read(navigationProvider.notifier);
       switch (result.route) {
-        case 'Live GPS': nav.setTab(DashboardTab.liveOps); break;
-        case 'Live Rider': nav.setTab(DashboardTab.liveRider); break;
-        case 'HR': nav.setTab(DashboardTab.hr); break;
-        case 'Assets': nav.setTab(DashboardTab.assets); break;
-        case 'Finance': nav.setTab(DashboardTab.finance); break;
-        case 'Performance': nav.setTab(DashboardTab.attendance); break;
+        case 'Live GPS': _navigateToTab(DashboardTab.liveOps); break;
+        case 'Live Rider': _navigateToTab(DashboardTab.liveRider); break;
+        case 'HR': _navigateToTab(DashboardTab.hr); break;
+        case 'Vehicles': _navigateToTab(DashboardTab.vehicles); break;
+        case 'Assets': _navigateToTab(DashboardTab.assets); break;
+        case 'Finance': _navigateToTab(DashboardTab.finance); break;
+        case 'Performance': _navigateToTab(DashboardTab.attendance); break;
         case 'Settings': 
+          if (Navigator.canPop(context)) {
+            Navigator.popUntil(context, (route) => route.isFirst);
+          }
           Navigator.push(context, MaterialPageRoute(builder: (_) => const LayoutSettingsScreen()));
           break;
       }
@@ -261,6 +258,13 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
 
     if (confirmed == true) {
       await ref.read(authProvider.notifier).signOut();
+    }
+  }
+
+  void _navigateToTab(DashboardTab tab) {
+    ref.read(navigationProvider.notifier).setTab(tab);
+    if (Navigator.canPop(context)) {
+      Navigator.popUntil(context, (route) => route.isFirst);
     }
   }
 
@@ -331,7 +335,13 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           bottomNavigationBar: !isDesktop && !(widget.showBackButton || widget.onBack != null) 
               ? _buildBottomNavigationBar(context, authState, navState) 
               : null,
-          floatingActionButton: widget.floatingActionButton,
+          floatingActionButton: widget.floatingActionButton ?? 
+              ((authState.profile?.role == 'Admin' || authState.profile?.role == 'Operations Manager') 
+                ? Padding(
+                    padding: EdgeInsets.only(bottom: isDesktop ? 75.0 : 0.0),
+                    child: const QuickAddMenu(),
+                  ) 
+                : null),
         ),
       ),
     );
@@ -430,8 +440,23 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
 
 
 
-    // 5. Assets / Documents (Fill remaining space)
-    if (role != 'Rider' && role != 'Business Development' && items.length < 5) {
+    // 5. Vehicles / Assets / Documents (Fill remaining space)
+    if ((role == 'Admin' || role == 'Operations Manager' || role == 'Supervisor') && items.length < 5) {
+      items.add(_BottomNavItem(
+        icon: Icons.directions_car_rounded,
+        label: 'Vehicles',
+        tab: DashboardTab.vehicles,
+        isActive: navState.activeTab == DashboardTab.vehicles,
+      ));
+      if (items.length < 5) {
+        items.add(_BottomNavItem(
+          icon: Icons.inventory_2_rounded,
+          label: 'Assets',
+          tab: DashboardTab.assets,
+          isActive: navState.activeTab == DashboardTab.assets,
+        ));
+      }
+    } else if (role != 'Rider' && role != 'Business Development' && items.length < 5) {
       items.add(_BottomNavItem(
         icon: Icons.inventory_2_rounded,
         label: 'Assets',
@@ -477,7 +502,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
               children: items.map((item) {
                 return Expanded(
                   child: InkWell(
-                    onTap: () => navNotifier.setTab(item.tab),
+                    onTap: () => _navigateToTab(item.tab),
                     splashColor: Colors.transparent,
                     highlightColor: Colors.transparent,
                     child: Column(
@@ -545,7 +570,6 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
   PreferredSizeWidget _buildMobileAppBar(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final role = ref.watch(authProvider).profile?.role ?? 'Rider';
     
     return AppBar(
       backgroundColor: theme.cardColor.withValues(alpha: 0.8),
@@ -593,11 +617,6 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             )
           : null,
       actions: [
-        if (role == 'Admin' || role == 'Operations Manager')
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: QuickAddMenu(),
-          ),
         ...?widget.actions,
         IconButton(
           padding: const EdgeInsets.all(8),
@@ -764,34 +783,41 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           ],
 
           // 1. Title & Subtitle
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.title.toUpperCase(),
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: theme.textTheme.titleLarge?.color,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              if (widget.subtitle.isNotEmpty)
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  widget.subtitle,
+                  widget.title.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: theme.textTheme.titleLarge?.color,
+                    letterSpacing: 0.5,
                   ),
                 ),
-            ],
+                if (widget.subtitle.isNotEmpty)
+                  Text(
+                    widget.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+              ],
+            ),
           ),
-          const SizedBox(width: 48),
+          const SizedBox(width: 24),
 
           // 2. Search Bar
-          Expanded(
+          ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 320, maxWidth: 500),
             child: CompositedTransformTarget(
               link: _searchLayerLink,
               child: Container(
@@ -862,11 +888,6 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             ...widget.headerActions!,
           ],
           
-          if (profile?.role == 'Admin' || profile?.role == 'Operations Manager') ...[
-            const SizedBox(width: 24),
-            const QuickAddMenu(),
-          ],
-
           const SizedBox(width: 40),
           
           // 2. Language Selector
@@ -1024,9 +1045,144 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     );
   }
 
-  Widget _buildSidebarItems(BuildContext context, AuthState authState, NavigationState navState, bool isSidebarCollapsed) {
+  Widget _buildExpandableStaffsItem(BuildContext context, AuthState authState, NavigationState navState, bool isSidebarCollapsed) {
+    final theme = Theme.of(context);
+    final isExpanded = _staffsExpanded;
+    final isAnySubActive = widget.activeItem == 'Riders' || 
+                           widget.activeItem == 'Supervisors';
+
     final role = authState.profile?.role ?? 'Rider';
     final navNotifier = ref.read(navigationProvider.notifier);
+
+    if (isSidebarCollapsed) {
+      return Theme(
+        data: theme.copyWith(cardColor: theme.cardColor),
+        child: PopupMenuButton<DashboardTab>(
+          tooltip: 'Staffs',
+          offset: const Offset(70, 0),
+          onSelected: (tab) => _navigateToTab(tab),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: DashboardTab.riders,
+              child: Row(
+                children: [
+                  Icon(Icons.people_outline_rounded, size: 18),
+                  SizedBox(width: 12),
+                  Text('Riders'),
+                ],
+              ),
+            ),
+            if (role != 'Supervisor')
+              const PopupMenuItem(
+                value: DashboardTab.supervisors,
+                child: Row(
+                  children: [
+                    Icon(Icons.supervisor_account_rounded, size: 18),
+                    SizedBox(width: 12),
+                    Text('Supervisors'),
+                  ],
+                ),
+              ),
+          ],
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: isAnySubActive ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              Icons.people_rounded,
+              color: isAnySubActive ? AppColors.primary : theme.textTheme.bodyMedium?.color,
+              size: 22,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() {
+              _isStaffsExpanded = !isExpanded;
+            });
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isAnySubActive && !isExpanded ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.people_rounded,
+                  color: isAnySubActive ? AppColors.primary : theme.textTheme.bodyMedium?.color,
+                  size: 22,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    'Staffs',
+                    style: GoogleFonts.outfit(
+                      fontWeight: isAnySubActive ? FontWeight.bold : FontWeight.w500,
+                      color: isAnySubActive ? (theme.brightness == Brightness.dark ? Colors.white : AppColors.textPrimary) : theme.textTheme.bodyLarge?.color,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                Icon(
+                  isExpanded ? Icons.keyboard_arrow_down_rounded : Icons.keyboard_arrow_right_rounded,
+                  color: isAnySubActive ? AppColors.primary : theme.textTheme.bodyMedium?.color,
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          child: isExpanded
+              ? Container(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Column(
+                    children: [
+                      _buildSidebarItem(
+                        context,
+                        Icons.people_outline_rounded,
+                        'Riders',
+                        widget.activeItem == 'Riders',
+                        isSidebarCollapsed,
+                        onTap: () => _navigateToTab(DashboardTab.riders),
+                      ),
+                      if (role != 'Supervisor')
+                        _buildSidebarItem(
+                          context,
+                          Icons.supervisor_account_rounded,
+                          'Supervisors',
+                          widget.activeItem == 'Supervisors',
+                          isSidebarCollapsed,
+                          onTap: () => _navigateToTab(DashboardTab.supervisors),
+                        ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSidebarItems(BuildContext context, AuthState authState, NavigationState navState, bool isSidebarCollapsed) {
+    final role = authState.profile?.role ?? 'Rider';
     final l10n = AppLocalizations.of(context)!;
 
     return Column(
@@ -1035,9 +1191,9 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           context, 
           Icons.dashboard_rounded, 
           l10n.dashboard, 
-          navState.activeTab == DashboardTab.dashboard, 
+          widget.activeItem == 'Dashboard', 
           isSidebarCollapsed,
-          onTap: () => navNotifier.setTab(DashboardTab.dashboard),
+          onTap: () => _navigateToTab(DashboardTab.dashboard),
         ),
         
         if (role == 'Admin' || role == 'Supervisor' || role == 'Operations Manager' || role == 'IT_Dev' || role == 'Leader')
@@ -1045,9 +1201,9 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             context, 
             Icons.map_rounded, 
             l10n.liveGPS, 
-            navState.activeTab == DashboardTab.liveOps, 
+            widget.activeItem == 'Live GPS', 
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.liveOps),
+            onTap: () => _navigateToTab(DashboardTab.liveOps),
           ),
 
         if (role == 'Admin' || role == 'Supervisor' || role == 'Operations Manager')
@@ -1055,9 +1211,9 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             context, 
             Icons.motorcycle_rounded, 
             l10n.liveRiderTracking, 
-            navState.activeTab == DashboardTab.liveRider, 
+            widget.activeItem == 'Live Rider', 
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.liveRider),
+            onTap: () => _navigateToTab(DashboardTab.liveRider),
           ),
 
         if (role == 'Admin' || role == 'Operations Manager' || role == 'Supervisor')
@@ -1065,9 +1221,9 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             context, 
             Icons.speed_rounded, 
             l10n.performance, 
-            navState.activeTab == DashboardTab.attendance, // Reusing attendance tab for Performance Hub
+            widget.activeItem == 'Performance', 
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.attendance),
+            onTap: () => _navigateToTab(DashboardTab.attendance),
           ),
 
         if (role == 'Admin' || role == 'Operations Manager' || role == 'Supervisor')
@@ -1075,57 +1231,60 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             context, 
             Icons.assessment_rounded, 
             'Reports', 
-            navState.activeTab == DashboardTab.reports, 
+            widget.activeItem == 'Reports', 
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.reports),
+            onTap: () => _navigateToTab(DashboardTab.reports),
           ),
 
         if (role == 'Admin' || role == 'Operations Manager' || role == 'Supervisor') ...[
-          _buildSidebarItem(
-            context, 
-            Icons.motorcycle_rounded, 
-            'Riders', 
-            navState.activeTab == DashboardTab.riders, 
-            isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.riders),
-          ),
-          if (role != 'Supervisor')
-            _buildSidebarItem(
-              context, 
-              Icons.supervisor_account_rounded, 
-              'Supervisors', 
-              navState.activeTab == DashboardTab.supervisors, 
-              isSidebarCollapsed,
-              onTap: () => navNotifier.setTab(DashboardTab.supervisors),
-            ),
+          _buildExpandableStaffsItem(context, authState, navState, isSidebarCollapsed),
           _buildSidebarItem(
             context, 
             Icons.business_rounded, 
             'Platforms', 
-            navState.activeTab == DashboardTab.platforms, 
+            widget.activeItem == 'Platforms', 
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.platforms),
+            onTap: () => _navigateToTab(DashboardTab.platforms),
           ),
         ],
 
         if (role == 'Admin' || role == 'HR')
           _buildSidebarItem(
             context, 
-            Icons.people_rounded, 
+            Icons.badge_rounded, 
             l10n.hrManagement, 
-            navState.activeTab == DashboardTab.hr, 
+            widget.activeItem == 'HR', 
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.hr),
+            onTap: () => _navigateToTab(DashboardTab.hr),
           ),
 
-        if (role != 'Rider' && role != 'Business Development')
+        if (role == 'Admin' || role == 'Operations Manager' || role == 'Supervisor') ...[
           _buildSidebarItem(
-            context, 
-            Icons.inventory_2_rounded, 
-            l10n.assetManagement, 
-            navState.activeTab == DashboardTab.assets, 
+            context,
+            Icons.directions_car_rounded,
+            'Vehicles',
+            widget.activeItem == 'Vehicles',
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.assets),
+            onTap: () => _navigateToTab(DashboardTab.vehicles),
+          ),
+          _buildSidebarItem(
+            context,
+            Icons.inventory_2_rounded,
+            'Assets',
+            widget.activeItem == 'Assets',
+            isSidebarCollapsed,
+            onTap: () => _navigateToTab(DashboardTab.assets),
+          ),
+        ],
+
+        if (role != 'Rider' && role != 'Business Development' && role != 'Admin' && role != 'Operations Manager' && role != 'Supervisor')
+          _buildSidebarItem(
+            context,
+            Icons.inventory_2_rounded,
+            l10n.assetManagement,
+            widget.activeItem == 'Assets',
+            isSidebarCollapsed,
+            onTap: () => _navigateToTab(DashboardTab.assets),
           ),
 
         if (role == 'Admin' || role == 'Finance Manager')
@@ -1133,9 +1292,9 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             context, 
             Icons.payments_rounded, 
             l10n.financialManagement, 
-            navState.activeTab == DashboardTab.finance, 
+            widget.activeItem == 'Finance', 
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.finance),
+            onTap: () => _navigateToTab(DashboardTab.finance),
           ),
 
         if (role == 'Rider' || role == 'Leader') ...[
@@ -1143,44 +1302,29 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             context, 
             Icons.help_outline, 
             l10n.support, 
-            navState.activeTab == DashboardTab.support, 
+            widget.activeItem == 'Support', 
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.support),
+            onTap: () => _navigateToTab(DashboardTab.support),
           ),
           _buildSidebarItem(
             context, 
             Icons.article_outlined, 
             l10n.documentVault, 
-            navState.activeTab == DashboardTab.documents, 
+            widget.activeItem == 'Documents', 
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.documents),
+            onTap: () => _navigateToTab(DashboardTab.documents),
           ),
           _buildSidebarItem(
             context, 
             Icons.history_edu_outlined, 
             l10n.myRequests, 
-            navState.activeTab == DashboardTab.requests, 
+            widget.activeItem == 'Requests', 
             isSidebarCollapsed,
-            onTap: () => navNotifier.setTab(DashboardTab.requests),
+            onTap: () => _navigateToTab(DashboardTab.requests),
           ),
         ],
       ],
     );
-  }
-
-  Widget _getDashboardForRole(String role) {
-    switch (role) {
-      case 'Admin': return const AdminDashboard();
-      case 'HR': return const HRDashboard();
-      case 'Finance Manager': return const FinanceDashboard();
-      case 'Operations Manager': return const OpsManagerDashboard();
-      case 'Supervisor': return const SupervisorDashboard();
-      case 'IT_Dev': return const ITDevDashboard();
-      case 'Leader': return const LeaderDashboard();
-      case 'Rider': return const RiderDashboard();
-      case 'Business Development': return const BizDevDashboard();
-      default: return const AdminDashboard();
-    }
   }
 
   Widget _buildUserAvatar(BuildContext context) {

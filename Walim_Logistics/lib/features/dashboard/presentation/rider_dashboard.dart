@@ -20,7 +20,6 @@ import 'package:walim_logistics/features/dashboard/presentation/widgets/office_r
 import 'package:walim_logistics/features/tracking/services/location_providers.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/my_performance_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
-import 'package:walim_logistics/shared/models/assigned_asset.dart';
 import 'package:intl/intl.dart';
 
 class RiderDashboard extends ConsumerWidget {
@@ -72,7 +71,6 @@ class RiderDashboard extends ConsumerWidget {
     
     final zoneAsync = ref.watch(riderZoneProvider);
     final currentZone = zoneAsync.value?['name'] ?? 'Riyadh';
-    final weatherStatus = "$currentZone: 32°C • Clear";
 
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -94,7 +92,6 @@ class RiderDashboard extends ConsumerWidget {
                   userName,
                   authState,
                   greeting,
-                  weatherStatus,
                 ),
               ]),
             ),
@@ -118,13 +115,13 @@ class RiderDashboard extends ConsumerWidget {
             child: Row(
               children: [
                 const Icon(
-                  Icons.wb_sunny_outlined,
+                  Icons.location_on_rounded,
                   size: 16,
-                  color: Colors.orange,
+                  color: AppColors.primary,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  weatherStatus,
+                  currentZone,
                   style: GoogleFonts.outfit(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -192,7 +189,6 @@ class RiderDashboard extends ConsumerWidget {
           userName,
           authState,
           greeting,
-          weatherStatus,
         ),
       ],
     );
@@ -213,7 +209,6 @@ class RiderDashboard extends ConsumerWidget {
     String userName,
     AuthState authState,
     String greeting,
-    String weather,
   ) {
     final isMobile = MediaQuery.of(context).size.width < 900;
     final hasPermission = ref.watch(permissionStatusProvider).value ?? true;
@@ -736,6 +731,10 @@ class RiderDashboard extends ConsumerWidget {
 
   Widget _buildMapPreview(BuildContext context, WidgetRef ref) {
     final zoneAsync = ref.watch(riderZoneProvider);
+    final centerLat = (zoneAsync.value?['geofence_center_lat'] as num?)?.toDouble() ?? 24.7136;
+    final centerLng = (zoneAsync.value?['geofence_center_long'] as num?)?.toDouble() ?? 46.6753;
+    final center = LatLng(centerLat, centerLng);
+
     return Container(
       height: 220,
       width: double.infinity,
@@ -751,10 +750,10 @@ class RiderDashboard extends ConsumerWidget {
         children: [
           Positioned.fill(
             child: FlutterMap(
-              options: const MapOptions(
-                initialCenter: LatLng(24.7136, 46.6753),
+              options: MapOptions(
+                initialCenter: center,
                 initialZoom: 14.0,
-                interactionOptions: InteractionOptions(
+                interactionOptions: const InteractionOptions(
                   flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                 ),
               ),
@@ -767,7 +766,7 @@ class RiderDashboard extends ConsumerWidget {
                 MarkerLayer(
                   markers: [
                     Marker(
-                      point: const LatLng(24.7136, 46.6753),
+                      point: center,
                       width: 50,
                       height: 50,
                       child: Container(
@@ -913,7 +912,7 @@ class RiderDashboard extends ConsumerWidget {
 
                           Text(
                             isActive
-                                ? '${ref.watch(riderZoneProvider).value?['name'] ?? 'Riyadh Central'} • 04h 22m'
+                                ? '${ref.watch(riderZoneProvider).value?['name'] ?? 'Riyadh Central'} • ${attendanceState.elapsedShiftTime}'
                                 : 'Within Geo-fence Area',
                             style: GoogleFonts.outfit(
                               color: Colors.white,
@@ -1024,7 +1023,7 @@ class RiderDashboard extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         isActive
-                            ? 'Active Shift • 04h 22m'
+                            ? 'Active Shift • ${attendanceState.elapsedShiftTime}'
                             : 'Within Geo-fence Area',
                         style: GoogleFonts.outfit(
                           color: Colors.white,

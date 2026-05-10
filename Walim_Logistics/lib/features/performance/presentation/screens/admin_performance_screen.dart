@@ -22,6 +22,16 @@ class AdminPerformanceScreen extends ConsumerStatefulWidget {
 class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen> {
   String _selectedRoleFilter = 'All';
   bool _isSaving = false;
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+  int _currentPage = 1;
+  static const int _itemsPerPage = 10;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,9 +79,9 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSectionHeader('Staff'),
-                  const SizedBox(height: 8),
-                  _buildRoleFilter(),
                   const SizedBox(height: 16),
+                  _buildSearchAndFilter(),
+                  const SizedBox(height: 20),
                   staffAsync.when(
                     data: (staff) {
                       final currentUserRole = ref.watch(authProvider).profile?.role;
@@ -89,22 +99,57 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
 
                         if (!isVisibleByRole) return false;
 
-                        if (_selectedRoleFilter == 'All') return true;
-                        return profile.role == _selectedRoleFilter;
+                        // Role filter
+                        if (_selectedRoleFilter != 'All' && profile.role != _selectedRoleFilter) {
+                          return false;
+                        }
+
+                        // Search filter
+                        if (_searchQuery.isNotEmpty) {
+                          final query = _searchQuery.toLowerCase();
+                          final name = profile.fullName.toLowerCase();
+                          final role = profile.role.toLowerCase();
+                          final email = (profile.email ?? '').toLowerCase();
+                          final phone = (profile.phoneNumber ?? '').toLowerCase();
+                          return name.contains(query) || role.contains(query) || email.contains(query) || phone.contains(query);
+                        }
+
+                        return true;
                       }).toList();
 
                       if (filtered.isEmpty) {
                         return const EmptyStatePlaceholder(
                           icon: Icons.person_search_outlined,
                           title: 'No staff found',
-                          subtitle: 'Try adjusting your filters to find team members.',
+                          subtitle: 'Try adjusting your filters or search query to find team members.',
                           color: Colors.blueGrey,
                         );
                       }
+
+                      // Calculate pagination
+                      final totalItems = filtered.length;
+                      final totalPages = (totalItems / _itemsPerPage).ceil();
+                      
+                      // Handle bounds of current page
+                      if (_currentPage > totalPages) {
+                        _currentPage = totalPages;
+                      }
+                      if (_currentPage < 1) {
+                        _currentPage = 1;
+                      }
+
+                      final startIndex = (_currentPage - 1) * _itemsPerPage;
+                      final endIndex = startIndex + _itemsPerPage;
+                      final pageItems = filtered.sublist(
+                        startIndex,
+                        endIndex > totalItems ? totalItems : endIndex,
+                      );
+
                       return Column(
-                        children: filtered
-                            .map((s) => _buildStaffCard(context, s))
-                            .toList(),
+                        children: [
+                          ...pageItems.map((s) => _buildStaffCard(context, s)),
+                          _buildPagination(totalItems, totalPages),
+                        ],
                       );
                     },
                     loading: () => const Center(child: CircularProgressIndicator()),
@@ -215,7 +260,10 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
             child: FilterChip(
               label: Text(role),
               selected: isSelected,
-              onSelected: (_) => setState(() => _selectedRoleFilter = role),
+              onSelected: (_) => setState(() {
+                _selectedRoleFilter = role;
+                _currentPage = 1;
+              }),
               selectedColor: AppColors.primary.withOpacity(0.15),
               checkmarkColor: AppColors.primary,
               labelStyle: GoogleFonts.outfit(
@@ -225,6 +273,215 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilter() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.01),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                      _currentPage = 1;
+                    });
+                  },
+                  style: GoogleFonts.outfit(fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Search staff by name or username...',
+                    hintStyle: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 14),
+                    prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary.withOpacity(0.7), size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                                _currentPage = 1;
+                              });
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: isDark ? Colors.white10 : AppColors.divider),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: isDark ? Colors.white10 : AppColors.divider),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                    ),
+                    filled: true,
+                    fillColor: isDark ? AppColors.surfaceDark : Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildRoleFilter(),
+      ],
+    );
+  }
+
+  Widget _buildPagination(int totalItems, int totalPages) {
+    if (totalPages <= 1) return const SizedBox.shrink();
+
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final int startItem = (_currentPage - 1) * _itemsPerPage + 1;
+    final int endItem = _currentPage * _itemsPerPage > totalItems ? totalItems : _currentPage * _itemsPerPage;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16, bottom: 24),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.white10 : AppColors.divider),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Showing $startItem-$endItem of $totalItems staff',
+            style: GoogleFonts.outfit(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildPaginationButton(
+                icon: Icons.chevron_left_rounded,
+                onPressed: _currentPage > 1
+                    ? () => setState(() => _currentPage--)
+                    : null,
+                enabled: _currentPage > 1,
+              ),
+              const SizedBox(width: 8),
+              ...List.generate(totalPages, (index) {
+                final pageNum = index + 1;
+                if (totalPages > 5) {
+                  if (pageNum != 1 && pageNum != totalPages && (pageNum - _currentPage).abs() > 1) {
+                    if (pageNum == 2 && _currentPage > 3) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text('...', style: GoogleFonts.outfit(color: AppColors.textSecondary)),
+                      );
+                    }
+                    if (pageNum == totalPages - 1 && _currentPage < totalPages - 2) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text('...', style: GoogleFonts.outfit(color: AppColors.textSecondary)),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }
+                }
+
+                final isSelected = pageNum == _currentPage;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: InkWell(
+                    onTap: () => setState(() => _currentPage = pageNum),
+                    borderRadius: BorderRadius.circular(10),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primary : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected 
+                              ? AppColors.primary 
+                              : (isDark ? Colors.white10 : AppColors.divider),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          pageNum.toString(),
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: isSelected 
+                                ? Colors.white 
+                                : (isDark ? Colors.white70 : AppColors.textPrimary),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(width: 8),
+              _buildPaginationButton(
+                icon: Icons.chevron_right_rounded,
+                onPressed: _currentPage < totalPages
+                    ? () => setState(() => _currentPage++)
+                    : null,
+                enabled: _currentPage < totalPages,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaginationButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+    required bool enabled,
+  }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: enabled 
+              ? (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03))
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDark ? Colors.white10 : AppColors.divider,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: enabled 
+              ? (isDark ? Colors.white70 : AppColors.textPrimary) 
+              : AppColors.textSecondary.withOpacity(0.4),
+        ),
       ),
     );
   }

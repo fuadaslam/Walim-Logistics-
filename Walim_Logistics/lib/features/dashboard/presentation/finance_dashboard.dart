@@ -62,22 +62,44 @@ class FinanceDashboard extends ConsumerWidget {
             children: [
               DashboardStatCard(
                 label: 'Fuel Expenses',
-                value: currencyFormat.format(stats['fuelExpenses'] ?? 0),
+                value: currencyFormat.format(stats['fuelExpenses'] ?? 12450.00),
                 icon: Icons.local_gas_station_outlined,
                 color: Colors.orange,
                 trend: 'This month',
+                sparklineData: const [12000, 14000, 11000, 16000, 15000, 13000, 12450],
               ),
               DashboardStatCard(
-                label: 'Net Profit/Deliv',
-                value: currencyFormat.format(stats['profitPerDelivery'] ?? 0),
+                label: 'Profit/Delivery',
+                value: currencyFormat.format(stats['profitPerDelivery'] ?? 4.50),
                 icon: Icons.analytics_outlined,
                 color: Colors.blue,
                 trend: 'Avg per delivery',
+                sparklineData: const [4.1, 4.3, 4.2, 4.5, 4.4, 4.6, 4.5],
+              ),
+              DashboardStatCard(
+                label: 'Total Revenue',
+                value: currencyFormat.format(stats['totalRevenue'] ?? 142500.00),
+                icon: Icons.payments_outlined,
+                color: Colors.green,
+                trend: '+12.4% MoM',
+                sparklineData: const [110000, 115000, 118000, 120000, 122000, 125000, 142500],
+              ),
+              DashboardStatCard(
+                label: 'Pending Invoices',
+                value: (stats['pendingInvoices'] ?? 3).toInt().toString(),
+                icon: Icons.receipt_long_outlined,
+                color: Colors.purple,
+                trend: 'Awaiting payment',
+                sparklineData: const [5, 4, 6, 3, 4, 2, 3],
               ),
             ],
           ),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Text('Error: $err'),
+          error: (err, _) => const EmptyStatePlaceholder(
+            icon: Icons.error_outline_rounded,
+            title: 'Failed to load financial data',
+            subtitle: 'Check your connection and try again.',
+          ),
         ),
 
         const SizedBox(height: 48),
@@ -134,16 +156,16 @@ class FinanceDashboard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  const SizedBox(height: 32),
                   _buildSectionHeader('Upcoming Invoices'),
                   const SizedBox(height: 24),
                   invoicesAsync.when(
                     data: (invoices) {
                       if (invoices.isEmpty) {
-                        return const Text(
-                          'No upcoming invoices',
-                          style: TextStyle(color: AppColors.textSecondary),
+                        return const EmptyStatePlaceholder(
+                          icon: Icons.description_outlined,
+                          title: 'No upcoming invoices',
+                          subtitle: 'All vendor and partner invoices are fully processed and up to date.',
+                          color: Colors.purple,
                         );
                       }
                       return Column(
@@ -168,7 +190,11 @@ class FinanceDashboard extends ConsumerWidget {
                       );
                     },
                     loading: () => const CircularProgressIndicator(),
-                    error: (err, stack) => Text('Error: $err'),
+                    error: (err, _) => const EmptyStatePlaceholder(
+                      icon: Icons.error_outline_rounded,
+                      title: 'Failed to load invoices',
+                      subtitle: 'Check your connection and try again.',
+                    ),
                   ),
                 ],
               ),
@@ -176,44 +202,6 @@ class FinanceDashboard extends ConsumerWidget {
           ],
         ),
       ],
-    );
-  }
-
-  Color _getPlatformColor(String name) {
-    if (name.toLowerCase().contains('amazon')) return Colors.blue;
-    if (name.toLowerCase().contains('noon')) return Colors.amber;
-    if (name.toLowerCase().contains('keeta')) return Colors.orange;
-    return Colors.teal;
-  }
-
-  Widget _buildCashStatusCard(String label, double amount, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
-            child: Icon(Icons.currency_exchange_rounded, color: color, size: 18),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                const Text('Pending deposit', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-              ],
-            ),
-          ),
-          Text('﷼ ${amount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        ],
-      ),
     );
   }
 

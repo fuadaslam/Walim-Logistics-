@@ -23,9 +23,53 @@ import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/rider_data_provider.dart';
 import 'package:walim_logistics/features/hr/presentation/edit_profile_screen.dart';
+import 'package:walim_logistics/features/tracking/models/vehicle.dart';
+import 'package:walim_logistics/features/tracking/screens/vehicle_detail_screen.dart';
+import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
 
-final _riderAssetsProvider = FutureProvider.autoDispose.family<List<AssignedAsset>, String>((ref, id) {
-  return ref.watch(hrRepositoryProvider).getAssetsForProfile(id);
+final _riderAssetsProvider = FutureProvider.autoDispose.family<List<AssignedAsset>, String>((ref, id) async {
+  final assets = await ref.watch(hrRepositoryProvider).getAssetsForProfile(id);
+  
+  try {
+    final supabase = ref.watch(supabaseProvider);
+    final vehicles = await supabase
+        .from('vehicles')
+        .select('id, plate_number, make, model, type, vin_number')
+        .eq('assigned_profile_id', id);
+        
+    final List<AssignedAsset> vehicleAssets = (vehicles as List).map((v) {
+      final plate = v['plate_number']?.toString() ?? '';
+      final make = v['make']?.toString() ?? '';
+      final model = v['model']?.toString() ?? '';
+      final type = v['type']?.toString() ?? 'vehicle';
+      
+      String displayName = plate;
+      if (displayName.isEmpty && make.isNotEmpty) {
+        displayName = '$make $model';
+      }
+      if (displayName.isEmpty) {
+        displayName = type.toUpperCase();
+      }
+      
+      return AssignedAsset(
+        assignmentId: v['id'] as String,
+        profileId: id,
+        assetId: v['id'] as String,
+        assetName: displayName,
+        assetCategory: 'vehicle',
+        assetSerialNumber: v['vin_number'] as String?,
+        assetStatus: 'assigned',
+      );
+    }).toList();
+    
+    // De-duplicate if the vehicle already exists in assets
+    final existingAssetIds = assets.map((a) => a.assetId).toSet();
+    final uniqueVehicleAssets = vehicleAssets.where((va) => !existingAssetIds.contains(va.assetId)).toList();
+    
+    return [...assets, ...uniqueVehicleAssets];
+  } catch (e) {
+    return assets;
+  }
 });
 
 final _riderDocumentsProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, id) {
@@ -65,8 +109,8 @@ class RiderDetailScreen extends ConsumerWidget {
     final name = currentProfile.fullName;
     
     return DashboardScaffold(
-      title: 'Rider Profile',
-      subtitle: 'Managing details and performance for $name',
+      title: '${currentProfile.role} Details',
+      subtitle: 'Managing identity and dynamics for $name',
       showBackButton: true,
       children: [
         _buildHeader(context, ref, currentProfile),
@@ -339,13 +383,17 @@ class RiderDetailScreen extends ConsumerWidget {
           spacing: isMobile ? 6 : 10,
           runSpacing: isMobile ? 6 : 10,
           children: [
-        Consumer(
+            Consumer(
               builder: (context, ref, _) {
                 final zoneAsync = ref.watch(_riderZoneByIdProvider(currentProfile.id));
-                final locationText = currentProfile.location ?? zoneAsync.value?['name'] ?? 'Riyadh';
+                final locationText = currentProfile.location ?? zoneAsync.value?['name'] ?? 'Default Hub';
                 return _buildHeaderTag(Icons.location_on_rounded, locationText);
               },
             ),
+            if (currentProfile.platformName != null)
+              _buildHeaderTag(Icons.hub_outlined, currentProfile.platformName!),
+            if (currentProfile.groupName != null)
+              _buildHeaderTag(Icons.group_work_outlined, currentProfile.groupName!),
           ],
         ),
 
@@ -649,8 +697,26 @@ class RiderDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildIdentityDetails(BuildContext context, UserProfile? profile) {
+    final bool isSupervisor = profile?.role == 'Supervisor';
+    
     return Column(
       children: [
+        if (isSupervisor) ...[
+          _buildDetailRow(context, 'Managed Platforms', profile?.managedPlatforms ?? 'None Designated'),
+          _buildDetailRow(context, 'Managed Groups', profile?.managedGroups ?? 'None Designated'),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: Divider(height: 1, thickness: 0.5),
+          ),
+          const SizedBox(height: 12),
+        ] else ...[
+          if (profile?.platformName != null)
+            _buildDetailRow(context, 'Active Platform', profile!.platformName!),
+          if (profile?.groupName != null)
+            _buildDetailRow(context, 'Primary Group', profile!.groupName!),
+          if (profile?.platformName != null || profile?.groupName != null)
+            const SizedBox(height: 12),
+        ],
         _buildDetailRow(context, 'Iqama Number', profile?.iqamaNumber ?? 'N/A', isCopyable: true),
         _buildDetailRow(context, 'Passport Number', profile?.passportNumber ?? 'N/A', isCopyable: true),
         _buildDetailRow(context, 'Driving License', profile?.drivingLicense ?? 'Saudi Private (Valid)'),
@@ -747,6 +813,7 @@ class RiderDetailScreen extends ConsumerWidget {
     
     return Consumer(builder: (context, ref, _) {
       final assetsAsync = ref.watch(_riderAssetsProvider(profile.id));
+      final vehicles = ref.watch(trackingProvider).vehicles;
       
       return assetsAsync.when(
         data: (assets) {
@@ -760,13 +827,50 @@ class RiderDetailScreen extends ConsumerWidget {
           }
           return Column(
             children: assets.map((asset) {
+              final isVehicle = asset.assetCategory?.toLowerCase() == 'vehicle';
+              VoidCallback? onTap;
+              
+              if (isVehicle) {
+                onTap = () {
+                  final cleanAssetName = asset.assetName.replaceAll(' ', '').toLowerCase();
+                  final matchingVehicle = vehicles.firstWhere(
+                    (v) {
+                      final cleanPlate = v.plateNumber.replaceAll(' ', '').toLowerCase();
+                      return cleanPlate.isNotEmpty && (
+                        cleanPlate == cleanAssetName || 
+                        cleanAssetName.contains(cleanPlate) || 
+                        cleanPlate.contains(cleanAssetName)
+                      );
+                    },
+                    orElse: () => vehicles.firstWhere(
+                      (v) => v.riderName?.toLowerCase() == profile.fullName.toLowerCase() || 
+                             (profile.iqamaNumber != null && v.iqamaNumber == profile.iqamaNumber),
+                      orElse: () => Vehicle(
+                        id: asset.assetId,
+                        name: asset.assetName,
+                        plateNumber: asset.assetName,
+                        riderName: profile.fullName,
+                        iqamaNumber: profile.iqamaNumber,
+                      ),
+                    ),
+                  );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => VehicleDetailScreen(vehicle: matchingVehicle),
+                    ),
+                  );
+                };
+              }
+              
               return _buildAssetItem(
-                context,
-                asset.assetCategory ?? 'Asset',
-                asset.assetName,
-                'S/N: ${asset.assetSerialNumber ?? 'N/A'}',
-                _getAssetIcon(asset.assetCategory),
-                _getAssetColor(asset.assetCategory),
+                context: context,
+                category: asset.assetCategory ?? 'Asset',
+                title: asset.assetName,
+                subtitle: 'S/N: ${asset.assetSerialNumber ?? 'N/A'}',
+                icon: _getAssetIcon(asset.assetCategory),
+                color: _getAssetColor(asset.assetCategory),
+                onTap: onTap,
               );
             }).toList(),
           );
@@ -802,85 +906,102 @@ class RiderDetailScreen extends ConsumerWidget {
     }
   }
 
-  Widget _buildAssetItem(BuildContext context, String category, String title, String subtitle, IconData icon, Color color) {
+  Widget _buildAssetItem({
+    required BuildContext context,
+    required String category,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
     final isMobile = MediaQuery.of(context).size.width < 600;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(isMobile ? 10 : 12),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.01),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(isMobile ? 10 : 14),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: isMobile ? 20 : 26),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.all(isMobile ? 10 : 12),
+            child: Row(
               children: [
-                Text(
-                  category.toUpperCase(), 
-                  style: GoogleFonts.outfit(
-                    color: color.withValues(alpha: 0.7), 
-                    fontSize: 8, 
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                  )
+                Container(
+                  padding: EdgeInsets.all(isMobile ? 10 : 14),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: isMobile ? 20 : 26),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  title, 
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.bold, 
-                    fontSize: isMobile ? 14 : 16,
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                  )
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        category.toUpperCase(), 
+                        style: GoogleFonts.outfit(
+                          color: color.withValues(alpha: 0.7), 
+                          fontSize: 8, 
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
+                        )
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        title, 
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold, 
+                          fontSize: isMobile ? 14 : 16,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                        )
+                      ),
+                      Text(
+                        subtitle, 
+                        style: GoogleFonts.outfit(
+                          color: AppColors.textSecondary.withValues(alpha: 0.6), 
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        )
+                      ),
+                    ],
+                  ),
                 ),
-                Text(
-                  subtitle, 
-                  style: GoogleFonts.outfit(
-                    color: AppColors.textSecondary.withValues(alpha: 0.6), 
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
+                if (!isMobile)
+                  TextButton(
+                    onPressed: onTap ?? () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen()));
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.05),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Manage', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   )
-                ),
+                else
+                  IconButton(
+                    onPressed: onTap ?? () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen()));
+                    },
+                    icon: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textSecondary),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
               ],
             ),
           ),
-          if (!isMobile)
-            TextButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen()));
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.05),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Manage', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            )
-          else
-            IconButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen()));
-              },
-              icon: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textSecondary),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -1179,13 +1300,28 @@ class RiderDetailScreen extends ConsumerWidget {
   }
 
   Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'active': return const Color(0xFF10B981);
-      case 'on break': return Colors.orange;
-      case 'offline': return Colors.grey;
-      case 'suspended': return Colors.amber;
-      case 'terminated': return Colors.red;
-      default: return Colors.blue;
+    final cleanStatus = status.toLowerCase().replaceAll('_', ' ').trim();
+    switch (cleanStatus) {
+      case 'active':
+      case 'active completed':
+        return const Color(0xFF10B981); // Emerald Green
+      case 'active pending':
+        return const Color(0xFFF59E0B); // Amber/Orange
+      case 'on break':
+      case 'on leave':
+        return Colors.orange;
+      case 'offline':
+        return Colors.grey;
+      case 'suspended':
+        return Colors.amber;
+      case 'terminated':
+        return Colors.red;
+      case 'inactive':
+      case 'inactive completed':
+      case 'inactive pending':
+        return Colors.red;
+      default:
+        return Colors.blue;
     }
   }
 

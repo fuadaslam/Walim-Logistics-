@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/admin/data/operations_repository.dart';
+import 'package:walim_logistics/features/admin/presentation/attendance_report_detail_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/finance/presentation/finance_notifier.dart';
@@ -156,9 +157,13 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
                     value: selectedPlatformId,
                     items: data,
                     hint: 'All Platforms',
+                    icon: Icons.storefront_rounded,
                     onChanged: (val) => setState(() => selectedPlatformId = val),
                   ),
-                  loading: () => const LinearProgressIndicator(),
+                  loading: () => const SizedBox(
+                    height: 48,
+                    child: Center(child: SizedBox(width: 24, height: 2, child: LinearProgressIndicator())),
+                  ),
                   error: (_, __) => const Text('Error'),
                 ),
               ],
@@ -178,28 +183,44 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
                     value: selectedGroupId,
                     items: data,
                     hint: 'All Groups',
+                    icon: Icons.workspaces_rounded,
                     onChanged: (val) => setState(() => selectedGroupId = val),
                   ),
-                  loading: () => const LinearProgressIndicator(),
+                  loading: () => const SizedBox(
+                    height: 48,
+                    child: Center(child: SizedBox(width: 24, height: 2, child: LinearProgressIndicator())),
+                  ),
                   error: (_, __) => const Text('Error'),
                 ),
               ],
             ),
           ),
-          TextButton.icon(
-            onPressed: () {
-              setState(() {
-                selectedDate = null;
-                selectedPlatformId = null;
-                selectedGroupId = null;
-                selectedStatus = null;
-              });
-            },
-            icon: const Icon(Icons.clear_all_rounded),
-            label: const Text('Clear Filters'),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              foregroundColor: Colors.redAccent,
+          SizedBox(
+            height: 48,
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  selectedDate = null;
+                  selectedPlatformId = null;
+                  selectedGroupId = null;
+                  selectedStatus = null;
+                });
+              },
+              icon: const Icon(Icons.clear_all_rounded, size: 18),
+              label: Text(
+                'Clear Filters',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                foregroundColor: Colors.redAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ),
         ],
@@ -211,6 +232,7 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
     required String? value,
     required List<Map<String, dynamic>> items,
     required String hint,
+    required IconData icon,
     required ValueChanged<String?> onChanged,
   }) {
     return Container(
@@ -220,20 +242,55 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          hint: Text(hint, style: GoogleFonts.outfit(fontSize: 14)),
-          isExpanded: true,
-          items: [
-            DropdownMenuItem<String>(value: null, child: Text(hint)),
-            ...items.map((i) => DropdownMenuItem(
-                  value: i['id'] as String,
-                  child: Text(i['name'] as String, overflow: TextOverflow.ellipsis),
-                )),
-          ],
-          onChanged: onChanged,
-        ),
+      height: 48,
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: value,
+                hint: Text(
+                  hint,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                isExpanded: true,
+                icon: const Icon(Icons.arrow_drop_down_rounded, color: AppColors.textSecondary),
+                items: [
+                  DropdownMenuItem<String>(
+                    value: null,
+                    child: Text(
+                      hint,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  ...items.map((i) => DropdownMenuItem(
+                        value: i['id'] as String,
+                        child: Text(
+                          i['name'] as String,
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )),
+                ],
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -255,7 +312,8 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
               borderRadius: BorderRadius.circular(12),
@@ -293,42 +351,87 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
         border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowHeight: 64,
-          dataRowMinHeight: 72,
-          dataRowMaxHeight: 72,
-          headingRowColor: WidgetStateProperty.all(AppColors.primary.withOpacity(0.05)),
-          columns: [
-            DataColumn(label: _buildTableHeader('Date')),
-            DataColumn(label: _buildTableHeader('Group')),
-            DataColumn(label: _buildTableHeader('Platform')),
-            DataColumn(label: _buildTableHeader('Supervisor')),
-            DataColumn(label: _buildTableHeader('SOS Time')),
-            DataColumn(label: _buildTableHeader('EOS Time')),
-            DataColumn(label: _buildTableHeader('Status')),
-          ],
-          rows: reports.map((report) {
-            final sosAt = report['sos_submitted_at'] != null 
-                ? DateFormat('HH:mm').format(DateTime.parse(report['sos_submitted_at']).toLocal())
-                : '---';
-            final eosAt = report['eos_submitted_at'] != null
-                ? DateFormat('HH:mm').format(DateTime.parse(report['eos_submitted_at']).toLocal())
-                : '---';
-            
-            return DataRow(cells: [
-              DataCell(Text(DateFormat('MMM dd, yyyy').format(DateTime.parse(report['report_date'])), 
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-              DataCell(Text(report['groups']?['name'] ?? 'N/A', style: GoogleFonts.outfit())),
-              DataCell(Text(report['platforms']?['name'] ?? 'N/A', style: GoogleFonts.outfit())),
-              DataCell(Text(report['profiles']?['full_name'] ?? 'N/A', style: GoogleFonts.outfit())),
-              DataCell(_buildTimeCell(sosAt, report['sos_submitted_at'] != null)),
-              DataCell(_buildTimeCell(eosAt, report['eos_submitted_at'] != null)),
-              DataCell(_buildStatusBadge(report['status'])),
-            ]);
-          }).toList(),
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: DataTable(
+                headingRowHeight: 64,
+                dataRowMinHeight: 72,
+                dataRowMaxHeight: 72,
+                headingRowColor: WidgetStateProperty.all(AppColors.primary.withOpacity(0.05)),
+                horizontalMargin: 24,
+                columnSpacing: 24,
+                dataRowColor: WidgetStateProperty.resolveWith<Color?>((states) {
+                  if (states.contains(WidgetState.hovered)) {
+                    return AppColors.primary.withOpacity(0.02);
+                  }
+                  return null;
+                }),
+                columns: [
+                  DataColumn(label: _buildTableHeader('Date')),
+                  DataColumn(label: _buildTableHeader('Group')),
+                  DataColumn(label: _buildTableHeader('Platform')),
+                  DataColumn(label: _buildTableHeader('Supervisor')),
+                  DataColumn(label: _buildTableHeader('SOS Time')),
+                  DataColumn(label: _buildTableHeader('EOS Time')),
+                  DataColumn(label: _buildTableHeader('Status')),
+                  DataColumn(label: _buildTableHeader('Actions')),
+                ],
+                rows: reports.map((report) {
+                  final sosAt = report['sos_submitted_at'] != null 
+                      ? DateFormat('HH:mm').format(DateTime.parse(report['sos_submitted_at']).toLocal())
+                      : '---';
+                  final eosAt = report['eos_submitted_at'] != null
+                      ? DateFormat('HH:mm').format(DateTime.parse(report['eos_submitted_at']).toLocal())
+                      : '---';
+                  
+                  return DataRow(
+                    onSelectChanged: (selected) {
+                      if (selected == true) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AttendanceReportDetailScreen(report: report),
+                          ),
+                        ).then((_) {
+                          ref.refresh(attendanceReportsProvider);
+                        });
+                      }
+                    },
+                    cells: [
+                      DataCell(Text(DateFormat('MMM dd, yyyy').format(DateTime.parse(report['report_date'])), 
+                          style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                      DataCell(Text(report['groups']?['name'] ?? 'N/A', style: GoogleFonts.outfit())),
+                      DataCell(Text(report['platforms']?['name'] ?? 'N/A', style: GoogleFonts.outfit())),
+                      DataCell(Text(report['profiles']?['full_name'] ?? 'N/A', style: GoogleFonts.outfit())),
+                      DataCell(_buildTimeCell(sosAt, report['sos_submitted_at'] != null)),
+                      DataCell(_buildTimeCell(eosAt, report['eos_submitted_at'] != null)),
+                      DataCell(_buildStatusBadge(report['status'])),
+                      DataCell(
+                        IconButton(
+                          icon: const Icon(Icons.remove_red_eye_outlined, color: AppColors.primary, size: 20),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AttendanceReportDetailScreen(report: report),
+                              ),
+                            ).then((_) {
+                              ref.refresh(attendanceReportsProvider);
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          );
+        }
       ),
     );
   }
@@ -344,22 +447,23 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
   }
 
   Widget _buildTimeCell(String time, bool isPresent) {
+    final color = Colors.grey.shade500;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isPresent ? AppColors.primary.withOpacity(0.05) : Colors.transparent,
+        color: isPresent ? color.withOpacity(0.05) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
-        border: isPresent ? Border.all(color: AppColors.primary.withOpacity(0.1)) : null,
+        border: isPresent ? Border.all(color: color.withOpacity(0.1)) : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (isPresent) Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary),
+          if (isPresent) Icon(Icons.access_time_rounded, size: 14, color: color),
           if (isPresent) const SizedBox(width: 8),
           Text(
             time,
             style: GoogleFonts.outfit(
-              color: isPresent ? AppColors.primary : AppColors.textSecondary.withOpacity(0.5),
+              color: isPresent ? color : AppColors.textSecondary.withOpacity(0.5),
               fontWeight: isPresent ? FontWeight.bold : FontWeight.normal,
             ),
           ),
@@ -373,24 +477,24 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
     IconData icon;
     switch (status) {
       case 'APPROVED':
-        color = Colors.green;
         icon = Icons.verified_rounded;
+        color = const Color(0xFF10B981); // Emerald Green
         break;
       case 'SOS_SUBMITTED':
-        color = Colors.orange;
         icon = Icons.login_rounded;
+        color = const Color(0xFF3B82F6); // Blue
         break;
       case 'EOS_SUBMITTED':
-        color = Colors.blue;
         icon = Icons.logout_rounded;
+        color = const Color(0xFF6366F1); // Indigo
         break;
       case 'NEEDS_CORRECTION':
-        color = Colors.red;
         icon = Icons.error_outline_rounded;
+        color = const Color(0xFFEF4444); // Red
         break;
       default:
-        color = Colors.grey;
         icon = Icons.help_outline_rounded;
+        color = const Color(0xFF64748B); // Slate Grey
     }
 
     return Container(

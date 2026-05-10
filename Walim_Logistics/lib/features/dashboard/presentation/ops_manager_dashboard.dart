@@ -6,10 +6,8 @@ import 'package:walim_logistics/l10n/app_localizations.dart';
 import 'package:walim_logistics/features/dashboard/data/models/dashboard_layout.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:walim_logistics/features/dashboard/presentation/matching_data_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/capacity_planning_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/vehicle_allocation_screen.dart';
-import 'package:walim_logistics/features/dashboard/presentation/supervisor_dashboard.dart';
 import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/staff_management_screen.dart';
 import 'package:walim_logistics/features/inspections/presentation/inspection_management_screen.dart';
@@ -23,6 +21,7 @@ import 'package:walim_logistics/features/tracking/screens/rider_tracking_screen.
 import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/attendance_reports_screen.dart';
+import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 
 class OpsManagerDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -57,23 +56,30 @@ class OpsManagerDashboard extends ConsumerWidget {
       );
     }
 
+    final profile = ref.watch(authProvider).profile;
+    final displayName = profile?.fullName ?? 'Operations Manager';
+
     return DashboardScaffold(
       title: l10n.opsControl.toUpperCase(),
       subtitle: l10n.opsSubtitle,
       children: [
-        _buildHeader(context, dashboardData),
+        _buildHeader(context, dashboardData, displayName),
         const SizedBox(height: 32),
         _buildContent(context, ref, dashboardData, layout, l10n),
       ],
     );
   }
 
-  Widget _buildHeader(BuildContext context, DashboardData data) {
+  Widget _buildHeader(BuildContext context, DashboardData data, String displayName) {
+    final efficiencyMsg = data.assetHealth > 0
+        ? 'Fleet is operating at ${data.assetHealth}% efficiency today.'
+        : 'Loading fleet metrics...';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Welcome back, Operations Manager',
+          'Welcome back, $displayName',
           style: GoogleFonts.outfit(
             fontSize: 28,
             fontWeight: FontWeight.w900,
@@ -82,7 +88,7 @@ class OpsManagerDashboard extends ConsumerWidget {
           ),
         ),
         Text(
-          'Your fleet is operating at 94% efficiency today. ${data.activeIncidents} incidents require your attention.',
+          '$efficiencyMsg ${data.activeIncidents > 0 ? '${data.activeIncidents} incident(s) require your attention.' : 'No active incidents.'}',
           style: GoogleFonts.outfit(
             fontSize: 16,
             color: AppColors.textSecondary,
@@ -98,7 +104,11 @@ class OpsManagerDashboard extends ConsumerWidget {
 
     if (!isDesktop) {
       return Column(
-        children: layout.sections.map((section) => _buildSection(context, ref, data, section, l10n)).toList(),
+        children: [
+          _buildRefreshBar(ref, data),
+          const SizedBox(height: 8),
+          ...layout.sections.map((section) => _buildSection(context, ref, data, section, l10n)),
+        ],
       );
     }
 
@@ -128,7 +138,11 @@ class OpsManagerDashboard extends ConsumerWidget {
           flex: 3,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: leftColumn,
+            children: [
+              _buildRefreshBar(ref, data),
+              const SizedBox(height: 8),
+              ...leftColumn,
+            ],
           ),
         ),
         if (rightColumn.isNotEmpty) ...[
@@ -142,6 +156,14 @@ class OpsManagerDashboard extends ConsumerWidget {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildRefreshBar(WidgetRef ref, DashboardData data) {
+    return DashboardRefreshBar(
+      lastUpdated: data.lastUpdated,
+      isLoading: data.isLoading,
+      onRefresh: () => ref.read(dashboardDataProvider.notifier).refresh(),
     );
   }
 
@@ -178,7 +200,7 @@ class OpsManagerDashboard extends ConsumerWidget {
               color: Colors.teal,
               trend: 'On duty',
               onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const StaffManagementScreen(initialRole: 'Rider', initialStatus: 'active'),
+                builder: (_) => const StaffManagementScreen(initialRole: 'Rider', initialStatus: 'Active_Completed'),
               )),
             ),
             DashboardStatCard(

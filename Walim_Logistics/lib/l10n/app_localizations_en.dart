@@ -130,7 +130,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vehicleAllocation => 'Vehicle Allocation';
 
   @override
-  String get liveRiderTracking => 'Live Rider Tracking';
+  String get liveRiderTracking => 'Live Riders';
 
   @override
   String get capacityPlanning => 'Capacity Planning';
@@ -178,7 +178,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hrManagement => 'HR Management';
 
   @override
-  String get assetManagement => 'Asset Management';
+  String get assetManagement => 'Assets';
 
   @override
   String get financialManagement => 'Financial Management';

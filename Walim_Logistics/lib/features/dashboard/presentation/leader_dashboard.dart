@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
-import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
-import 'package:walim_logistics/l10n/app_localizations.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/fleet/presentation/shift_assignment_screen.dart';
 import 'package:walim_logistics/features/fleet/presentation/group_management_screen.dart';
 import 'package:walim_logistics/features/incidents/presentation/incident_report_screen.dart';
-import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 
 class LeaderDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -25,7 +23,7 @@ class LeaderDashboard extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildContent(context),
+                _buildContent(context, ref),
               ]),
             ),
           ),
@@ -37,47 +35,52 @@ class LeaderDashboard extends ConsumerWidget {
       title: 'LEADER PORTAL',
       subtitle: 'Manage your team and inventory flow',
       children: [
-        _buildContent(context),
+        _buildContent(context, ref),
       ],
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(dashboardDataProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Team Stats
         _buildSectionHeader('Group Readiness'),
         const SizedBox(height: 24),
+        if (data.isLoading && data.activeRiders == 0)
+          const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 24), child: CircularProgressIndicator()))
+        else
         ResponsiveGrid(
-          children: const [
+          children: [
             DashboardStatCard(
-              label: 'Active Team',
-              value: '12 Riders',
+              label: 'Active Riders',
+              value: data.activeRiders.toString(),
               icon: Icons.people_rounded,
               color: AppColors.primary,
-              trend: 'All Checked-in',
+              trend: 'SOS: ${data.checkedInToday}',
             ),
             DashboardStatCard(
-              label: 'Fleet Readiness',
-              value: '10/12',
+              label: 'Fleet Health',
+              value: '${data.assetHealth}%',
               icon: Icons.motorcycle_rounded,
               color: Colors.green,
-              trend: '2 in maintenance',
+              trend: 'Vehicles operational',
             ),
             DashboardStatCard(
-              label: 'Pending Handovers',
-              value: '3 Items',
+              label: 'Pending Inspections',
+              value: data.pendingInspections.toString(),
               icon: Icons.qr_code_scanner_rounded,
               color: Colors.orange,
-              trend: 'Bags & Uniforms',
+              trend: 'Today',
             ),
             DashboardStatCard(
-              label: 'Reported Issues',
-              value: '1',
+              label: 'Active Incidents',
+              value: data.activeIncidents.toString(),
               icon: Icons.report_problem_outlined,
               color: AppColors.error,
-              trend: 'Action needed',
+              trend: data.activeIncidents == 0 ? 'All clear' : 'Action needed',
             ),
           ],
         ),
@@ -102,7 +105,7 @@ class LeaderDashboard extends ConsumerWidget {
                     children: [
                       DashboardActionCard(
                         title: 'Group Management',
-                        subtitle: 'Manage 12 team members',
+                        subtitle: 'Manage your team members',
                         icon: Icons.groups_outlined,
                         color: Colors.teal,
                         onTap: () {
@@ -146,72 +149,45 @@ class LeaderDashboard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader('Team Status'),
+                  _buildSectionHeader('Recent Activity'),
                   const SizedBox(height: 24),
-                  _buildRiderStatusItem(context, 'Ahmed Khan', 'On Duty', true),
-                  const SizedBox(height: 12),
-                  _buildRiderStatusItem(context, 'Mohammed S.', 'Break', false),
-                  const SizedBox(height: 12),
-                  _buildRiderStatusItem(context, 'Zaid Ali', 'On Duty', true),
-                  const SizedBox(height: 32),
-                  _buildSectionHeader('Urgent Alerts'),
-                  const SizedBox(height: 24),
-                  _buildAlertCard('Vehicle #422 reported stolen', Colors.red),
-                  const SizedBox(height: 12),
-                  _buildAlertCard('Safety Gear check required for New Joiner', Colors.orange),
+                  ActivityFeed(
+                    items: data.recentActivity.map((a) {
+                      final type = a['type'] as String? ?? '';
+                      IconData icon;
+                      Color color;
+                      switch (type) {
+                        case 'incident':
+                          icon = Icons.warning_rounded;
+                          color = Colors.red;
+                          break;
+                        case 'leave':
+                          icon = Icons.person_off_outlined;
+                          color = Colors.orange;
+                          break;
+                        case 'inspection':
+                          icon = Icons.checklist_rounded;
+                          color = Colors.green;
+                          break;
+                        default:
+                          icon = Icons.info_outline;
+                          color = Colors.blue;
+                      }
+                      return ActivityItem(
+                        title: a['title'] as String? ?? '',
+                        subtitle: a['subtitle'] as String? ?? '',
+                        time: a['time'] as String? ?? '',
+                        icon: icon,
+                        color: color,
+                      );
+                    }).toList(),
+                  ),
                 ],
               ),
             ),
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildRiderStatusItem(BuildContext context, String name, String status, bool isActive) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderDetailScreen()));
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: isActive ? Colors.green : Colors.orange, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 16),
-            Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold))),
-            Text(status, style: TextStyle(color: isActive ? Colors.green : Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAlertCard(String message, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, color: color, size: 20),
-          const SizedBox(width: 12),
-          Expanded(child: Text(message, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold))),
-        ],
-      ),
     );
   }
 

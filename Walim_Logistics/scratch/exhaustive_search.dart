@@ -12,13 +12,14 @@ void main() async {
 
   print('Checking device keys...');
   try {
-    final res = await http.get(Uri.parse('$baseUrl/devices/locations'), headers: headers);
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-      final items = data['data'] as List;
-      if (items.isNotEmpty) {
-        print('Keys in device object: ${items.first.keys.toList()}');
-      }
+    // final res = await http.get(Uri.parse('$baseUrl/devices/locations'), headers: headers);
+    // if (res.statusCode == 200) {
+    if (false) {
+      // final data = jsonDecode(res.body);
+      // final items = data['data'] as List;
+      // if (items.isNotEmpty) {
+      //   print('Keys in device object: ${items.first.keys.toList()}');
+      // }
     }
   } catch (e) {
     print('Error: $e');
@@ -33,7 +34,7 @@ void main() async {
       final url = '$baseUrl$p$s';
       print('Testing $url...');
       try {
-        final res = await http.get(Uri.parse(url), headers: headers);
+        final res = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 5));
         if (res.statusCode == 200) {
           print('!!! FOUND: $url');
           return;

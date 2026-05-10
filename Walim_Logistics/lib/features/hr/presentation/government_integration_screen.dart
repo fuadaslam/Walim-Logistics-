@@ -23,13 +23,14 @@ class GovernmentIntegrationScreen extends StatelessWidget {
   }
 
   Widget _buildSummaryCards() {
+    final color = Colors.grey.shade500;
     return Row(
       children: [
-        _buildStatCard('Expiring Soon', '12', Icons.warning_amber_rounded, Colors.orange),
+        _buildStatCard('Expiring Soon', '12', Icons.warning_amber_rounded, color),
         const SizedBox(width: 16),
-        _buildStatCard('Expired', '3', Icons.error_outline_rounded, Colors.red),
+        _buildStatCard('Expired', '3', Icons.error_outline_rounded, color),
         const SizedBox(width: 16),
-        _buildStatCard('Renewed (30d)', '45', Icons.check_circle_outline_rounded, Colors.green),
+        _buildStatCard('Renewed (30d)', '45', Icons.check_circle_outline_rounded, color),
       ],
     );
   }
@@ -138,7 +139,7 @@ class GovernmentIntegrationScreen extends StatelessWidget {
                 DataCell(Text(item['name'], style: const TextStyle(fontWeight: FontWeight.w600))),
                 DataCell(Text(item['iqama'])),
                 DataCell(Text(item['iqamaExpiry'])),
-                DataCell(_buildStatusTag(item['balady'], item['balady'] == 'Valid' ? Colors.green : Colors.red)),
+                DataCell(_buildStatusTag(item['balady'], Colors.grey.shade500)),
                 DataCell(Text(item['insurance'])),
                 DataCell(_buildStatusTag(item['status'], statusColor)),
               ]);
@@ -164,12 +165,6 @@ class GovernmentIntegrationScreen extends StatelessWidget {
   }
 
   Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Compliant': return Colors.green;
-      case 'Expiring Soon': return Colors.orange;
-      case 'Action Required':
-      case 'Expired': return Colors.red;
-      default: return Colors.grey;
-    }
+    return Colors.grey.shade500;
   }
 }

@@ -17,6 +17,18 @@ final _allRidersProvider =
   (ref) => ref.watch(operationsRepositoryProvider).fetchRiders(),
 );
 
+final _groupLeaderProvider =
+    FutureProvider.autoDispose.family<String?, String>(
+  (ref, groupId) async {
+    final res = await Supabase.instance.client
+        .from('groups')
+        .select('leader_id')
+        .eq('id', groupId)
+        .single();
+    return res['leader_id'] as String?;
+  },
+);
+
 class RiderGroupAssignmentScreen extends ConsumerStatefulWidget {
   final String groupId;
   final String groupName;
@@ -36,16 +48,25 @@ class _RiderGroupAssignmentScreenState
     extends ConsumerState<RiderGroupAssignmentScreen> {
   String _search = '';
 
+  void _invalidateAll() {
+    ref.invalidate(_membersProvider(widget.groupId));
+    ref.invalidate(_allRidersProvider);
+    ref.invalidate(_groupLeaderProvider(widget.groupId));
+  }
+
   @override
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(_membersProvider(widget.groupId));
     final allRidersAsync = ref.watch(_allRidersProvider);
+    final leaderAsync = ref.watch(_groupLeaderProvider(widget.groupId));
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final leaderId = leaderAsync.valueOrNull;
+
     return DashboardScaffold(
       title: widget.groupName.toUpperCase(),
-      subtitle: 'Manage riders assigned to this group',
+      subtitle: 'Manage riders and group leader',
       showBackButton: true,
       activeItem: 'Dashboard',
       children: [
@@ -59,7 +80,7 @@ class _RiderGroupAssignmentScreenState
               style: GoogleFonts.outfit(color: Colors.red)),
           data: (members) => members.isEmpty
               ? _emptyMembers()
-              : _membersList(members, isDark),
+              : _membersList(members, isDark, leaderId),
         ),
 
         const SizedBox(height: 32),
@@ -127,10 +148,7 @@ class _RiderGroupAssignmentScreenState
                       _AvailableRiderTile(
                     rider: available[i],
                     groupId: widget.groupId,
-                    onAdded: () {
-                      ref.invalidate(_membersProvider(widget.groupId));
-                      ref.invalidate(_allRidersProvider);
-                    },
+                    onAdded: _invalidateAll,
                   ),
                 );
               },
@@ -176,7 +194,8 @@ class _RiderGroupAssignmentScreenState
     );
   }
 
-  Widget _membersList(List<Map<String, dynamic>> members, bool isDark) {
+  Widget _membersList(
+      List<Map<String, dynamic>> members, bool isDark, String? leaderId) {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
@@ -194,25 +213,87 @@ class _RiderGroupAssignmentScreenState
         itemBuilder: (context, i) {
           final m = members[i];
           final profile = m['profiles'] as Map<String, dynamic>?;
+          final riderId = m['rider_id'] as String;
+          final isLeader = riderId == leaderId;
+
           return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: AppColors.primary.withOpacity(0.1),
-              child: Text(
-                (profile?['full_name'] as String? ?? '?')[0].toUpperCase(),
-                style: const TextStyle(
-                    color: AppColors.primary, fontWeight: FontWeight.bold),
-              ),
+            leading: Stack(
+              children: [
+                CircleAvatar(
+                  backgroundColor: isLeader
+                      ? Colors.amber.withOpacity(0.15)
+                      : AppColors.primary.withOpacity(0.1),
+                  child: Text(
+                    (profile?['full_name'] as String? ?? '?')[0].toUpperCase(),
+                    style: TextStyle(
+                        color: isLeader ? Colors.amber.shade700 : AppColors.primary,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+                if (isLeader)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade600,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.star_rounded,
+                          size: 10, color: Colors.white),
+                    ),
+                  ),
+              ],
             ),
-            title: Text(profile?['full_name'] as String? ?? 'Unknown',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    profile?['full_name'] as String? ?? 'Unknown',
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                if (isLeader)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      'LEADER',
+                      style: GoogleFonts.outfit(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.amber.shade700,
+                          letterSpacing: 0.5),
+                    ),
+                  ),
+              ],
+            ),
             subtitle: Text(
                 profile?['iqama_number'] as String? ?? '',
                 style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey)),
-            trailing: IconButton(
-              icon: const Icon(Icons.remove_circle_outline_rounded,
-                  color: Colors.red),
-              tooltip: 'Remove from group',
-              onPressed: () => _confirmRemove(context, m, profile),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Leader toggle button
+                _LeaderToggleButton(
+                  groupId: widget.groupId,
+                  riderId: riderId,
+                  isLeader: isLeader,
+                  onChanged: _invalidateAll,
+                ),
+                // Remove from group button
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline_rounded,
+                      color: Colors.red),
+                  tooltip: 'Remove from group',
+                  onPressed: () => _confirmRemove(context, m, profile),
+                ),
+              ],
             ),
           );
         },
@@ -239,18 +320,90 @@ class _RiderGroupAssignmentScreenState
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
+              final riderId = member['rider_id'] as String;
+              final leaderAsync =
+                  ref.read(_groupLeaderProvider(widget.groupId));
+              final currentLeaderId = leaderAsync.valueOrNull;
               await ref.read(operationsRepositoryProvider).removeRiderFromGroup(
                     groupId: widget.groupId,
-                    riderId: member['rider_id'] as String,
+                    riderId: riderId,
                   );
-              ref.invalidate(_membersProvider(widget.groupId));
-              ref.invalidate(_allRidersProvider);
+              // If removed rider was the leader, clear leader_id
+              if (currentLeaderId == riderId) {
+                await ref
+                    .read(operationsRepositoryProvider)
+                    .assignGroupLeader(groupId: widget.groupId, riderId: null);
+              }
+              _invalidateAll();
             },
             child: Text('Remove',
                 style: GoogleFonts.outfit(color: Colors.red)),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Leader Toggle Button
+// ---------------------------------------------------------------------------
+
+class _LeaderToggleButton extends ConsumerStatefulWidget {
+  final String groupId;
+  final String riderId;
+  final bool isLeader;
+  final VoidCallback onChanged;
+
+  const _LeaderToggleButton({
+    required this.groupId,
+    required this.riderId,
+    required this.isLeader,
+    required this.onChanged,
+  });
+
+  @override
+  ConsumerState<_LeaderToggleButton> createState() =>
+      _LeaderToggleButtonState();
+}
+
+class _LeaderToggleButtonState extends ConsumerState<_LeaderToggleButton> {
+  bool _loading = false;
+
+  Future<void> _toggle() async {
+    setState(() => _loading = true);
+    try {
+      await ref.read(operationsRepositoryProvider).assignGroupLeader(
+            groupId: widget.groupId,
+            riderId: widget.isLeader ? null : widget.riderId,
+          );
+      widget.onChanged();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+    return IconButton(
+      icon: Icon(
+        widget.isLeader ? Icons.star_rounded : Icons.star_outline_rounded,
+        color: widget.isLeader ? Colors.amber.shade600 : Colors.grey,
+      ),
+      tooltip: widget.isLeader ? 'Remove as leader' : 'Set as group leader',
+      onPressed: _toggle,
     );
   }
 }

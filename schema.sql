@@ -32,6 +32,9 @@ CREATE TABLE public.profiles (
     license_number TEXT UNIQUE,
     avatar_url TEXT,
     status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'on_leave', 'suspended')),
+    last_lat DOUBLE PRECISION,
+    last_lng DOUBLE PRECISION,
+    last_location_update TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -186,6 +189,7 @@ CREATE TRIGGER on_auth_user_created
 ALTER PUBLICATION supabase_realtime ADD TABLE public.attendance;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.incidents;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.cod_reconciliation;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
 
 -- 12. RLS & Security (Enhanced)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;

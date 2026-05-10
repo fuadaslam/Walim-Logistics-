@@ -343,7 +343,7 @@ abstract class AppLocalizations {
   /// No description provided for @liveRiderTracking.
   ///
   /// In en, this message translates to:
-  /// **'Live Rider Tracking'**
+  /// **'Live Riders'**
   String get liveRiderTracking;
 
   /// No description provided for @capacityPlanning.
@@ -439,7 +439,7 @@ abstract class AppLocalizations {
   /// No description provided for @assetManagement.
   ///
   /// In en, this message translates to:
-  /// **'Asset Management'**
+  /// **'Assets'**
   String get assetManagement;
 
   /// No description provided for @financialManagement.

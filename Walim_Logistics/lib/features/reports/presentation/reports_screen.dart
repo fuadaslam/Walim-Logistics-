@@ -65,13 +65,14 @@ class ReportsScreen extends ConsumerWidget {
     // For a real app, we'd calculate missing based on platforms * frequency
     final missingCount = isAdminOrOps ? 3 : 0; 
 
+    final color = Colors.grey.shade500;
     return Row(
       children: [
         _StatCard(
           title: 'Total Uploaded',
           value: '$uploadedCount',
           icon: Icons.check_circle_rounded,
-          color: Colors.green,
+          color: color,
         ),
         const SizedBox(width: 16),
         if (isAdminOrOps)
@@ -79,7 +80,7 @@ class ReportsScreen extends ConsumerWidget {
             title: 'Missing Reports',
             value: '$missingCount',
             icon: Icons.warning_rounded,
-            color: Colors.orange,
+            color: color,
           ),
       ],
     );
@@ -153,14 +154,92 @@ class ReportsScreen extends ConsumerWidget {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.only(bottom: 80),
-      itemCount: state.reports.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final report = state.reports[index];
-        return _ReportCard(report: report);
-      },
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: isDark ? Colors.white10 : AppColors.divider.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: SizedBox(
+            width: double.infinity,
+            child: DataTable(
+              showCheckboxColumn: false,
+              headingRowColor: WidgetStateProperty.all(isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.background.withValues(alpha: 0.5)),
+              dataRowMaxHeight: 75,
+              dataRowMinHeight: 65,
+              dividerThickness: 0.5,
+              horizontalMargin: 24,
+              columnSpacing: 12,
+              columns: [
+                DataColumn(label: _buildHeaderLabel('PLATFORM', Icons.hub_rounded)),
+                DataColumn(label: _buildHeaderLabel('FREQUENCY', Icons.schedule_rounded)),
+                DataColumn(label: _buildHeaderLabel('SUPERVISOR', Icons.supervisor_account_rounded)),
+                DataColumn(label: _buildHeaderLabel('STATUS', Icons.info_outline_rounded)),
+              ],
+              rows: state.reports.map((report) => DataRow(
+                onSelectChanged: (_) {
+                  // Download or view report
+                },
+                cells: [
+                  DataCell(_buildPlatformCell(report)),
+                  DataCell(Text(report.frequency.name.toUpperCase(), style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 13))),
+                  DataCell(Text(report.supervisorName, style: GoogleFonts.outfit(color: AppColors.textSecondary))),
+                  DataCell(_StatusBadge(status: report.status)),
+                ],
+              )).toList(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderLabel(String label, IconData icon) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: AppColors.textSecondary.withValues(alpha: 0.6)),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w900,
+            fontSize: 12,
+            letterSpacing: 1.0,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlatformCell(PlatformReport report) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          report.platformName,
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        Text(
+          DateFormat('MMM dd, yyyy').format(report.reportDate),
+          style: GoogleFonts.outfit(fontSize: 11, color: AppColors.textSecondary),
+        ),
+      ],
     );
   }
 
@@ -397,71 +476,6 @@ class _DropdownFilter<T> extends StatelessWidget {
   }
 }
 
-class _ReportCard extends StatelessWidget {
-  final PlatformReport report;
-
-  const _ReportCard({required this.report});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.primary),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  report.platformName,
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                Text(
-                  '${report.frequency.name.toUpperCase()} - ${DateFormat('MMM dd, yyyy').format(report.reportDate)}',
-                  style: GoogleFonts.outfit(fontSize: 13, color: Theme.of(context).disabledColor),
-                ),
-                Text(
-                  'By: ${report.supervisorName}',
-                  style: GoogleFonts.outfit(fontSize: 12, color: Theme.of(context).disabledColor.withOpacity(0.6)),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              _StatusBadge(status: report.status),
-              const SizedBox(height: 8),
-              Text(
-                DateFormat('HH:mm').format(report.uploadedAt),
-                style: GoogleFonts.outfit(fontSize: 12, color: Theme.of(context).disabledColor),
-              ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          IconButton(
-            icon: const Icon(Icons.download_rounded),
-            onPressed: () {}, // Download logic
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _StatusBadge extends StatelessWidget {
   final String status;
@@ -469,7 +483,26 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = status == 'uploaded' ? Colors.blue : (status == 'verified' ? Colors.green : Colors.red);
+    Color color;
+    switch (status.toLowerCase()) {
+      case 'uploaded':
+      case 'verified':
+      case 'approved':
+      case 'complete':
+        color = const Color(0xFF10B981); // Emerald Green
+        break;
+      case 'pending':
+      case 'draft':
+        color = const Color(0xFFF59E0B); // Amber / Yellow
+        break;
+      case 'missing':
+      case 'rejected':
+      case 'failed':
+        color = const Color(0xFFEF4444); // Red
+        break;
+      default:
+        color = const Color(0xFF64748B); // Slate Grey
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

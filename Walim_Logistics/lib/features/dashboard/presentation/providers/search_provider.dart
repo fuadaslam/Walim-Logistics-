@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
+import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
+import 'package:walim_logistics/features/tracking/models/vehicle.dart';
 
 enum SearchResultType {
   rider,
@@ -106,11 +108,39 @@ class SearchNotifier extends StateNotifier<SearchState> {
       }
     });
 
+    // 2. Search Vehicles
+    try {
+      final vehicles = _ref.read(trackingProvider).vehicles;
+      for (final v in vehicles) {
+        final plate = v.plateNumber.toLowerCase();
+        final name = v.name.toLowerCase();
+        final make = v.make.toLowerCase();
+        final model = v.model.toLowerCase();
+        final vin = v.vin.toLowerCase();
+
+        if (plate.contains(q) ||
+            name.contains(q) ||
+            make.contains(q) ||
+            model.contains(q) ||
+            vin.contains(q)) {
+          results.add(SearchResult(
+            title: v.fullPlate,
+            subtitle: 'Vehicle • ${v.make.isNotEmpty ? '${v.make} ${v.model}' : v.name}',
+            type: SearchResultType.vehicle,
+            data: v,
+          ));
+        }
+      }
+    } catch (e) {
+      // Ignore if trackingProvider is not initialized or fails
+    }
+
     // 3. Static Screens / Navigation
     const screens = [
       {'title': 'Live GPS', 'subtitle': 'Real-time tracking', 'route': 'Live GPS'},
       {'title': 'Live Rider Tracking', 'subtitle': 'Rider positioning', 'route': 'Live Rider'},
       {'title': 'HR Management', 'subtitle': 'Staff and Leaves', 'route': 'HR'},
+      {'title': 'Vehicles', 'subtitle': 'Vehicle Registry & Fleet Assets', 'route': 'Vehicles'},
       {'title': 'Asset Registry', 'subtitle': 'Fleet and Equipment', 'route': 'Assets'},
       {'title': 'Finance Hub', 'subtitle': 'Payroll and Invoicing', 'route': 'Finance'},
       {'title': 'Performance Hub', 'subtitle': 'SLA Analytics', 'route': 'Performance'},

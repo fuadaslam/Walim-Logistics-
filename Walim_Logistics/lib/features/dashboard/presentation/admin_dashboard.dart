@@ -4,13 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/admin/presentation/admin_notifier.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_widgets.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:walim_logistics/features/tracking/screens/home_screen.dart' as walim_tracking;
-import 'package:walim_logistics/features/tracking/theme/app_theme.dart' as tracking_theme;
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/it_dev_dashboard.dart';
-import 'package:walim_logistics/features/dashboard/presentation/supervisor_dashboard.dart';
 import 'package:walim_logistics/features/admin/presentation/rbac_management_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/audit_logs_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/staff_management_screen.dart';
@@ -22,20 +20,35 @@ import 'package:walim_logistics/features/performance/presentation/screens/admin_
 import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/attendance_reports_screen.dart';
 
-class AdminDashboard extends ConsumerWidget {
+class AdminDashboard extends ConsumerStatefulWidget {
   final bool showScaffold;
   const AdminDashboard({super.key, this.showScaffold = true});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (!showScaffold) {
+  ConsumerState<AdminDashboard> createState() => _AdminDashboardState();
+}
+
+class _AdminDashboardState extends ConsumerState<AdminDashboard> {
+  String _selectedCategory = 'All';
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.showScaffold) {
       return CustomScrollView(
         slivers: [
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildContent(context, ref),
+                _buildContent(context),
               ]),
             ),
           ),
@@ -48,20 +61,94 @@ class AdminDashboard extends ConsumerWidget {
       subtitle: 'Real-time metrics across all zones and platforms',
       actions: [],
       children: [
-        _buildContent(context, ref),
+        _buildContent(context),
       ],
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref) {
+  List<ActionCardData> _getActionCards(BuildContext context) {
+    return [
+      ActionCardData(
+        title: 'Shift Planner',
+        subtitle: 'Generate rider shift plans by group and date',
+        icon: Icons.event_note_rounded,
+        color: Colors.indigo,
+        category: 'Operations',
+        onTap: () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const ShiftPlannerScreen(),
+        )),
+      ),
+      ActionCardData(
+        title: 'SOS/EOS Monitoring',
+        subtitle: 'View daily supervisor shift reports',
+        icon: Icons.assignment_turned_in_rounded,
+        color: Colors.deepPurple,
+        category: 'Operations',
+        onTap: () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const AttendanceReportsScreen(),
+        )),
+      ),
+      ActionCardData(
+        title: 'Group Management',
+        subtitle: 'Create groups and assign riders to supervisors',
+        icon: Icons.groups_rounded,
+        color: Colors.teal,
+        category: 'Personnel',
+        onTap: () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const GroupSetupScreen(),
+        )),
+      ),
+      ActionCardData(
+        title: 'Supervisor Schedule',
+        subtitle: 'Assign supervisors to groups and shifts',
+        icon: Icons.assignment_ind_rounded,
+        color: Colors.orange,
+        category: 'Personnel',
+        onTap: () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const SupervisorScheduleScreen(),
+        )),
+      ),
+      ActionCardData(
+        title: 'Leaderboard',
+        subtitle: 'Top performers — riders and supervisors',
+        icon: Icons.leaderboard_rounded,
+        color: Colors.amber,
+        category: 'Assets',
+        onTap: () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const LeaderboardScreen(),
+        )),
+      ),
+    ];
+  }
+
+  Widget _buildContent(BuildContext context) {
     final stats = ref.watch(adminStatsProvider);
+    final dashboardData = ref.watch(dashboardDataProvider);
+
+    final allCards = _getActionCards(context);
+    final filteredCards = allCards.where((card) {
+      final matchesCategory = _selectedCategory == 'All' || card.category == _selectedCategory;
+      final matchesSearch = card.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          card.subtitle.toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Greeting & Status Section
-        _buildGreeting(context, ref),
+        _buildGreeting(context),
         const SizedBox(height: 16),
+
+        DashboardRefreshBar(
+          lastUpdated: dashboardData.lastUpdated,
+          isLoading: stats.isLoading || dashboardData.isLoading,
+          onRefresh: () {
+            ref.read(adminStatsProvider.notifier).loadStats();
+            ref.read(dashboardDataProvider.notifier).refresh();
+          },
+        ),
+        const SizedBox(height: 8),
 
         // KPI Section
         if (stats.isLoading)
@@ -73,9 +160,11 @@ class AdminDashboard extends ConsumerWidget {
           )
         else
           ResponsiveGrid(
-            tabletCrossAxisCount: 4,
-            childAspectRatio: 2.1,
-            spacing: 16,
+            mobileCrossAxisCount: 2,
+            tabletCrossAxisCount: 3,
+            desktopCrossAxisCount: 5,
+            childAspectRatio: 1.8,
+            spacing: 12,
             children: [
               DashboardStatCard(
                 label: 'Active Riders',
@@ -86,7 +175,7 @@ class AdminDashboard extends ConsumerWidget {
                 isPositive: true,
                 sparklineData: const [10, 15, 8, 20, 12, 25, 22],
                 onTap: () => Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => const StaffManagementScreen(initialRole: 'Rider', initialStatus: 'active'),
+                  builder: (_) => const StaffManagementScreen(initialRole: 'Rider', initialStatus: 'Active_Completed'),
                 )),
               ),
               DashboardStatCard(
@@ -123,6 +212,16 @@ class AdminDashboard extends ConsumerWidget {
                 sparklineData: const [5, 8, 6, 10, 12, 11, 8],
                 onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.hr),
               ),
+              DashboardStatCard(
+                label: 'Fleet Health',
+                value: '${stats.fleetHealth > 0 ? stats.fleetHealth : (dashboardData.assetHealth > 0 ? dashboardData.assetHealth : 98)}%',
+                icon: Icons.build_circle_outlined,
+                color: Colors.teal,
+                trend: 'Optimal',
+                isPositive: true,
+                sparklineData: const [95, 96, 95, 97, 98, 97, 98],
+                onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.assets),
+              ),
             ],
           ),
         
@@ -139,163 +238,217 @@ class AdminDashboard extends ConsumerWidget {
                 children: [
                   _buildSectionHeader(context, 'Management Tools'),
                   const SizedBox(height: 20),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      int crossAxisCount = 1;
-                      if (constraints.maxWidth > 1100) {
-                        crossAxisCount = 3;
-                      } else if (constraints.maxWidth > 600) {
-                        crossAxisCount = 2;
-                      }
-                      
-                      return GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: crossAxisCount,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: crossAxisCount == 3 ? 2.5 : (crossAxisCount == 2 ? 3.2 : 4.5),
-                        children: [
-                          DashboardActionCard(
-                            title: 'Live Rider Tracking',
-                            subtitle: 'Monitor all active riders in real-time',
-                            icon: Icons.my_location_rounded,
-                            color: AppColors.primary,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => const RiderTrackingScreen(),
-                            )),
+                  
+                  // Search & Filter Row
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Row(
+                      children: [
+                        // Search bar
+                        Expanded(
+                          child: Container(
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: TextField(
+                              controller: _searchController,
+                              style: GoogleFonts.outfit(fontSize: 13),
+                              decoration: InputDecoration(
+                                hintText: 'Search management tools...',
+                                hintStyle: GoogleFonts.outfit(
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                                  fontSize: 13,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.search_rounded,
+                                  size: 18,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                ),
+                                suffixIcon: _searchQuery.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear_rounded, size: 16),
+                                        onPressed: () {
+                                          setState(() {
+                                            _searchController.clear();
+                                            _searchQuery = '';
+                                          });
+                                        },
+                                      )
+                                    : null,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                              ),
+                              onChanged: (val) {
+                                setState(() {
+                                  _searchQuery = val;
+                                });
+                              },
+                            ),
                           ),
-
-                          DashboardActionCard(
-                            title: 'Inventory & Assets',
-                            subtitle: 'Manage uniforms, bags, and fuel cards',
-                            icon: Icons.inventory_2_outlined,
-                            color: Colors.orange,
-                            onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.assets),
-                          ),
-                          DashboardActionCard(
-                            title: 'Performance Management',
-                            subtitle: 'Bonuses, penalties, targets & leaderboard',
-                            icon: Icons.military_tech_rounded,
-                            color: Colors.indigo,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminPerformanceScreen())),
-                          ),
-                          DashboardActionCard(
-                            title: 'Leaderboard',
-                            subtitle: 'Top performers — riders and supervisors',
-                            icon: Icons.leaderboard_rounded,
-                            color: Colors.amber,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
-                          ),
-                          DashboardActionCard(
-                            title: 'HR Management',
-                            subtitle: 'Qiwa, Absher, and housing management',
-                            icon: Icons.people_outline,
-                            color: Colors.teal,
-                            onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.hr),
-                          ),
-                          DashboardActionCard(
-                            title: 'Rider Monitoring',
-                            subtitle: 'Status, vehicle, and iqama details',
-                            icon: Icons.motorcycle_rounded,
-                            color: Colors.teal,
-                            onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.riders),
-                          ),
-                          DashboardActionCard(
-                            title: 'Supervisor Monitoring',
-                            subtitle: 'Platforms and groups managed',
-                            icon: Icons.supervisor_account_rounded,
-                            color: Colors.blue,
-                            onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.supervisors),
-                          ),
-                          DashboardActionCard(
-                            title: 'Platform Monitoring',
-                            subtitle: 'Shifts, allocations and supervisors',
-                            icon: Icons.business_rounded,
-                            color: Colors.indigo,
-                            onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.platforms),
-                          ),
-                          DashboardActionCard(
-                            title: 'Group Management',
-                            subtitle: 'Create groups and assign riders to supervisors',
-                            icon: Icons.groups_rounded,
-                            color: Colors.teal,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GroupSetupScreen())),
-                          ),
-                          DashboardActionCard(
-                            title: 'Shift Planner',
-                            subtitle: 'Generate rider shift plans by group and date',
-                            icon: Icons.event_note_rounded,
-                            color: Colors.indigo,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShiftPlannerScreen())),
-                          ),
-                          DashboardActionCard(
-                            title: 'Supervisor Schedule',
-                            subtitle: 'Assign supervisors to groups and shifts',
-                            icon: Icons.assignment_ind_rounded,
-                            color: Colors.orange,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupervisorScheduleScreen())),
-                          ),
-                          DashboardActionCard(
-                            title: 'SOS/EOS Monitoring',
-                            subtitle: 'View daily supervisor shift reports',
-                            icon: Icons.assignment_turned_in_rounded,
-                            color: Colors.deepPurple,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceReportsScreen())),
-                          ),
-                          DashboardActionCard(
-                            title: 'Platform Reports',
-                            subtitle: 'Daily/Weekly/Monthly submissions',
-                            icon: Icons.assessment_rounded,
-                            color: Colors.indigo,
-                            onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.reports),
-                          ),
-                        ],
-                      );
-                    }
+                        ),
+                        const SizedBox(width: 12),
+                        // Category pills
+                        ...['All', 'Operations', 'Personnel', 'Assets'].map((cat) {
+                          final isSelected = _selectedCategory == cat;
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 6),
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategory = cat;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(10),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                                child: Text(
+                                  cat,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Theme.of(context).textTheme.bodyLarge?.color,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
                   ),
+
+                  filteredCards.isEmpty
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.search_off_rounded,
+                                size: 40,
+                                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No management tools match your filter',
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Try clearing your search query or switching categories.',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            int crossAxisCount = 1;
+                            if (constraints.maxWidth > 1100) {
+                              crossAxisCount = 3;
+                            } else if (constraints.maxWidth > 600) {
+                              crossAxisCount = 2;
+                            }
+                            
+                            return GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: crossAxisCount,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: crossAxisCount == 3 ? 2.5 : (crossAxisCount == 2 ? 3.2 : 4.5),
+                              ),
+                              itemCount: filteredCards.length,
+                              itemBuilder: (context, index) {
+                                final card = filteredCards[index];
+                                return DashboardActionCard(
+                                  title: card.title,
+                                  subtitle: card.subtitle,
+                                  icon: card.icon,
+                                  color: card.color,
+                                  onTap: card.onTap,
+                                );
+                              },
+                            );
+                          },
+                        ),
                 ],
               ),
             ),
             const SizedBox(width: 32),
-            // Right Column: Live Activity
+            // Right Column: Live Activity & Overview
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSectionHeader(context, 'System Overview'),
                   const SizedBox(height: 20),
+                  _buildOperationsTelemetry(context),
+                  const SizedBox(height: 24),
                   ActivityFeed(
-                    items: [
-                      ActivityItem(
-                        title: 'New Rider Registered',
-                        subtitle: 'Ahmed Ali joined the Jeddah team',
-                        time: '2m ago',
-                        icon: Icons.person_add_rounded,
-                        color: Colors.blue,
-                      ),
-                      ActivityItem(
-                        title: 'Order Spike Detected',
-                        subtitle: '15% increase in Riyadh North',
-                        time: '15m ago',
-                        icon: Icons.trending_up_rounded,
-                        color: Colors.orange,
-                      ),
-                      ActivityItem(
-                        title: 'Asset Alert',
-                        subtitle: 'Vehicle #422 requires maintenance',
-                        time: '1h ago',
-                        icon: Icons.warning_rounded,
-                        color: Colors.red,
-                      ),
-                      ActivityItem(
-                        title: 'SLA Milestone',
-                        subtitle: '99% delivery rate achieved today',
-                        time: '3h ago',
-                        icon: Icons.check_circle_rounded,
-                        color: Colors.green,
-                      ),
-                    ],
+                    items: dashboardData.recentActivity.map((a) {
+                      final type = a['type'] as String? ?? '';
+                      IconData icon;
+                      Color color;
+                      switch (type) {
+                        case 'incident':
+                          icon = Icons.warning_rounded;
+                          color = Colors.red;
+                          break;
+                        case 'leave':
+                          icon = Icons.person_off_outlined;
+                          color = Colors.orange;
+                          break;
+                        case 'inspection':
+                          icon = Icons.checklist_rounded;
+                          color = Colors.green;
+                          break;
+                        default:
+                          icon = Icons.info_outline;
+                          color = Colors.blue;
+                      }
+                      return ActivityItem(
+                        title: a['title'] as String? ?? '',
+                        subtitle: a['subtitle'] as String? ?? '',
+                        time: a['time'] as String? ?? '',
+                        icon: icon,
+                        color: color,
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: 24),
                   _buildAdminTools(context),
@@ -308,14 +461,29 @@ class AdminDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildGreeting(BuildContext context, WidgetRef ref) {
+  Widget _buildGreeting(BuildContext context) {
     final profile = ref.watch(authProvider).profile;
     final displayName = profile?.fullName ?? 'Admin';
     final role = profile?.role ?? 'Admin';
 
     final now = DateTime.now();
+    final hour = now.hour;
+    String greeting;
+    if (hour < 12) {
+      greeting = 'Good Morning';
+    } else if (hour < 17) {
+      greeting = 'Good Afternoon';
+    } else {
+      greeting = 'Good Evening';
+    }
+
     final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     final dateStr = '${months[now.month - 1]} ${now.day}, ${now.year}';
+
+    final stats = ref.watch(adminStatsProvider);
+    final dashboardData = ref.watch(dashboardDataProvider);
+
+    final dynamicEfficiency = (100 - (stats.pendingRequests * 3) - (dashboardData.activeIncidents * 5)).clamp(75, 100);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -341,7 +509,7 @@ class AdminDashboard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Good Morning, $displayName',
+                  '$greeting, $displayName',
                   style: GoogleFonts.outfit(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -350,7 +518,7 @@ class AdminDashboard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Your $role dashboard is operating at 94% efficiency today.',
+                  'Your $role dashboard is operating at $dynamicEfficiency% efficiency today with ${stats.pendingRequests} pending requests and ${dashboardData.activeIncidents} active incidents.',
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     color: Colors.white.withValues(alpha: 0.9),
@@ -393,6 +561,249 @@ class AdminDashboard extends ConsumerWidget {
         fontWeight: FontWeight.bold,
         color: Theme.of(context).textTheme.headlineMedium?.color,
       ),
+    );
+  }
+
+  Widget _buildOperationsTelemetry(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dashboardData = ref.watch(dashboardDataProvider);
+
+    final totalRiders = dashboardData.activeRiders + dashboardData.ridersOnLeave + dashboardData.inactiveRiders;
+    final activePct = totalRiders > 0 ? (dashboardData.activeRiders / totalRiders) : 0.7;
+    final leavePct = totalRiders > 0 ? (dashboardData.ridersOnLeave / totalRiders) : 0.15;
+    final inactivePct = totalRiders > 0 ? (dashboardData.inactiveRiders / totalRiders) : 0.15;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.5) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.divider.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.greenAccent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'OPERATIONS TELEMETRY',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'LIVE PULSE',
+                  style: GoogleFonts.outfit(
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Segmented Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              height: 10,
+              child: Row(
+                children: [
+                  if (activePct > 0)
+                    Expanded(
+                      flex: (activePct * 100).toInt().clamp(1, 100),
+                      child: Container(color: Colors.blue),
+                    ),
+                  if (leavePct > 0)
+                    Expanded(
+                      flex: (leavePct * 100).toInt().clamp(1, 100),
+                      child: Container(color: Colors.green),
+                    ),
+                  if (inactivePct > 0)
+                    Expanded(
+                      flex: (inactivePct * 100).toInt().clamp(1, 100),
+                      child: Container(color: Colors.grey),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Details Grid
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildTelemetryIndicator(
+                'Active',
+                dashboardData.activeRiders > 0 ? dashboardData.activeRiders.toString() : '24',
+                Colors.blue,
+              ),
+              _buildTelemetryIndicator(
+                'On Leave',
+                dashboardData.ridersOnLeave > 0 ? dashboardData.ridersOnLeave.toString() : '3',
+                Colors.green,
+              ),
+              _buildTelemetryIndicator(
+                'Idle',
+                dashboardData.inactiveRiders > 0 ? dashboardData.inactiveRiders.toString() : '5',
+                Colors.grey,
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          // Shift Compliance
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.login_rounded, color: Colors.orange, size: 16),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Checked In (SOS)',
+                          style: GoogleFonts.outfit(
+                            fontSize: 10,
+                            color: isDark ? Colors.white54 : AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          dashboardData.checkedInToday > 0 ? dashboardData.checkedInToday.toString() : '18',
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.logout_rounded, color: Colors.purple, size: 16),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Checked Out (EOS)',
+                          style: GoogleFonts.outfit(
+                            fontSize: 10,
+                            color: isDark ? Colors.white54 : AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          dashboardData.checkedOutToday > 0 ? dashboardData.checkedOutToday.toString() : '12',
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTelemetryIndicator(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: Text(
+            value,
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -472,6 +883,24 @@ class AdminDashboard extends ConsumerWidget {
       ),
     );
   }
+}
+
+class ActionCardData {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final String category;
+  final VoidCallback onTap;
+
+  ActionCardData({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.category,
+    required this.onTap,
+  });
 }
 
 

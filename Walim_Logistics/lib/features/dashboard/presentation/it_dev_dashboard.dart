@@ -107,40 +107,39 @@ class ITDevDashboard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('System Performance'),
+        _buildSectionHeader('System & Fleet Overview'),
         const SizedBox(height: 24),
         ResponsiveGrid(
           tabletCrossAxisCount: 4,
           children: [
             DashboardStatCard(
-              label: 'Server Uptime',
-              value: '99.99%',
-              icon: Icons.dns_outlined,
+              label: 'Active Riders',
+              value: data.activeRiders.toString(),
+              icon: Icons.motorcycle_rounded,
               color: Colors.green,
-              trend: 'All systems operational',
-              sparklineData: [99.98, 99.99, 99.99, 99.99, 99.99, 99.99],
+              trend: 'Using the platform',
             ),
             DashboardStatCard(
-              label: 'API Latency',
-              value: '42ms',
-              icon: Icons.speed_outlined,
+              label: 'Active Groups',
+              value: data.activeGroups.toString(),
+              icon: Icons.groups_rounded,
               color: Colors.blue,
-              trend: 'Optimized',
-              sparklineData: [50, 48, 45, 43, 42, 42],
+              trend: 'Operational',
             ),
             DashboardStatCard(
-              label: 'Database Health',
-              value: '100%',
+              label: 'Fleet Health',
+              value: '${data.assetHealth}%',
               icon: Icons.storage_outlined,
               color: Colors.teal,
-              trend: 'Clean state',
+              trend: 'Vehicles operational',
             ),
             DashboardStatCard(
-              label: 'Active Errors',
+              label: 'Active Incidents',
               value: data.activeIncidents.toString(),
               icon: Icons.bug_report_outlined,
               color: AppColors.error,
               trend: data.activeIncidents > 0 ? 'Action required' : 'No critical alerts',
+              isPositive: data.activeIncidents == 0,
             ),
           ],
         ),
@@ -197,41 +196,6 @@ class ITDevDashboard extends ConsumerWidget {
   }
 
 
-
-  Widget _buildAPIStatusItem(String name, bool isOnline) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: isOnline ? Colors.green : Colors.red,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          ),
-          Text(
-            isOnline ? 'ONLINE' : 'LATENCY',
-            style: TextStyle(
-              color: isOnline ? Colors.green : Colors.red,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSectionHeader(String title) {
     return Text(

@@ -7,6 +7,7 @@ import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboar
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/biz_dev/presentation/partner_portals_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/layout_provider.dart';
+import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 
 class BizDevDashboard extends ConsumerWidget {
   final bool showScaffold;
@@ -15,6 +16,7 @@ class BizDevDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final layout = ref.watch(dashboardLayoutProvider);
+    final dashboardData = ref.watch(dashboardDataProvider);
 
     if (!showScaffold) {
       return CustomScrollView(
@@ -23,7 +25,7 @@ class BizDevDashboard extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildContent(context, ref, layout),
+                _buildContent(context, ref, layout, dashboardData),
               ]),
             ),
           ),
@@ -35,17 +37,17 @@ class BizDevDashboard extends ConsumerWidget {
       title: 'GROWTH ENGINE',
       subtitle: 'Partner relations and profitability analysis',
       children: [
-        _buildContent(context, ref, layout),
+        _buildContent(context, ref, layout, dashboardData),
       ],
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref, DashboardLayout layout) {
+  Widget _buildContent(BuildContext context, WidgetRef ref, DashboardLayout layout, DashboardData data) {
     final isDesktop = MediaQuery.of(context).size.width > 1200;
 
     if (!isDesktop) {
       return Column(
-        children: layout.sections.map((section) => _buildSection(context, ref, section)).toList(),
+        children: layout.sections.map((section) => _buildSection(context, ref, section, data)).toList(),
       );
     }
 
@@ -55,8 +57,8 @@ class BizDevDashboard extends ConsumerWidget {
 
     for (var i = 0; i < layout.sections.length; i++) {
       final section = layout.sections[i];
-      final sectionWidget = _buildSection(context, ref, section);
-      
+      final sectionWidget = _buildSection(context, ref, section, data);
+
       if (section == DashboardSection.metrics || section == DashboardSection.actions) {
         leftColumn.add(sectionWidget);
         leftColumn.add(const SizedBox(height: 48));
@@ -89,55 +91,60 @@ class BizDevDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildSection(BuildContext context, WidgetRef ref, DashboardSection section) {
+  Widget _buildSection(BuildContext context, WidgetRef ref, DashboardSection section, DashboardData data) {
     switch (section) {
       case DashboardSection.metrics:
-        return _buildMetricsSection();
+        return _buildMetricsSection(data);
       case DashboardSection.actions:
         return _buildActionsSection(context);
       case DashboardSection.performance:
-        return _buildPerformanceSection();
+        return _buildPerformanceSection(data);
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildMetricsSection() {
+  Widget _buildMetricsSection(DashboardData data) {
+    final partnerCount = data.platforms.isNotEmpty ? data.platforms.length : null;
+    final partnerNames = data.platforms.map((p) => p['name'] as String? ?? '').where((n) => n.isNotEmpty).take(3).join(', ');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader('Revenue & Partnerships'),
         const SizedBox(height: 24),
+        if (data.isLoading && partnerCount == null)
+          const Center(child: CircularProgressIndicator())
+        else
         ResponsiveGrid(
-          children: const [
+          children: [
             DashboardStatCard(
               label: 'Active Partners',
-              value: '6',
+              value: partnerCount != null ? partnerCount.toString() : '—',
               icon: Icons.handshake_outlined,
               color: Colors.purple,
-              trend: 'Amazon, Noon, Keeta...',
+              trend: partnerNames.isNotEmpty ? partnerNames : 'No platforms configured',
             ),
             DashboardStatCard(
-              label: 'Avg. Margin/Del',
-              value: '﷼ 4.2',
-              icon: Icons.analytics_outlined,
+              label: 'Active Riders',
+              value: data.activeRiders.toString(),
+              icon: Icons.motorcycle_rounded,
               color: Colors.green,
-              trend: '+5% this week',
-              sparklineData: [3.8, 3.9, 4.0, 4.1, 4.2, 4.2],
+              trend: 'Across all platforms',
             ),
             DashboardStatCard(
-              label: 'New Prospects',
-              value: '3',
-              icon: Icons.add_chart_outlined,
+              label: 'Active Groups',
+              value: data.activeGroups.toString(),
+              icon: Icons.groups_rounded,
               color: Colors.blue,
-              trend: 'Negotiation phase',
+              trend: 'Operational',
             ),
             DashboardStatCard(
-              label: 'Projected Growth',
-              value: '+15%',
+              label: 'Fleet Health',
+              value: '${data.assetHealth}%',
               icon: Icons.trending_up_outlined,
               color: Colors.teal,
-              trend: 'Next Quarter',
+              trend: 'Vehicles operational',
             ),
           ],
         ),
@@ -193,17 +200,32 @@ class BizDevDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildPerformanceSection() {
+  Widget _buildPerformanceSection(DashboardData data) {
+    final platformShare = data.platformShare;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Partner Performance'),
+        _buildSectionHeader('Platform Distribution'),
         const SizedBox(height: 24),
-        _buildPartnerPerformanceCard('Amazon SA', 0.85, Colors.orange),
-        const SizedBox(height: 12),
-        _buildPartnerPerformanceCard('Noon Logistics', 0.78, Colors.amber),
-        const SizedBox(height: 12),
-        _buildPartnerPerformanceCard('Keeta Food', 0.92, Colors.teal),
+        if (platformShare.isEmpty)
+          const EmptyStatePlaceholder(
+            icon: Icons.pie_chart_outline,
+            title: 'No platform data',
+            subtitle: 'Platform distribution will appear once groups are assigned.',
+            color: Colors.purple,
+          )
+        else
+          ...platformShare.asMap().entries.map((entry) {
+            final p = entry.value;
+            final name = p['name'] as String? ?? 'Unknown';
+            final share = (p['share'] as double? ?? 0.0).clamp(0.0, 1.0);
+            final color = p['color'] as Color? ?? Colors.blue;
+            return Padding(
+              padding: EdgeInsets.only(bottom: entry.key < platformShare.length - 1 ? 12 : 0),
+              child: _buildPartnerPerformanceCard(name, share, color),
+            );
+          }),
       ],
     );
   }

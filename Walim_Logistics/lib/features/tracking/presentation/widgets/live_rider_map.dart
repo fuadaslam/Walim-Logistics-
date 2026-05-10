@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/features/tracking/services/location_providers.dart';
 import 'package:walim_logistics/shared/models/profile.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
+import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
 
 class LiveRiderMap extends ConsumerStatefulWidget {
   const LiveRiderMap({super.key});
@@ -41,8 +42,22 @@ class _LiveRiderMapState extends ConsumerState<LiveRiderMap> {
       data: (riders) {
         final filteredRiders = riders.where((r) {
           final query = _searchQuery.toLowerCase();
-          return r.fullName.toLowerCase().contains(query) ||
+          final matchesSearch = r.fullName.toLowerCase().contains(query) ||
               (r.phoneNumber?.contains(query) ?? false);
+          
+          if (!matchesSearch) return false;
+          if (_selectedCity == 'All') return true;
+
+          final lat = r.lastLat!;
+          final lng = r.lastLng!;
+          if (_selectedCity == 'Riyadh') {
+            return lat > 24.0 && lat < 25.5 && lng > 46.0 && lng < 47.5;
+          } else if (_selectedCity == 'Jeddah') {
+            return lat > 21.0 && lat < 22.0 && lng > 38.8 && lng < 39.6;
+          } else if (_selectedCity == 'Taif') {
+            return lat > 20.8 && lat < 21.8 && lng > 40.0 && lng < 41.0;
+          }
+          return true;
         }).toList();
 
         return Column(
@@ -54,9 +69,9 @@ class _LiveRiderMapState extends ConsumerState<LiveRiderMap> {
                 children: [
                   FlutterMap(
                     mapController: _mapController,
-                    options: const MapOptions(
-                      initialCenter: LatLng(24.7136, 46.6753),
-                      initialZoom: 12.0,
+                    options: MapOptions(
+                      initialCenter: _cities[_selectedCity]!,
+                      initialZoom: _selectedCity == 'All' ? 5.0 : 12.0,
                     ),
                     children: [
                       TileLayer(
@@ -342,20 +357,48 @@ class _LiveRiderMapState extends ConsumerState<LiveRiderMap> {
             _buildInfoRow(Icons.access_time, 'Last Update', _formatLastUpdate(rider.lastLocationUpdate)),
             _buildInfoRow(Icons.location_on, 'Location', '${rider.lastLat?.toStringAsFixed(4)}, ${rider.lastLng?.toStringAsFixed(4)}'),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  _mapController.move(LatLng(rider.lastLat!, rider.lastLng!), 15);
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      _mapController.move(LatLng(rider.lastLat!, rider.lastLng!), 15);
+                      Navigator.pop(context);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary, width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.my_location_rounded, size: 18),
+                    label: const Text('Focus on Map', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
                 ),
-                child: const Text('Focus on Map', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RiderDetailScreen(profile: rider),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.badge_outlined, size: 18, color: Colors.white),
+                    label: const Text('View Profile', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

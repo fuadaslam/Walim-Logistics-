@@ -35,13 +35,35 @@ Future<Response> _apiHandler(Request req) async {
   };
 
   http.Response res;
-  if (req.method == 'POST' || req.method == 'PATCH' || req.method == 'PUT') {
-    final body = await req.readAsString();
-    res = await _client.post(url, headers: headers, body: body);
-  } else if (req.method == 'DELETE') {
-    res = await _client.delete(url, headers: headers);
-  } else {
-    res = await _client.get(url, headers: headers);
+  try {
+    if (req.method == 'POST' || req.method == 'PATCH' || req.method == 'PUT') {
+      final body = await req.readAsString();
+      res = await _client
+          .post(url, headers: headers, body: body)
+          .timeout(const Duration(seconds: 45));
+    } else if (req.method == 'DELETE') {
+      res = await _client
+          .delete(url, headers: headers)
+          .timeout(const Duration(seconds: 45));
+    } else {
+      // Retry once on 504 — transient gateway timeouts on Rakeen side
+      res = await _client
+          .get(url, headers: headers)
+          .timeout(const Duration(seconds: 45));
+      if (res.statusCode == 504) {
+        await Future.delayed(const Duration(seconds: 2));
+        res = await _client
+            .get(url, headers: headers)
+            .timeout(const Duration(seconds: 45));
+      }
+    }
+  } catch (e) {
+    print('[proxy] EXCEPTION for $url: $e');
+    return Response(
+      504, 
+      body: '{"error": "Gateway Timeout", "details": "$e"}',
+      headers: _corsHeaders({'content-type': 'application/json; charset=utf-8'}),
+    );
   }
 
   print('[proxy] ${req.method} $url → ${res.statusCode}');

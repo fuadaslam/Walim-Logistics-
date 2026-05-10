@@ -14,14 +14,24 @@ class AttendanceState {
   final bool hasActiveShift;
   final String? error;
   final int? _todayCheckIns;
+  final DateTime? shiftStartTime;
 
   int get todayCheckIns => _todayCheckIns ?? 0;
+
+  String get elapsedShiftTime {
+    if (!hasActiveShift || shiftStartTime == null) return '—';
+    final diff = DateTime.now().difference(shiftStartTime!);
+    final h = diff.inHours.toString().padLeft(2, '0');
+    final m = (diff.inMinutes % 60).toString().padLeft(2, '0');
+    return '${h}h ${m}m';
+  }
 
   AttendanceState({
     this.isCheckingIn = false,
     this.hasActiveShift = false,
     this.error,
     int? todayCheckIns = 0,
+    this.shiftStartTime,
   }) : _todayCheckIns = todayCheckIns;
 
   AttendanceState copyWith({
@@ -29,12 +39,15 @@ class AttendanceState {
     bool? hasActiveShift,
     String? error,
     int? todayCheckIns,
+    DateTime? shiftStartTime,
+    bool clearShiftStartTime = false,
   }) {
     return AttendanceState(
       isCheckingIn: isCheckingIn ?? this.isCheckingIn,
       hasActiveShift: hasActiveShift ?? this.hasActiveShift,
       error: error,
       todayCheckIns: todayCheckIns ?? _todayCheckIns,
+      shiftStartTime: clearShiftStartTime ? null : (shiftStartTime ?? this.shiftStartTime),
     );
   }
 }
@@ -55,9 +68,14 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
         profile.id,
       );
 
+      DateTime? startTime;
+      if (activeShift != null && activeShift['check_in_time'] != null) {
+        startTime = DateTime.tryParse(activeShift['check_in_time'].toString())?.toLocal();
+      }
       state = state.copyWith(
         hasActiveShift: activeShift != null,
         todayCheckIns: completedPeriods.length,
+        shiftStartTime: startTime,
       );
 
       if (activeShift != null) {
@@ -87,7 +105,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
           long: position.longitude,
         );
         _ref.read(locationServiceProvider).stopTracking();
-        state = state.copyWith(hasActiveShift: false, isCheckingIn: false);
+        state = state.copyWith(hasActiveShift: false, isCheckingIn: false, clearShiftStartTime: true);
       } else {
         // Checking IN
         final currentPeriod = _repository.getShiftPeriod(DateTime.now());
@@ -131,12 +149,14 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
             hasActiveShift: true,
             isCheckingIn: false,
             todayCheckIns: newCount,
+            shiftStartTime: DateTime.now(),
           );
         } else {
           state = state.copyWith(
             hasActiveShift: true,
             isCheckingIn: false,
             todayCheckIns: newCount,
+            shiftStartTime: DateTime.now(),
           );
         }
         _ref.read(locationServiceProvider).startTracking();

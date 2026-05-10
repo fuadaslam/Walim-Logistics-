@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 
 class DashboardStatCard extends StatefulWidget {
@@ -75,30 +76,30 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
             padding: EdgeInsets.all(isMobile ? 8 : 12),
             decoration: BoxDecoration(
               color: isDark 
-                  ? AppColors.surfaceDark.withOpacity(0.8) 
+                  ? AppColors.surfaceDark.withValues(alpha:0.8) 
                   : Colors.white,
               borderRadius: BorderRadius.circular(20),
               gradient: _isHovered ? LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  widget.color.withOpacity(isDark ? 0.15 : 0.05),
-                  widget.color.withOpacity(isDark ? 0.05 : 0.01),
+                  widget.color.withValues(alpha:isDark ? 0.15 : 0.05),
+                  widget.color.withValues(alpha:isDark ? 0.05 : 0.01),
                 ],
               ) : null,
               boxShadow: [
                 BoxShadow(
                   color: _isHovered 
-                      ? widget.color.withOpacity(0.15) 
-                      : Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                      ? widget.color.withValues(alpha:0.15) 
+                      : Colors.black.withValues(alpha:isDark ? 0.2 : 0.04),
                   blurRadius: _isHovered ? 25 : 12,
                   offset: Offset(0, _isHovered ? 8 : 4),
                 ),
               ],
               border: Border.all(
                 color: _isHovered 
-                    ? widget.color.withOpacity(0.5) 
-                    : (isDark ? Colors.white.withOpacity(0.08) : AppColors.divider.withOpacity(0.5)),
+                    ? widget.color.withValues(alpha:0.5) 
+                    : (isDark ? Colors.white.withValues(alpha:0.08) : AppColors.divider.withValues(alpha:0.5)),
                 width: 1.2,
               ),
             ),
@@ -130,9 +131,9 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: widget.color.withOpacity(0.1),
+                            color: widget.color.withValues(alpha:0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: widget.color.withOpacity(0.2)),
+                            border: Border.all(color: widget.color.withValues(alpha:0.2)),
                           ),
                           child: Icon(
                             widget.icon, 
@@ -145,8 +146,8 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: (widget.isPositive ?? true) 
-                                  ? Colors.green.withOpacity(0.1) 
-                                  : Colors.red.withOpacity(0.1),
+                                  ? Colors.green.withValues(alpha:0.1) 
+                                  : Colors.red.withValues(alpha:0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -196,7 +197,7 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.outfit(
                                     fontSize: 8,
-                                    color: (isDark ? Colors.white70 : AppColors.textSecondary).withOpacity(0.8),
+                                    color: (isDark ? Colors.white70 : AppColors.textSecondary).withValues(alpha:0.8),
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 0.5,
                                   ),
@@ -209,7 +210,7 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
                             widget.label.toUpperCase(),
                             style: GoogleFonts.outfit(
                               fontSize: 8,
-                              color: (isDark ? Colors.white70 : AppColors.textSecondary).withOpacity(0.8),
+                              color: (isDark ? Colors.white70 : AppColors.textSecondary).withValues(alpha:0.8),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -375,14 +376,14 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
               color: isDark ? AppColors.surfaceDark : Colors.white,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: _isHovered ? widget.color.withOpacity(0.6) : (isDark ? Colors.white.withOpacity(0.05) : AppColors.divider.withOpacity(0.5)),
+                color: _isHovered ? widget.color.withValues(alpha:0.6) : (isDark ? Colors.white.withValues(alpha:0.05) : AppColors.divider.withValues(alpha:0.5)),
                 width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
                   color: _isHovered 
-                      ? widget.color.withOpacity(0.15) 
-                      : Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+                      ? widget.color.withValues(alpha:0.15) 
+                      : Colors.black.withValues(alpha:isDark ? 0.2 : 0.03),
                   blurRadius: _isHovered ? 20 : 10,
                   offset: Offset(0, _isHovered ? 8 : 4),
                 ),
@@ -396,7 +397,7 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
                     gradient: LinearGradient(
                       colors: [
                         widget.color,
-                        widget.color.withOpacity(0.8),
+                        widget.color.withValues(alpha:0.8),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -404,7 +405,7 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: widget.color.withOpacity(0.2),
+                        color: widget.color.withValues(alpha:0.2),
                         blurRadius: 6,
                         offset: const Offset(0, 3),
                       ),
@@ -442,9 +443,9 @@ class _DashboardActionCardState extends State<DashboardActionCard> with SingleTi
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                               decoration: BoxDecoration(
-                                color: widget.color.withOpacity(0.1),
+                                color: widget.color.withValues(alpha:0.1),
                                 borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: widget.color.withOpacity(0.2)),
+                                border: Border.all(color: widget.color.withValues(alpha:0.2)),
                               ),
                               child: Text(
                                 widget.badge!,
@@ -499,15 +500,15 @@ class ActivityFeed extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark.withOpacity(0.5) : Colors.white,
+        color: isDark ? AppColors.surfaceDark.withValues(alpha:0.5) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.08) : AppColors.divider.withOpacity(0.5),
+          color: isDark ? Colors.white.withValues(alpha:0.08) : AppColors.divider.withValues(alpha:0.5),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha:0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -573,7 +574,7 @@ class ActivityFeed extends StatelessWidget {
               itemCount: items.length,
               separatorBuilder: (context, index) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Divider(height: 1, color: (isDark ? Colors.white : AppColors.divider).withOpacity(0.1)),
+                child: Divider(height: 1, color: (isDark ? Colors.white : AppColors.divider).withValues(alpha:0.1)),
               ),
               itemBuilder: (context, index) {
                 final item = items[index];
@@ -588,9 +589,9 @@ class ActivityFeed extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: item.color.withOpacity(0.1),
+                            color: item.color.withValues(alpha:0.1),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: item.color.withOpacity(0.2)),
+                            border: Border.all(color: item.color.withValues(alpha:0.2)),
                           ),
                           child: Icon(item.icon, color: item.color, size: 20),
                         ),
@@ -611,7 +612,7 @@ class ActivityFeed extends StatelessWidget {
                               Text(
                                 item.subtitle,
                                 style: GoogleFonts.outfit(
-                                  color: (isDark ? Colors.white70 : AppColors.textSecondary).withOpacity(0.8),
+                                  color: (isDark ? Colors.white70 : AppColors.textSecondary).withValues(alpha:0.8),
                                   fontSize: 12,
                                   height: 1.3,
                                   fontWeight: FontWeight.w500,
@@ -624,7 +625,7 @@ class ActivityFeed extends StatelessWidget {
                         Text(
                           item.time,
                           style: GoogleFonts.outfit(
-                            color: AppColors.textSecondary.withOpacity(0.6),
+                            color: AppColors.textSecondary.withValues(alpha:0.6),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -733,6 +734,70 @@ class AnimatedTransform extends StatelessWidget {
   }
 }
 
+class DashboardRefreshBar extends StatelessWidget {
+  final DateTime? lastUpdated;
+  final bool isLoading;
+  final VoidCallback onRefresh;
+
+  const DashboardRefreshBar({
+    super.key,
+    required this.lastUpdated,
+    required this.isLoading,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    String label;
+    if (isLoading) {
+      label = 'Refreshing...';
+    } else if (lastUpdated != null) {
+      final diff = DateTime.now().difference(lastUpdated!);
+      if (diff.inSeconds < 60) {
+        label = 'Updated just now';
+      } else if (diff.inMinutes < 60) {
+        label = 'Updated ${diff.inMinutes}m ago';
+      } else {
+        label = 'Updated at ${DateFormat('HH:mm').format(lastUpdated!)}';
+      }
+    } else {
+      label = 'Not yet loaded';
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontSize: 12,
+            color: isDark ? Colors.white38 : AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 30,
+          height: 30,
+          child: isLoading
+              ? const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  color: isDark ? Colors.white54 : AppColors.textSecondary,
+                  padding: EdgeInsets.zero,
+                  tooltip: 'Refresh',
+                  onPressed: onRefresh,
+                ),
+        ),
+      ],
+    );
+  }
+}
+
 class EmptyStatePlaceholder extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -761,13 +826,13 @@ class EmptyStatePlaceholder extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
       decoration: BoxDecoration(
         color: isDark 
-            ? AppColors.surfaceDark.withOpacity(0.3) 
-            : themeColor.withOpacity(0.02),
+            ? AppColors.surfaceDark.withValues(alpha:0.3) 
+            : themeColor.withValues(alpha:0.02),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDark 
-              ? Colors.white.withOpacity(0.05) 
-              : themeColor.withOpacity(0.05),
+              ? Colors.white.withValues(alpha:0.05) 
+              : themeColor.withValues(alpha:0.05),
           width: 1.5,
           style: BorderStyle.solid,
         ),
@@ -778,7 +843,7 @@ class EmptyStatePlaceholder extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: themeColor.withOpacity(0.08),
+              color: themeColor.withValues(alpha:0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -804,7 +869,7 @@ class EmptyStatePlaceholder extends StatelessWidget {
             textAlign: TextAlign.center,
             style: GoogleFonts.outfit(
               fontSize: 14,
-              color: (isDark ? Colors.white70 : AppColors.textSecondary).withOpacity(0.8),
+              color: (isDark ? Colors.white70 : AppColors.textSecondary).withValues(alpha:0.8),
               fontWeight: FontWeight.w500,
               height: 1.5,
             ),

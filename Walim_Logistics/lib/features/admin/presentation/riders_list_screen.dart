@@ -5,6 +5,7 @@ import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/admin/presentation/monitoring_providers.dart';
 import 'package:walim_logistics/shared/models/profile.dart';
 import 'package:walim_logistics/features/hr/presentation/rider_detail_screen.dart';
+import 'package:walim_logistics/shared/widgets/walim_table.dart';
 
 class RidersListScreen extends ConsumerStatefulWidget {
   const RidersListScreen({super.key});
@@ -14,9 +15,6 @@ class RidersListScreen extends ConsumerStatefulWidget {
 }
 
 class _RidersListScreenState extends ConsumerState<RidersListScreen> {
-  int _rowsPerPage = 10;
-  int _currentPage = 0;
-
   @override
   Widget build(BuildContext context) {
     final ridersAsync = ref.watch(detailedRidersProvider);
@@ -40,17 +38,40 @@ class _RidersListScreenState extends ConsumerState<RidersListScreen> {
           return matchesSearch && matchesStatus;
         }).toList();
 
-        if (allRiders.isEmpty) {
-          return _buildEmptyState();
-        }
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildFilters(context),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Expanded(
-              child: _buildRidersTable(context, filteredRiders, isDark),
+              child: WalimDataTable<Map<String, dynamic>>(
+                columns: const [
+                  WalimColumn(label: 'RIDER', icon: Icons.person_outline_rounded),
+                  WalimColumn(label: 'STATUS', icon: Icons.info_outline_rounded),
+                  WalimColumn(label: 'VEHICLE', icon: Icons.motorcycle_rounded),
+                  WalimColumn(label: 'IQAMA', icon: Icons.badge_outlined),
+                  WalimColumn(label: 'PHONE', icon: Icons.phone_android_rounded),
+                ],
+                items: filteredRiders,
+                rowBuilder: (pagedRiders) => pagedRiders.map((rider) => DataRow(
+                  onSelectChanged: (_) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RiderDetailScreen(profile: UserProfile.fromJson(rider)),
+                      ),
+                    );
+                  },
+                  cells: [
+                    DataCell(_buildRiderInfo(rider)),
+                    DataCell(_buildStatusBadge(rider['status'] ?? 'unknown')),
+                    DataCell(Text(rider['vehicle'] ?? 'No vehicle', style: GoogleFonts.outfit(fontWeight: FontWeight.w500))),
+                    DataCell(Text(rider['iqama_number'] ?? 'N/A', style: GoogleFonts.outfit(color: AppColors.textSecondary))),
+                    DataCell(Text(rider['phone_number'] ?? 'N/A', style: GoogleFonts.outfit(fontWeight: FontWeight.w600))),
+                  ],
+                )).toList(),
+                emptyState: _buildEmptyState(),
+              ),
             ),
           ],
         );
@@ -66,269 +87,173 @@ class _RidersListScreenState extends ConsumerState<RidersListScreen> {
   Widget _buildFilters(BuildContext context) {
     final currentStatus = ref.watch(riderFilterStatusProvider);
     final statuses = [null, 'active', 'on leave', 'inactive'];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: statuses.map((status) {
-          final isSelected = currentStatus == status;
-          final label = status == null ? 'All Status' : status.toUpperCase();
-          
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: ChoiceChip(
-              label: Text(label, style: GoogleFonts.outfit(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              )),
-              selected: isSelected,
-              onSelected: (selected) {
-                ref.read(riderFilterStatusProvider.notifier).state = selected ? status : null;
-                setState(() {
-                  _currentPage = 0; // Reset to first page on filter change
-                });
-              },
-              selectedColor: AppColors.primary,
-              backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              showCheckmark: false,
-              elevation: isSelected ? 4 : 0,
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildRidersTable(BuildContext context, List<Map<String, dynamic>> riders, bool isDark) {
-    // Client-side pagination
-    final startIndex = _currentPage * _rowsPerPage;
-    final endIndex = (startIndex + _rowsPerPage) < riders.length ? (startIndex + _rowsPerPage) : riders.length;
-    final pagedRiders = riders.isEmpty ? <Map<String, dynamic>>[] : riders.sublist(startIndex, endIndex);
-    final totalPages = (riders.length / _rowsPerPage).ceil();
-
     return Container(
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isDark ? Colors.white10 : AppColors.divider),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
       ),
-      child: Column(
+      child: Row(
         children: [
+          Icon(Icons.filter_list_rounded, size: 18, color: AppColors.textSecondary),
+          const SizedBox(width: 16),
           Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width - 100),
-                  child: DataTable(
-                    headingRowColor: WidgetStateProperty.all(isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.background),
-                    dataRowMaxHeight: 70,
-                    dividerThickness: 0.5,
-                    columns: [
-                      DataColumn(label: _buildHeaderLabel('Rider')),
-                      DataColumn(label: _buildHeaderLabel('Status')),
-                      DataColumn(label: _buildHeaderLabel('Vehicle')),
-                      DataColumn(label: _buildHeaderLabel('Iqama Number')),
-                      DataColumn(label: _buildHeaderLabel('Phone')),
-                      DataColumn(label: _buildHeaderLabel('Action')),
-                    ],
-                    rows: pagedRiders.map((rider) => DataRow(
-                      cells: [
-                        DataCell(_buildRiderInfo(rider)),
-                        DataCell(_buildStatusBadge(rider['status'] ?? 'unknown')),
-                        DataCell(Text(rider['vehicle'] ?? 'No vehicle', style: GoogleFonts.outfit())),
-                        DataCell(Text(rider['iqama_number'] ?? 'N/A', style: GoogleFonts.outfit())),
-                        DataCell(Text(rider['phone_number'] ?? 'N/A', style: GoogleFonts.outfit())),
-                        DataCell(_buildAction(context, rider)),
-                      ],
-                    )).toList(),
-                  ),
-                ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: statuses.map((status) {
+                  final isSelected = currentStatus == status;
+                  final label = status == null ? 'All Status' : status.toUpperCase();
+                  
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ChoiceChip(
+                      label: Text(label, style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                        color: isSelected ? Colors.white : (isDark ? Colors.white60 : AppColors.textSecondary),
+                      )),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        ref.read(riderFilterStatusProvider.notifier).state = selected ? status : null;
+                      },
+                      selectedColor: AppColors.primary,
+                      backgroundColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(
+                        color: isSelected ? AppColors.primary : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+                        width: 1,
+                      ),
+                      showCheckmark: false,
+                      elevation: 0,
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),
-          _buildPaginationFooter(riders.length, totalPages, isDark),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPaginationFooter(int totalItems, int totalPages, bool isDark) {
-    if (totalItems == 0) return const SizedBox.shrink();
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: isDark ? Colors.white10 : AppColors.divider)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Showing ${(_currentPage * _rowsPerPage) + 1} to ${((_currentPage + 1) * _rowsPerPage).clamp(0, totalItems)} of $totalItems riders',
-            style: GoogleFonts.outfit(
-              fontSize: 13,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Row(
-            children: [
-              _buildPageButton(
-                icon: Icons.chevron_left,
-                onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
-              ),
-              const SizedBox(width: 8),
-              ...List.generate(totalPages, (index) {
-                // Show only a few page numbers if there are many
-                if (totalPages > 7) {
-                  if (index != 0 && index != totalPages - 1 && (index < _currentPage - 1 || index > _currentPage + 1)) {
-                    if (index == _currentPage - 2 || index == _currentPage + 2) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4),
-                        child: Text('...'),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  }
-                }
-                
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: _buildPageNumber(index, isDark),
-                );
-              }),
-              const SizedBox(width: 8),
-              _buildPageButton(
-                icon: Icons.chevron_right,
-                onPressed: _currentPage < totalPages - 1 ? () => setState(() => _currentPage++) : null,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPageNumber(int index, bool isDark) {
-    final isSelected = _currentPage == index;
-    return InkWell(
-      onTap: () => setState(() => _currentPage = index),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 32,
-        height: 32,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : (isDark ? Colors.white10 : AppColors.divider),
-          ),
-        ),
-        child: Text(
-          '${index + 1}',
-          style: GoogleFonts.outfit(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPageButton({required IconData icon, VoidCallback? onPressed}) {
-    return IconButton(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 20),
-      style: IconButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: AppColors.divider),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderLabel(String label) {
-    return Text(
-      label,
-      style: GoogleFonts.outfit(
-        fontWeight: FontWeight.w900,
-        fontSize: 13,
-        letterSpacing: 0.5,
-        color: AppColors.textSecondary,
       ),
     );
   }
 
   Widget _buildRiderInfo(Map<String, dynamic> rider) {
     final name = rider['full_name'] ?? 'Rider';
+    final color = Colors.grey.shade400;
+
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color, color.withValues(alpha: 0.7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          alignment: Alignment.center,
           child: Text(
             name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
-            style: GoogleFonts.outfit(color: AppColors.primary, fontWeight: FontWeight.bold),
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
           ),
         ),
-        const SizedBox(width: 12),
-        Text(name, style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+        const SizedBox(width: 14),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              name,
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              rider['group_name'] ?? 'General Fleet',
+              style: GoogleFonts.outfit(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 
   Widget _buildStatusBadge(String status) {
     Color color;
-    switch (status.toLowerCase()) {
-      case 'active': color = Colors.green; break;
-      case 'on leave': color = Colors.orange; break;
-      case 'inactive': color = Colors.red; break;
-      default: color = Colors.grey;
+    IconData icon;
+    switch (status.toLowerCase().replaceAll('_', ' ')) {
+      case 'active':
+      case 'active completed':
+        icon = Icons.check_circle_rounded;
+        color = const Color(0xFF10B981); // Emerald Green
+        break;
+      case 'active pending':
+        icon = Icons.pending_actions_rounded;
+        color = const Color(0xFFF59E0B); // Amber for Pending
+        break;
+      case 'on leave': 
+        icon = Icons.pause_circle_filled_rounded;
+        color = const Color(0xFF3B82F6); // Blue
+        break;
+      case 'inactive':
+      case 'inactive completed':
+      case 'inactive pending':
+        icon = Icons.cancel_rounded;
+        color = const Color(0xFFEF4444); // Red
+        break;
+      default: 
+        icon = Icons.help_rounded;
+        color = const Color(0xFF64748B); // Slate Grey
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
-      child: Text(
-        status.toUpperCase(),
-        style: GoogleFonts.outfit(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAction(BuildContext context, Map<String, dynamic> rider) {
-    return TextButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => RiderDetailScreen(profile: UserProfile.fromJson(rider)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            status.toUpperCase(),
+            style: GoogleFonts.outfit(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+            ),
           ),
-        );
-      },
-      child: Text('View Details', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.primary)),
+        ],
+      ),
     );
   }
 
@@ -338,13 +263,28 @@ class _RidersListScreenState extends ConsumerState<RidersListScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 100),
-          Icon(Icons.people_outline_rounded, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.2)),
-          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.people_outline_rounded, size: 64, color: AppColors.primary.withValues(alpha: 0.5)),
+          ),
+          const SizedBox(height: 24),
           Text(
             'No riders found',
             style: GoogleFonts.outfit(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting your search or filters',
+            style: GoogleFonts.outfit(
+              fontSize: 14,
               color: AppColors.textSecondary,
             ),
           ),

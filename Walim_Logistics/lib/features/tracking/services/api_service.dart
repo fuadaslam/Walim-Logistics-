@@ -48,7 +48,7 @@ class ApiService {
   }
 
   Future<List<Vehicle>> getDevices() async {
-    const pageSize = 250; // API hard limit
+    const pageSize = 250;
     final Map<String, Vehicle> uniqueVehicles = {};
     int page = 1;
 
@@ -62,7 +62,9 @@ class ApiService {
         },
       );
 
-      final res = await _client.get(uri, headers: _headers);
+      final res = await _client
+          .get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 60));
 
       if (res.statusCode == 401) throw Exception('Invalid API key');
       if (res.statusCode == 403) throw Exception('Access forbidden');

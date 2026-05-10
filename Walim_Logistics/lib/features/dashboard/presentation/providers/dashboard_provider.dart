@@ -25,6 +25,7 @@ class DashboardData {
   final List<Map<String, dynamic>> fleetAssets;
   final bool isLoading;
   final String? error;
+  final DateTime? lastUpdated;
 
   DashboardData({
     this.activeRiders = 0,
@@ -44,6 +45,7 @@ class DashboardData {
     this.fleetAssets = const [],
     this.isLoading = false,
     this.error,
+    this.lastUpdated,
   });
 
   DashboardData copyWith({
@@ -64,6 +66,7 @@ class DashboardData {
     List<Map<String, dynamic>>? fleetAssets,
     bool? isLoading,
     String? error,
+    DateTime? lastUpdated,
   }) {
     return DashboardData(
       activeRiders: activeRiders ?? this.activeRiders,
@@ -83,6 +86,7 @@ class DashboardData {
       fleetAssets: fleetAssets ?? this.fleetAssets,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
 }
@@ -119,11 +123,14 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
         recentActivity: activity,
         fleetAssets: assets,
         isLoading: false,
+        lastUpdated: DateTime.now(),
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  Future<void> refresh() => loadDashboard();
 }
 
 final dashboardDataProvider = StateNotifierProvider<DashboardNotifier, DashboardData>((ref) {

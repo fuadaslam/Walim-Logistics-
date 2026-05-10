@@ -10,7 +10,7 @@ class OperationsRepository {
   Future<List<Map<String, dynamic>>> fetchGroups() async {
     final res = await _db
         .from('groups')
-        .select('*, platforms(name), zones(name), profiles!supervisor_id(id, full_name)')
+        .select('*, platforms(name), zones(name), supervisor:profiles!supervisor_id(id, full_name), leader:profiles!leader_id(id, full_name)')
         .order('name');
     return List<Map<String, dynamic>>.from(res as List);
   }
@@ -86,6 +86,16 @@ class OperationsRepository {
         .eq('rider_id', riderId);
   }
 
+  Future<void> assignGroupLeader({
+    required String groupId,
+    required String? riderId,
+  }) async {
+    await _db
+        .from('groups')
+        .update({'leader_id': riderId})
+        .eq('id', groupId);
+  }
+
   // ── Riders & Supervisors ──────────────────────────────────────────────────
 
   Future<List<Map<String, dynamic>>> fetchRiders() async {
@@ -115,6 +125,10 @@ class OperationsRepository {
   Future<List<Map<String, dynamic>>> fetchPlatforms() async {
     final res = await _db.from('platforms').select('id, name').order('name');
     return List<Map<String, dynamic>>.from(res as List);
+  }
+
+  Future<void> createPlatform({required String name}) async {
+    await _db.from('platforms').insert({'name': name});
   }
 
   Future<List<Map<String, dynamic>>> fetchZones() async {

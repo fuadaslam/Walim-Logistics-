@@ -12,8 +12,6 @@ class LayoutSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final layout = ref.watch(dashboardLayoutProvider);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return DashboardScaffold(
       title: 'DASHBOARD SETTINGS',
@@ -79,7 +77,7 @@ class LayoutSettingsScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha:0.5)),
       ),
       child: ReorderableListView.builder(
         shrinkWrap: true,
@@ -101,9 +99,9 @@ class LayoutSettingsScreen extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor.withOpacity(0.5),
+          color: Theme.of(context).cardColor.withValues(alpha:0.5),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.3), style: BorderStyle.solid),
+          border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha:0.3), style: BorderStyle.solid),
         ),
         child: const Center(
           child: Text('No hidden sections', style: TextStyle(color: AppColors.textSecondary)),
@@ -115,7 +113,7 @@ class LayoutSettingsScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha:0.5)),
       ),
       child: ListView.builder(
         shrinkWrap: true,
@@ -130,15 +128,13 @@ class LayoutSettingsScreen extends ConsumerWidget {
   }
 
   Widget _buildSectionTile(BuildContext context, WidgetRef ref, DashboardSection section, int index, bool isActive) {
-    final theme = Theme.of(context);
-    
     return ListTile(
       key: ValueKey(section),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: _getSectionColor(section).withOpacity(0.1),
+          color: _getSectionColor(section).withValues(alpha:0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(_getSectionIcon(section), color: _getSectionColor(section), size: 20),

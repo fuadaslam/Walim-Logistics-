@@ -17,15 +17,15 @@ import 'package:walim_logistics/features/dashboard/presentation/rider_dashboard.
 import 'package:walim_logistics/features/dashboard/presentation/biz_dev_dashboard.dart';
 
 // Import other screens
+import 'package:walim_logistics/features/dashboard/presentation/settings_screen.dart';
 import 'package:walim_logistics/features/tracking/screens/home_screen.dart' as walim_tracking;
 import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
 import 'package:walim_logistics/features/tracking/theme/app_theme.dart' as tracking_theme;
 import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
-import 'package:walim_logistics/features/inspections/presentation/inspection_screen.dart';
+import 'package:walim_logistics/features/hr/presentation/asset_management_screen.dart';
 import 'package:walim_logistics/features/support/presentation/support_tickets_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/document_vault_screen.dart';
 import 'package:walim_logistics/features/requests/presentation/leave_request_screen.dart' as rider_requests;
-import 'package:walim_logistics/features/fleet/presentation/live_tracking_screen.dart';
 import 'package:walim_logistics/features/tracking/presentation/widgets/live_rider_map.dart';
 import 'package:walim_logistics/features/reports/presentation/reports_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
@@ -106,9 +106,18 @@ class MainDashboardShell extends ConsumerWidget {
         );
       case DashboardTab.assets:
         return _TabConfig(
-          title: l10n.assetManagement.toUpperCase(),
-          subtitle: 'Track and assign fleet assets',
+          title: 'ASSET RESPONSIBILITY',
+          subtitle: 'Tracking company assets assigned to staff members',
           activeItem: 'Assets',
+          showBackButton: true,
+          onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
+          body: const AssetManagementScreen(showScaffold: false),
+        );
+      case DashboardTab.vehicles:
+        return _TabConfig(
+          title: 'VEHICLE REGISTRY',
+          subtitle: 'Track vehicle registrations, inspections, and insurance',
+          activeItem: 'Vehicles',
           showBackButton: true,
           onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
           body: const FleetAssetRegistryScreen(showScaffold: false),
@@ -185,7 +194,7 @@ class MainDashboardShell extends ConsumerWidget {
           activeItem: 'Settings',
           showBackButton: true,
           onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
-          body: const Center(child: Text('Settings Screen')),
+          body: const SettingsScreen(),
         );
       case DashboardTab.riders:
         return _TabConfig(
@@ -205,6 +214,8 @@ class MainDashboardShell extends ConsumerWidget {
           activeItem: 'Supervisors',
           showBackButton: true,
           onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
+          onSearchChanged: (v) => ref.read(supervisorSearchQueryProvider.notifier).state = v,
+          searchHint: 'Search by name, platform or group...',
           body: const SupervisorsListScreen(),
         );
       case DashboardTab.platforms:
@@ -214,10 +225,10 @@ class MainDashboardShell extends ConsumerWidget {
           activeItem: 'Platforms',
           showBackButton: true,
           onBack: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.dashboard),
+          onSearchChanged: (v) => ref.read(platformSearchQueryProvider.notifier).state = v,
+          searchHint: 'Search by platform name...',
           body: const PlatformsListScreen(),
         );
-      default:
-        return _getDashboardConfig(role, l10n);
     }
   }
 

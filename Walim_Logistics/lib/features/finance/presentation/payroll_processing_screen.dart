@@ -26,7 +26,7 @@ class PayrollProcessingScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppColors.accent, Color(0xFF4A4ED7)]),
+        gradient: LinearGradient(colors: [Colors.grey.shade700, Colors.grey.shade800]),
         borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
@@ -93,14 +93,14 @@ class PayrollProcessingScreen extends StatelessWidget {
             const DataCell(Text('﷼ 3,500')),
             const DataCell(Text('﷼ 450')),
             const DataCell(Text('﷼ 3,950')),
-            DataCell(Icon(Icons.check_circle, color: Colors.green[400])),
+            DataCell(Icon(Icons.check_circle, color: Colors.grey.shade400)),
           ]),
           DataRow(cells: [
             const DataCell(Text('Mohammed Khan')),
             const DataCell(Text('﷼ 3,200')),
             const DataCell(Text('﷼ 200')),
             const DataCell(Text('﷼ 3,400')),
-            const DataCell(Icon(Icons.pending_actions, color: Colors.orange)),
+            DataCell(Icon(Icons.pending_actions, color: Colors.grey.shade400)),
           ]),
         ],
       ),

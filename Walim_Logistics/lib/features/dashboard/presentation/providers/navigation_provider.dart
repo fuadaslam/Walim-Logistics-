@@ -18,6 +18,7 @@ enum DashboardTab {
   riders,
   supervisors,
   platforms,
+  vehicles,
 }
 
 class NavigationState {

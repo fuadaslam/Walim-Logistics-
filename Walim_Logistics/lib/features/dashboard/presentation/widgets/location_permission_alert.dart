@@ -14,12 +14,12 @@ class LocationPermissionAlert extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.1),
+        color: AppColors.error.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.error.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: AppColors.error.withValues(alpha:0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.error.withOpacity(0.1),
+            color: AppColors.error.withValues(alpha:0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

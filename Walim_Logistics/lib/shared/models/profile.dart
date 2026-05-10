@@ -27,6 +27,8 @@ class UserProfile {
   final String? supervisorPhone;
   final String? zoneId;
   final String? zoneName;
+  final String? managedPlatforms;
+  final String? managedGroups;
 
   UserProfile({
     required this.id,
@@ -55,6 +57,8 @@ class UserProfile {
     this.supervisorPhone,
     this.zoneId,
     this.zoneName,
+    this.managedPlatforms,
+    this.managedGroups,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -113,6 +117,8 @@ class UserProfile {
       supervisorPhone: json['supervisor_phone'],
       zoneId: json['zone_id'],
       zoneName: json['zone_name'],
+      managedPlatforms: json['managed_platforms'],
+      managedGroups: json['managed_groups'],
     );
   }
 }

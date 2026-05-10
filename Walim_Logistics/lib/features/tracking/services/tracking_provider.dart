@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/vehicle.dart';
 import 'api_service.dart';
 
@@ -43,6 +44,7 @@ class TrackingProvider extends ChangeNotifier {
   String _selectedCity = 'All';
   String _activeMenu = 'Live GPS';
   final Set<String> _resolvedIncidentIds = {};
+  int _consecutiveErrors = 0;
 
   TrackingProvider() {
     _autoInit();
@@ -265,18 +267,81 @@ class TrackingProvider extends ChangeNotifier {
     _loading = true;
     notifyListeners();
     try {
-      final vehicles = await _api.getDevices();
-      _vehicles = vehicles;
+      final devices = await _api.getDevices();
+      
+      // Fetch vehicle metadata from Supabase
+      try {
+        final supabase = Supabase.instance.client;
+        final List<dynamic> dbVehicles = await supabase
+            .from('vehicles')
+            .select('plate_number, make, model, vin_number, type, assigned_profile_id, profiles(full_name, iqama_number)');
+            
+        final dbVehiclesMap = <String, Map<String, dynamic>>{};
+        for (var v in dbVehicles) {
+          final plate = v['plate_number']?.toString().toLowerCase().replaceAll(' ', '') ?? '';
+          if (plate.isNotEmpty) {
+            dbVehiclesMap[plate] = v as Map<String, dynamic>;
+          }
+        }
+        
+        final mergedVehicles = devices.map((v) {
+          final cleanPlate = v.plateNumber.toLowerCase().replaceAll(' ', '');
+          final dbVehicle = dbVehiclesMap[cleanPlate];
+          if (dbVehicle != null) {
+            final profiles = dbVehicle['profiles'];
+            String? riderName = v.riderName;
+            String? iqamaNumber = v.iqamaNumber;
+            if (profiles is Map<String, dynamic>) {
+              riderName = profiles['full_name']?.toString() ?? riderName;
+              iqamaNumber = profiles['iqama_number']?.toString() ?? iqamaNumber;
+            } else if (profiles is List && profiles.isNotEmpty) {
+              riderName = profiles[0]['full_name']?.toString() ?? riderName;
+              iqamaNumber = profiles[0]['iqama_number']?.toString() ?? iqamaNumber;
+            }
+            return Vehicle(
+              id: v.id,
+              name: v.name,
+              plateNumber: v.plateNumber,
+              protocol: v.protocol,
+              status: v.status,
+              active: v.active,
+              riderName: riderName,
+              iqamaNumber: iqamaNumber,
+              make: dbVehicle['make']?.toString() ?? '',
+              model: dbVehicle['model']?.toString() ?? '',
+              vin: dbVehicle['vin_number']?.toString() ?? '',
+              position: v.position,
+            );
+          }
+          return v;
+        }).toList();
+        
+        _vehicles = mergedVehicles;
+      } catch (dbError) {
+        debugPrint('Error merging Supabase vehicle metadata: $dbError');
+        _vehicles = devices;
+      }
+      
       _lastUpdate = DateFormat('HH:mm').format(DateTime.now());
+      _consecutiveErrors = 0;
       _error = null;
     } catch (e) {
+      _consecutiveErrors++;
       final msg = e.toString().replaceFirst('Exception: ', '');
-      _error = (msg.contains('Connection refused') || msg.contains('SocketException'))
-          ? 'Proxy offline — run: dart run proxy/bin/proxy.dart'
-          : msg;
+      if (msg.contains('Connection refused') || msg.contains('SocketException')) {
+        _error = 'Proxy offline — run: dart run proxy/bin/proxy.dart';
+      } else if (msg.contains('TimeoutException') || msg.contains('timed out') || msg.contains('504') || msg.contains('500')) {
+        _error = 'Rakeen tracking service is temporarily unavailable. Showing last known data.';
+      } else {
+        _error = msg;
+      }
     }
     _loading = false;
     notifyListeners();
+    // Back off refresh interval after consecutive failures (max 2 min)
+    if (_consecutiveErrors > 0) {
+      _startRefresh();
+    }
   }
 
   Future<void> refresh() async {
@@ -285,7 +350,11 @@ class TrackingProvider extends ChangeNotifier {
 
   void _startRefresh() {
     _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    // Back off to 2 min after 3+ consecutive failures; normal 30s otherwise
+    final interval = _consecutiveErrors >= 3
+        ? const Duration(seconds: 120)
+        : const Duration(seconds: 30);
+    _refreshTimer = Timer.periodic(interval, (_) {
       loadVehicles();
     });
   }
