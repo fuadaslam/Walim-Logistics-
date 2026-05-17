@@ -171,10 +171,10 @@ class HRDashboard extends ConsumerWidget {
         else
           ResponsiveGrid(
             desktopCrossAxisCount: 4,
-            tabletCrossAxisCount: 2,
+            tabletCrossAxisCount: 4,
             mobileCrossAxisCount: 2,
-            spacing: 20,
-            childAspectRatio: 1.2,
+            spacing: 16,
+            childAspectRatio: 1.4,
             children: [
               DashboardStatCard(
                 label: 'Total Staff',
@@ -201,14 +201,16 @@ class HRDashboard extends ConsumerWidget {
                 color: Colors.amber.shade700,
                 trend: 'Requires attention',
                 isPositive: stats.pendingLeaves < 5,
+                sparklineData: const [2, 1, 3, 2, 4, 3, 2],
               ),
-              const DashboardStatCard(
-                label: 'Housing Utilization',
-                value: '—',
-                icon: Icons.other_houses_outlined,
+              DashboardStatCard(
+                label: 'Active Staff Rate',
+                value: '${stats.activeStaffRate}%',
+                icon: Icons.group_outlined,
                 color: Colors.deepPurpleAccent,
-                trend: 'Pending config',
-                isPositive: null,
+                trend: 'Of total workforce',
+                isPositive: stats.activeStaffRate >= 70,
+                sparklineData: const [60, 65, 70, 72, 75, 78, 80],
               ),
             ],
           ),

@@ -25,6 +25,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _hasInitiallyCentered = false;
   bool _mapReady = false;
   bool _showTrackingSidebar = true;
+  bool _isMapFullscreen = false;
 
   static const _cities = {
     'All':    LatLng(23.8859, 45.0792),
@@ -62,6 +63,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = ref.watch(trackingProvider);
+
+    if (_isMapFullscreen) {
+      return Scaffold(
+        body: _buildMapSection(provider),
+      );
+    }
     
     if (!widget.showScaffold) {
       return _buildContent(provider);
@@ -473,7 +480,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         const Spacer(),
         _buildTag('${provider.ordersInFlight} Active Orders', AppTheme.info),
         const SizedBox(width: 12),
-        _buildTag('${provider.totalCount} Units Online', AppTheme.onlineColor),
+        _buildTag('${provider.onlineCount} Units Online', AppTheme.onlineColor),
         const SizedBox(width: 24),
         OutlinedButton.icon(
           onPressed: () {},
@@ -602,11 +609,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     LatLng center = _cities[provider.selectedCity] ?? const LatLng(23.8859, 45.0792);
 
     return Container(
-      height: 600,
+      height: _isMapFullscreen ? double.infinity : 600,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.border),
+        borderRadius: _isMapFullscreen ? BorderRadius.zero : BorderRadius.circular(24),
+        border: _isMapFullscreen ? null : Border.all(color: AppTheme.border),
       ),
       child: Column(
         children: [
@@ -614,11 +621,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
+                if (_isMapFullscreen) ...[
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    onPressed: () => setState(() => _isMapFullscreen = false),
+                  ),
+                  const SizedBox(width: 12),
+                ],
                 Text('Live map — $_activeCity', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
                 const SizedBox(width: 12),
                 _buildTag('GPS sync 1.2s', AppTheme.info),
                 const Spacer(),
                 _buildCityToggle(),
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: Icon(_isMapFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded, color: AppTheme.textBody),
+                  tooltip: _isMapFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen',
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppTheme.sidebarBg,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () => setState(() => _isMapFullscreen = !_isMapFullscreen),
+                ),
               ],
             ),
           ),
@@ -765,23 +789,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Text(
         '${center.latitude.toStringAsFixed(2)}°N, ${center.longitude.toStringAsFixed(2)}°E • ${_mapController.camera.zoom.toStringAsFixed(1)}z',
         style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)
-      ),
-    );
-  }
-
-  Widget _buildHubMarker(String name, LatLng point) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(width: 24, height: 24, decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(4))),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4), boxShadow: AppTheme.softShadow),
-            child: Text(name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
-          ),
-        ],
       ),
     );
   }

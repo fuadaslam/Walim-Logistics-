@@ -37,7 +37,7 @@ class LoginScreen extends ConsumerWidget {
                 width: 300,
                 height: 300,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.6),
+                  color: Colors.white.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -49,7 +49,7 @@ class LoginScreen extends ConsumerWidget {
                 width: 450,
                 height: 450,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -112,12 +112,12 @@ class LoginScreen extends ConsumerWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+                            border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.02),
+                                color: Colors.black.withValues(alpha: 0.02),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -165,7 +165,7 @@ class LoginScreen extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(32),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
+                                color: Colors.black.withValues(alpha: 0.04),
                                 blurRadius: 24,
                                 offset: const Offset(0, 8),
                               ),
@@ -187,7 +187,7 @@ class LoginScreen extends ConsumerWidget {
                                 style: GoogleFonts.outfit(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textSecondary.withOpacity(0.8),
+                                  color: AppColors.textSecondary.withValues(alpha: 0.8),
                                   letterSpacing: 2.5,
                                 ),
                               ),
@@ -207,7 +207,7 @@ class LoginScreen extends ConsumerWidget {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: AppColors.textSecondary.withOpacity(0.7),
+                                  color: AppColors.textSecondary.withValues(alpha: 0.7),
                                   height: 1.5,
                                 ),
                               ),
@@ -225,7 +225,7 @@ class LoginScreen extends ConsumerWidget {
                                   Text(
                                     "${l10n.dontHaveAccount} ",
                                     style: TextStyle(
-                                      color: AppColors.textSecondary.withOpacity(0.8),
+                                      color: AppColors.textSecondary.withValues(alpha: 0.8),
                                       fontSize: 14,
                                     ),
                                   ),
@@ -260,7 +260,7 @@ class LoginScreen extends ConsumerWidget {
                           '© 2024 Walim Logistics • All Rights Reserved',
                           style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.textSecondary.withOpacity(0.5),
+                            color: AppColors.textSecondary.withValues(alpha: 0.5),
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.5,
                           ),

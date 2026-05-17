@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:walim_logistics/features/admin/data/operations_repository.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
-import 'package:walim_logistics/shared/models/profile.dart';
 
 final riderSearchQueryProvider = StateProvider<String>((ref) => '');
 final riderFilterStatusProvider = StateProvider<String?>((ref) => null);
@@ -95,8 +94,7 @@ final detailedPlatformsProvider = FutureProvider<List<Map<String, dynamic>>>((re
   
   // Fetch platforms
   final platforms = await repo.fetchPlatforms();
-  final allGroups = await repo.fetchGroups();
-  
+
   // Fetch today's shift plans to count riders per platform
   final today = DateTime.now();
   final shiftPlans = await repo.fetchShiftPlans(date: today);
@@ -106,9 +104,6 @@ final detailedPlatformsProvider = FutureProvider<List<Map<String, dynamic>>>((re
   
   return platforms.map((plat) {
     final platId = plat['id'];
-    
-    // Groups in this platform
-    final platformGroups = allGroups.where((g) => g['platform_id'] == platId).toList();
     
     // Riders allocated today
     final ridersCount = shiftPlans.where((p) => p['platform_id'] == platId).length;

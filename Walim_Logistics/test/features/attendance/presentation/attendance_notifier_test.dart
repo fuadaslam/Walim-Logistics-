@@ -63,7 +63,7 @@ void main() {
     when(() => mockLocationService.stopTracking()).thenReturn(null);
   });
 
-  ProviderContainer _makeContainer({
+  ProviderContainer makeContainer({
     UserProfile? profile,
     Map<String, dynamic>? activeShift,
     List<String> periods = const [],
@@ -88,7 +88,7 @@ void main() {
 
   group('AttendanceNotifier initialization', () {
     test('starts with default state when no profile is authenticated', () async {
-      final container = _makeContainer(profile: null);
+      final container = makeContainer(profile: null);
       addTearDown(container.dispose);
 
       container.read(attendanceProvider);
@@ -102,7 +102,7 @@ void main() {
     });
 
     test('does not query the repository when no profile is authenticated', () async {
-      final container = _makeContainer(profile: null);
+      final container = makeContainer(profile: null);
       addTearDown(container.dispose);
 
       container.read(attendanceProvider);
@@ -113,7 +113,7 @@ void main() {
     });
 
     test('hasActiveShift is false when no active shift exists', () async {
-      final container = _makeContainer(
+      final container = makeContainer(
         profile: _makeProfile(),
         activeShift: null,
         periods: [],
@@ -128,7 +128,7 @@ void main() {
 
     test('hasActiveShift is true when an active shift exists', () async {
       final shiftStart = DateTime.now().subtract(const Duration(hours: 2));
-      final container = _makeContainer(
+      final container = makeContainer(
         profile: _makeProfile(),
         activeShift: {
           'id': 'shift-1',
@@ -146,7 +146,7 @@ void main() {
 
     test('shiftStartTime is populated from active shift check_in_time', () async {
       final shiftStart = DateTime(2024, 6, 15, 8, 0).toUtc();
-      final container = _makeContainer(
+      final container = makeContainer(
         profile: _makeProfile(),
         activeShift: {
           'id': 'shift-1',
@@ -162,7 +162,7 @@ void main() {
     });
 
     test('todayCheckIns reflects completed periods count', () async {
-      final container = _makeContainer(
+      final container = makeContainer(
         profile: _makeProfile(),
         activeShift: null,
         periods: ['Morning', 'Afternoon'],
@@ -176,7 +176,7 @@ void main() {
     });
 
     test('starts location tracking when an active shift exists', () async {
-      final container = _makeContainer(
+      final container = makeContainer(
         profile: _makeProfile(),
         activeShift: {
           'id': 'shift-1',
@@ -192,7 +192,7 @@ void main() {
     });
 
     test('does not start location tracking when no active shift', () async {
-      final container = _makeContainer(
+      final container = makeContainer(
         profile: _makeProfile(),
         activeShift: null,
       );
@@ -206,7 +206,7 @@ void main() {
 
     test('queries repository with the correct profile id', () async {
       const profileId = 'specific-profile-id';
-      final container = _makeContainer(
+      final container = makeContainer(
         profile: _makeProfile(id: profileId),
         activeShift: null,
       );

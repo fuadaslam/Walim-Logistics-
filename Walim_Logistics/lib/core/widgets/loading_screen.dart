@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:walim_logistics/core/theme/app_theme.dart';
 
 class AppLoadingScreen extends StatelessWidget {
   final String? message;

@@ -26,9 +26,10 @@ class FleetRepository {
 
   Future<List<AssignedAsset>> getAssetsForProfile(String profileId) async {
     final res = await _supabase
-        .from('profile_active_assets')
-        .select()
+        .from('asset_assignments')
+        .select('*, assets(id, name, category, serial_number, status)')
         .eq('profile_id', profileId)
+        .filter('returned_at', 'is', null)
         .order('assigned_at', ascending: false);
     return (res as List).map((e) => AssignedAsset.fromJson(e as Map<String, dynamic>)).toList();
   }

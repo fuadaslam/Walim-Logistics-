@@ -51,7 +51,7 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
       actions: [
         IconButton(
           icon: const Icon(Icons.refresh_rounded),
-          onPressed: () => ref.refresh(attendanceReportsProvider),
+          onPressed: () => ref.invalidate(attendanceReportsProvider),
         ),
       ],
       children: [
@@ -110,10 +110,10 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -238,9 +238,9 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+        color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       height: 48,
       child: Row(
@@ -315,9 +315,9 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+              color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+              border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
             ),
             child: Row(
               children: [
@@ -348,7 +348,7 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
@@ -361,12 +361,12 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
                 headingRowHeight: 64,
                 dataRowMinHeight: 72,
                 dataRowMaxHeight: 72,
-                headingRowColor: WidgetStateProperty.all(AppColors.primary.withOpacity(0.05)),
+                headingRowColor: WidgetStateProperty.all(AppColors.primary.withValues(alpha: 0.05)),
                 horizontalMargin: 24,
                 columnSpacing: 24,
                 dataRowColor: WidgetStateProperty.resolveWith<Color?>((states) {
                   if (states.contains(WidgetState.hovered)) {
-                    return AppColors.primary.withOpacity(0.02);
+                    return AppColors.primary.withValues(alpha: 0.02);
                   }
                   return null;
                 }),
@@ -397,7 +397,7 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
                             builder: (context) => AttendanceReportDetailScreen(report: report),
                           ),
                         ).then((_) {
-                          ref.refresh(attendanceReportsProvider);
+                          ref.invalidate(attendanceReportsProvider);
                         });
                       }
                     },
@@ -420,7 +420,7 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
                                 builder: (context) => AttendanceReportDetailScreen(report: report),
                               ),
                             ).then((_) {
-                              ref.refresh(attendanceReportsProvider);
+                              ref.invalidate(attendanceReportsProvider);
                             });
                           },
                         ),
@@ -451,9 +451,9 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isPresent ? color.withOpacity(0.05) : Colors.transparent,
+        color: isPresent ? color.withValues(alpha: 0.05) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
-        border: isPresent ? Border.all(color: color.withOpacity(0.1)) : null,
+        border: isPresent ? Border.all(color: color.withValues(alpha: 0.1)) : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -463,7 +463,7 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
           Text(
             time,
             style: GoogleFonts.outfit(
-              color: isPresent ? color : AppColors.textSecondary.withOpacity(0.5),
+              color: isPresent ? color : AppColors.textSecondary.withValues(alpha: 0.5),
               fontWeight: isPresent ? FontWeight.bold : FontWeight.normal,
             ),
           ),
@@ -500,9 +500,9 @@ class _AttendanceReportsScreenState extends ConsumerState<AttendanceReportsScree
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

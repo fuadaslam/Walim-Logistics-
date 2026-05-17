@@ -76,43 +76,63 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
             padding: EdgeInsets.all(isMobile ? 8 : 12),
             decoration: BoxDecoration(
               color: isDark 
-                  ? AppColors.surfaceDark.withValues(alpha:0.8) 
+                  ? AppColors.surfaceDark.withValues(alpha:0.9) 
                   : Colors.white,
               borderRadius: BorderRadius.circular(20),
-              gradient: _isHovered ? LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  widget.color.withValues(alpha:isDark ? 0.15 : 0.05),
-                  widget.color.withValues(alpha:isDark ? 0.05 : 0.01),
+                  isDark ? Colors.white.withValues(alpha:0.02) : Colors.white,
+                  widget.color.withValues(alpha:isDark ? (_isHovered ? 0.06 : 0.02) : (_isHovered ? 0.03 : 0.005)),
                 ],
-              ) : null,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: _isHovered 
-                      ? widget.color.withValues(alpha:0.15) 
-                      : Colors.black.withValues(alpha:isDark ? 0.2 : 0.04),
-                  blurRadius: _isHovered ? 25 : 12,
-                  offset: Offset(0, _isHovered ? 8 : 4),
+                      ? widget.color.withValues(alpha:0.1) 
+                      : Colors.black.withValues(alpha:isDark ? 0.15 : 0.015),
+                  blurRadius: _isHovered ? 20 : 10,
+                  offset: Offset(0, _isHovered ? 6 : 4),
                 ),
               ],
               border: Border.all(
                 color: _isHovered 
-                    ? widget.color.withValues(alpha:0.5) 
-                    : (isDark ? Colors.white.withValues(alpha:0.08) : AppColors.divider.withValues(alpha:0.5)),
-                width: 1.2,
+                    ? widget.color.withValues(alpha:0.3) 
+                    : (isDark ? Colors.white.withValues(alpha:0.05) : AppColors.divider.withValues(alpha:0.4)),
+                width: 1.0,
               ),
             ),
             child: Stack(
               children: [
+                // Decorative background blob
+                Positioned(
+                  top: -20,
+                  right: -20,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 400),
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          widget.color.withValues(alpha: _isHovered ? 0.12 : 0.06),
+                          widget.color.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 if (widget.sparklineData != null)
                   Positioned(
-                    bottom: -6,
-                    left: -15,
-                    right: -15,
-                    height: isMobile ? 30 : 40,
-                    child: Opacity(
-                      opacity: _isHovered ? 0.4 : 0.2,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: isMobile ? 35 : 60,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: _isHovered ? 0.5 : 0.3,
                       child: MetricSparkline(
                         data: widget.sparklineData!,
                         color: widget.color,
@@ -142,78 +162,67 @@ class _DashboardStatCardState extends State<DashboardStatCard> with SingleTicker
                           ),
                         ),
                         if (widget.trend != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: (widget.isPositive ?? true) 
-                                  ? Colors.green.withValues(alpha:0.1) 
-                                  : Colors.red.withValues(alpha:0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  (widget.isPositive ?? true) ? Icons.trending_up : Icons.trending_down,
-                                  size: 9,
-                                  color: (widget.isPositive ?? true) ? Colors.green : Colors.red,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: (widget.isPositive ?? true) 
+                                    ? Colors.green.withValues(alpha:0.1) 
+                                    : Colors.red.withValues(alpha:0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      (widget.isPositive ?? true) ? Icons.trending_up : Icons.trending_down,
+                                      size: 9,
+                                      color: (widget.isPositive ?? true) ? Colors.green : Colors.red,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      widget.trend!,
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                        color: (widget.isPositive ?? true) ? Colors.green : Colors.red,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  widget.trend!,
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.bold,
-                                    color: (widget.isPositive ?? true) ? Colors.green : Colors.red,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                       ],
                     ),
+                    const Spacer(),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              widget.value,
-                              style: GoogleFonts.outfit(
-                                fontSize: isMobile ? 20 : 22,
-                                fontWeight: FontWeight.w900,
-                                color: isDark ? Colors.white : AppColors.textPrimary,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            if (!isMobile)
-                              Expanded(
-                                child: Text(
-                                  widget.label.toUpperCase(),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 8,
-                                    color: (isDark ? Colors.white70 : AppColors.textSecondary).withValues(alpha:0.8),
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        if (isMobile)
-                          Text(
-                            widget.label.toUpperCase(),
-                            style: GoogleFonts.outfit(
-                              fontSize: 8,
-                              color: (isDark ? Colors.white70 : AppColors.textSecondary).withValues(alpha:0.8),
-                              fontWeight: FontWeight.bold,
-                            ),
+                        Text(
+                          widget.value,
+                          style: GoogleFonts.outfit(
+                            fontSize: isMobile ? 20 : 24,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                            letterSpacing: -0.8,
+                            height: 1.1,
                           ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.outfit(
+                            fontSize: isMobile ? 10 : 11,
+                            color: (isDark ? Colors.white70 : AppColors.textSecondary).withValues(alpha: 0.85),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.1,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -270,8 +279,15 @@ class _SparklinePainter extends CustomPainter {
     }
 
     path.moveTo(0, getY(data[0]));
-    for (int i = 1; i < data.length; i++) {
-      path.lineTo(i * stepX, getY(data[i]));
+    for (int i = 0; i < data.length - 1; i++) {
+      final x1 = i * stepX;
+      final y1 = getY(data[i]);
+      final x2 = (i + 1) * stepX;
+      final y2 = getY(data[i + 1]);
+      
+      final cx = (x1 + x2) / 2;
+      
+      path.cubicTo(cx, y1, cx, y2, x2, y2);
     }
 
     if (fill) {
@@ -498,19 +514,27 @@ class ActivityFeed extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark.withValues(alpha:0.5) : Colors.white,
+        color: isDark ? AppColors.surfaceDark.withValues(alpha:0.9) : Colors.white,
         borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            isDark ? Colors.white.withValues(alpha:0.02) : Colors.white,
+            isDark ? Colors.white.withValues(alpha:0.00) : AppColors.divider.withValues(alpha:0.1),
+          ],
+        ),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha:0.08) : AppColors.divider.withValues(alpha:0.5),
-          width: 1.5,
+          color: isDark ? Colors.white.withValues(alpha:0.08) : AppColors.divider.withValues(alpha:0.6),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha:isDark ? 0.15 : 0.02),
+            blurRadius: 30,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -573,8 +597,8 @@ class ActivityFeed extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: items.length,
               separatorBuilder: (context, index) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Divider(height: 1, color: (isDark ? Colors.white : AppColors.divider).withValues(alpha:0.1)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1, color: (isDark ? Colors.white : AppColors.divider).withValues(alpha: 0.06)),
               ),
               itemBuilder: (context, index) {
                 final item = items[index];
@@ -587,13 +611,23 @@ class ActivityFeed extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          height: 44,
+                          width: 44,
                           decoration: BoxDecoration(
-                            color: item.color.withValues(alpha:0.1),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: item.color.withValues(alpha:0.2)),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                item.color.withValues(alpha: 0.15),
+                                item.color.withValues(alpha: 0.05),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: item.color.withValues(alpha: 0.2), width: 1),
                           ),
-                          child: Icon(item.icon, color: item.color, size: 20),
+                          child: Center(
+                            child: Icon(item.icon, color: item.color, size: 18),
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(

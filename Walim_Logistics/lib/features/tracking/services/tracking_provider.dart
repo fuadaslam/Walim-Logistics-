@@ -116,6 +116,8 @@ class TrackingProvider extends ChangeNotifier {
   String get activeMenu => _activeMenu;
 
   int get totalCount => _vehicles.length;
+  int get onlineCount =>
+      _vehicles.where((v) => v.status != 'offline').length;
   int get movingCount =>
       _vehicles.where((v) => v.status == 'moving').length;
   int get idleCount => _vehicles
@@ -160,12 +162,12 @@ class TrackingProvider extends ChangeNotifier {
     for (final v in _vehicles) {
       String p = 'Other';
       final upper = v.name.toUpperCase();
-      if (upper.contains('NOON')) p = 'Noon';
-      else if (upper.contains('KEETA')) p = 'Keeta';
-      else if (upper.contains('AMAZON')) p = 'Amazon';
-      else if (upper.contains('JAHEZ')) p = 'Jahez';
-      else if (upper.contains('NINJA GROCERY')) p = 'Ninja Grocery';
-      else if (upper.contains('NINJA')) p = 'Ninja';
+      if (upper.contains('NOON')) { p = 'Noon'; }
+      else if (upper.contains('KEETA')) { p = 'Keeta'; }
+      else if (upper.contains('AMAZON')) { p = 'Amazon'; }
+      else if (upper.contains('JAHEZ')) { p = 'Jahez'; }
+      else if (upper.contains('NINJA GROCERY')) { p = 'Ninja Grocery'; }
+      else if (upper.contains('NINJA')) { p = 'Ninja'; }
       groups.putIfAbsent(p, () => []).add(v);
     }
     return groups.entries

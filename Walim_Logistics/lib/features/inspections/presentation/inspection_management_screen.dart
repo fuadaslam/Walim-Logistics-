@@ -47,7 +47,7 @@ class InspectionManagementScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+              border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
             ),
             child: TabBar(
               tabs: [
@@ -96,16 +96,16 @@ class InspectionManagementScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
+          color: color.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: color.withOpacity(0.1)),
+          border: Border.all(color: color.withValues(alpha: 0.1)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 24),
@@ -160,12 +160,12 @@ class InspectionManagementScreen extends ConsumerWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.divider.withOpacity(0.3)),
+            border: Border.all(color: AppColors.divider.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: (isCompleted ? Colors.green : Colors.orange).withOpacity(0.1),
+                backgroundColor: (isCompleted ? Colors.green : Colors.orange).withValues(alpha: 0.1),
                 child: Text(
                   rider.riderName[0],
                   style: TextStyle(color: isCompleted ? Colors.green : Colors.orange),
@@ -194,7 +194,7 @@ class InspectionManagementScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: rider.inspection!.isSafeToDrive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                        color: rider.inspection!.isSafeToDrive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -221,7 +221,7 @@ class InspectionManagementScreen extends ConsumerWidget {
                   icon: const Icon(Icons.notifications_active_outlined, size: 16),
                   label: const Text('Remind'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.withOpacity(0.1),
+                    backgroundColor: Colors.orange.withValues(alpha: 0.1),
                     foregroundColor: Colors.orange,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

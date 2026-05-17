@@ -211,7 +211,7 @@ class RiderDashboard extends ConsumerWidget {
     String greeting,
   ) {
     final isMobile = MediaQuery.of(context).size.width < 900;
-    final hasPermission = ref.watch(permissionStatusProvider).value ?? true;
+    final hasPermission = ref.watch(permissionStatusProvider).valueOrNull ?? true;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,9 +271,9 @@ class RiderDashboard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.05),
+        color: AppColors.error.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.error.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,7 +317,7 @@ class RiderDashboard extends ConsumerWidget {
                   label: const Text('Mark Leave'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.error,
-                    side: BorderSide(color: AppColors.error.withOpacity(0.5)),
+                    side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
                   ),
                 ),
               ),
@@ -333,7 +333,7 @@ class RiderDashboard extends ConsumerWidget {
                   label: const Text('Report Issue'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.error,
-                    side: BorderSide(color: AppColors.error.withOpacity(0.5)),
+                    side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
                   ),
                 ),
               ),
@@ -471,7 +471,7 @@ class RiderDashboard extends ConsumerWidget {
   Widget _buildRequestStatusSection(BuildContext context, WidgetRef ref) {
     final requestsAsync = ref.watch(riderLeaveRequestsProvider);
 
-    Color _statusColor(String status) {
+    Color statusColor(String status) {
       switch (status) {
         case 'Approved':
           return Colors.green;
@@ -505,11 +505,11 @@ class RiderDashboard extends ConsumerWidget {
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Theme.of(context).dividerColor.withOpacity(0.5),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -524,12 +524,12 @@ class RiderDashboard extends ConsumerWidget {
                   height: 1,
                   indent: 72,
                   endIndent: 20,
-                  color: Theme.of(context).dividerColor.withOpacity(0.3),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
                 ),
                 itemBuilder: (context, index) {
                   final r = requests[index];
                   final status = r['status'] as String? ?? 'Pending';
-                  final color = _statusColor(status);
+                  final color = statusColor(status);
                   final startDate = r['start_date'] != null
                       ? DateFormat('MMM d')
                           .format(DateTime.parse(r['start_date']))
@@ -543,7 +543,7 @@ class RiderDashboard extends ConsumerWidget {
                           height: 44,
                           width: 44,
                           decoration: BoxDecoration(
-                            color: color.withOpacity(0.1),
+                            color: color.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(Icons.event_note_outlined,
@@ -570,7 +570,7 @@ class RiderDashboard extends ConsumerWidget {
                                       .textTheme
                                       .bodyMedium
                                       ?.color
-                                      ?.withOpacity(0.5),
+                                      ?.withValues(alpha: 0.5),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -595,9 +595,9 @@ class RiderDashboard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
 
       child: Text(
@@ -701,9 +701,9 @@ class RiderDashboard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.withOpacity(0.2)),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
       ),
 
       child: Row(
@@ -731,110 +731,137 @@ class RiderDashboard extends ConsumerWidget {
 
   Widget _buildMapPreview(BuildContext context, WidgetRef ref) {
     final zoneAsync = ref.watch(riderZoneProvider);
-    final centerLat = (zoneAsync.value?['geofence_center_lat'] as num?)?.toDouble() ?? 24.7136;
-    final centerLng = (zoneAsync.value?['geofence_center_long'] as num?)?.toDouble() ?? 46.6753;
-    final center = LatLng(centerLat, centerLng);
 
-    return Container(
-      height: 220,
-      width: double.infinity,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Theme.of(context).cardColor,
-        border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.5),
+    return zoneAsync.when(
+      loading: () => Container(
+        height: 220,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Theme.of(context).cardColor,
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+          ),
         ),
+        child: const Center(child: CircularProgressIndicator()),
       ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: center,
-                initialZoom: 14.0,
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+      error: (_, __) => const SizedBox.shrink(),
+      data: (zone) {
+        if (zone == null) {
+          return const EmptyStatePlaceholder(
+            icon: Icons.map_outlined,
+            title: 'No Zone Assigned',
+            subtitle: 'You do not have any active or scheduled shifts for today.',
+            color: Colors.blueGrey,
+          );
+        }
+
+        final centerLat = (zone['geofence_center_lat'] as num?)?.toDouble() ?? 24.7136;
+        final centerLng = (zone['geofence_center_long'] as num?)?.toDouble() ?? 46.6753;
+        final center = LatLng(centerLat, centerLng);
+
+        return Container(
+          height: 220,
+          width: double.infinity,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: Theme.of(context).cardColor,
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: center,
+                    initialZoom: 14.0,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.walim.walim_logistics',
+                      retinaMode: true,
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: center,
+                          width: 50,
+                          height: 50,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.my_location_rounded,
+                              color: AppColors.primary,
+                              size: 28,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.walim.walim_logistics',
-                  retinaMode: true,
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: center,
-                      width: 50,
-                      height: 50,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.my_location_rounded,
-                          color: AppColors.primary,
-                          size: 28,
+              Align(
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 60), // Push below the center marker
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        zone['name'] ?? 'Assigned Zone',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Align(
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 60), // Push below the center marker
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
+              ),
+              Positioned(
+                top: 16,
+                right: 16,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    zoneAsync.value?['name'] ?? 'Riyadh Central Zone',
-                    style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
-                  ),
+                  child: const Icon(Icons.fullscreen_rounded, size: 20),
                 ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.fullscreen_rounded, size: 20),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -846,6 +873,11 @@ class RiderDashboard extends ConsumerWidget {
     bool isMobile,
   ) {
     final isActive = attendanceState.hasActiveShift;
+    final zoneName = ref.watch(riderZoneProvider).when(
+          data: (zone) => zone?['name'] as String? ?? 'Assigned Zone',
+          loading: () => '...',
+          error: (_, __) => 'Assigned Zone',
+        );
 
     return Container(
       padding: EdgeInsets.all(isMobile ? 16 : 24),
@@ -860,14 +892,12 @@ class RiderDashboard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: (isActive ? AppColors.primary : Colors.black).withOpacity(
-              0.3,
-            ),
+            color: (isActive ? AppColors.primary : Colors.black).withValues(alpha: 0.3),
             blurRadius: 25,
             offset: const Offset(0, 15),
           ),
         ],
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.5),
       ),
 
       child: isMobile
@@ -878,10 +908,10 @@ class RiderDashboard extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Icon(
@@ -903,7 +933,7 @@ class RiderDashboard extends ConsumerWidget {
                                 ? 'MISSION STATUS: ACTIVE'
                                 : 'SYSTEM STATUS: STANDBY',
                             style: GoogleFonts.outfit(
-                              color: Colors.white.withOpacity(0.6),
+                              color: Colors.white.withValues(alpha: 0.6),
                               fontSize: 10,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.5,
@@ -912,7 +942,7 @@ class RiderDashboard extends ConsumerWidget {
 
                           Text(
                             isActive
-                                ? '${ref.watch(riderZoneProvider).value?['name'] ?? 'Riyadh Central'} • ${attendanceState.elapsedShiftTime}'
+                                ? '$zoneName • ${attendanceState.elapsedShiftTime}'
                                 : 'Within Geo-fence Area',
                             style: GoogleFonts.outfit(
                               color: Colors.white,
@@ -934,7 +964,7 @@ class RiderDashboard extends ConsumerWidget {
                         : () => _handleAttendance(context, ref),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isActive
-                          ? Colors.redAccent.withOpacity(0.1)
+                          ? Colors.redAccent.withValues(alpha: 0.1)
                           : Colors.white,
                       foregroundColor: isActive
                           ? Colors.redAccent
@@ -944,7 +974,7 @@ class RiderDashboard extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                         side: BorderSide(
                           color: isActive
-                              ? Colors.redAccent.withOpacity(0.5)
+                              ? Colors.redAccent.withValues(alpha: 0.5)
                               : Colors.transparent,
                           width: 1.5,
                         ),
@@ -986,12 +1016,12 @@ class RiderDashboard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                     boxShadow: isActive
                         ? [
                             BoxShadow(
-                              color: Colors.white.withOpacity(0.4),
+                              color: Colors.white.withValues(alpha: 0.4),
                               blurRadius: 20,
                               spreadRadius: 2,
                             ),
@@ -1012,9 +1042,9 @@ class RiderDashboard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isActive ? 'ZONE: ${(ref.watch(riderZoneProvider).value?['name'] as String?)?.toUpperCase() ?? 'RIYADH CENTRAL'}' : 'NOT ON DUTY',
+                        isActive ? 'ZONE: ${zoneName.toUpperCase()}' : 'NOT ON DUTY',
                         style: GoogleFonts.outfit(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2,
@@ -1099,11 +1129,11 @@ class RiderDashboard extends ConsumerWidget {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.5),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1115,7 +1145,7 @@ class RiderDashboard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -1140,7 +1170,7 @@ class RiderDashboard extends ConsumerWidget {
                   style: GoogleFonts.outfit(
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1170,9 +1200,9 @@ class RiderDashboard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1208,7 +1238,7 @@ class RiderDashboard extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => const DocumentVaultScreen()),
               ),
               style: TextButton.styleFrom(
-                backgroundColor: color.withOpacity(0.1),
+                backgroundColor: color.withValues(alpha: 0.1),
                 padding: const EdgeInsets.symmetric(vertical: 8),
               ),
               child: const Text(
@@ -1233,7 +1263,7 @@ class RiderDashboard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 18, color: AppColors.primary),

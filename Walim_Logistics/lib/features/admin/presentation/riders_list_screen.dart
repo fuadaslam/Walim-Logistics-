@@ -21,9 +21,6 @@ class _RidersListScreenState extends ConsumerState<RidersListScreen> {
     final searchQuery = ref.watch(riderSearchQueryProvider).toLowerCase();
     final statusFilter = ref.watch(riderFilterStatusProvider);
     
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return ridersAsync.when(
       data: (allRiders) {
         // Apply filters

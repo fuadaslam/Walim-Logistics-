@@ -120,7 +120,6 @@ class SupervisorRepository {
     await _supabase.from('attendance_reports').update({
       'status': 'SOS_SUBMITTED',
       'sos_submitted_at': DateTime.now().toIso8601String(),
-      'handover_notes': handoverNotes,
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', reportId);
   }
@@ -151,7 +150,6 @@ class SupervisorRepository {
     await _supabase.from('attendance_reports').update({
       'status': 'EOS_SUBMITTED',
       'eos_submitted_at': DateTime.now().toIso8601String(),
-      'handover_notes': handoverNotes,
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', reportId);
   }
@@ -286,6 +284,49 @@ class SupervisorRepository {
       'correction_notes': notes,
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', reportId);
+  }
+
+  /// Returns open/in-progress support tickets for the given rider IDs.
+  Future<List<Map<String, dynamic>>> fetchRiderIncidents(
+      List<String> riderIds) async {
+    if (riderIds.isEmpty) return [];
+    final res = await _supabase
+        .from('support_tickets')
+        .select('*, profiles!support_tickets_profile_id_fkey(full_name)')
+        .inFilter('profile_id', riderIds)
+        .inFilter('status', ['open', 'in_progress'])
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(res as List);
+  }
+
+  /// Returns approved leave requests that cover [date] for the given rider IDs.
+  Future<List<Map<String, dynamic>>> fetchRiderLeaveRequests(
+      List<String> riderIds, DateTime date) async {
+    if (riderIds.isEmpty) return [];
+    final dateStr = _fmtDate(date);
+    final res = await _supabase
+        .from('requests')
+        .select('*, profiles!requests_profile_id_fkey(full_name)')
+        .inFilter('profile_id', riderIds)
+        .eq('type', 'leave')
+        .eq('status', 'approved')
+        .lte('start_date', dateStr)
+        .or('end_date.gte.$dateStr,end_date.is.null')
+        .order('start_date', ascending: false);
+    return List<Map<String, dynamic>>.from(res as List);
+  }
+
+  /// Returns all pending requests from the given rider IDs.
+  Future<List<Map<String, dynamic>>> fetchRiderPendingRequests(
+      List<String> riderIds) async {
+    if (riderIds.isEmpty) return [];
+    final res = await _supabase
+        .from('requests')
+        .select('*, profiles!requests_profile_id_fkey(full_name)')
+        .inFilter('profile_id', riderIds)
+        .eq('status', 'pending')
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(res as List);
   }
 
   String _fmtDate(DateTime d) =>

@@ -98,7 +98,7 @@ void _showGroupBottomSheet(BuildContext context, WidgetRef ref, Map<String, dyna
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withOpacity(0.5),
+    barrierColor: Colors.black.withValues(alpha: 0.5),
     builder: (_) => _GroupBottomSheet(existing: existing, ref: ref),
   );
 }
@@ -145,7 +145,7 @@ class _GroupCard extends StatelessWidget {
 
     // Smart color combinations for premium, highly readable badges
     Color platformTextColor = platformColor;
-    Color platformBgColor = platformColor.withOpacity(0.08);
+    Color platformBgColor = platformColor.withValues(alpha: 0.08);
     if (platformName != null) {
       final pName = platformName.toLowerCase();
       if (pName.contains('noon')) {
@@ -166,14 +166,14 @@ class _GroupCard extends StatelessWidget {
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0),
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withValues(alpha: 0.02),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -319,9 +319,9 @@ class _GroupCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.05),
+                        color: Colors.red.withValues(alpha: 0.05),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.red.withOpacity(0.1)),
+                        border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
                       ),
                       child: IconButton(
                         icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red),
@@ -348,10 +348,10 @@ class _GroupCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.015) : const Color(0xFFF8FAFC),
+        color: isDark ? Colors.white.withValues(alpha: 0.015) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.04) : const Color(0xFFF1F5F9),
+          color: isDark ? Colors.white.withValues(alpha: 0.04) : const Color(0xFFF1F5F9),
         ),
       ),
       child: Row(
@@ -388,7 +388,7 @@ class _GroupCard extends StatelessWidget {
     return Container(
       width: 1,
       height: 24,
-      color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0),
+      color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE2E8F0),
       margin: const EdgeInsets.symmetric(horizontal: 12),
     );
   }
@@ -405,7 +405,7 @@ class _GroupCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color.withOpacity(0.85)),
+          Icon(icon, size: 14, color: color.withValues(alpha: 0.85)),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -473,7 +473,7 @@ class _GroupCard extends StatelessWidget {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.08),
+            color: iconColor.withValues(alpha: 0.08),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
@@ -516,7 +516,7 @@ class _GroupCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -664,7 +664,7 @@ class _GroupBottomSheetState extends ConsumerState<_GroupBottomSheet> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 24,
               offset: const Offset(0, -4),
             ),
@@ -792,7 +792,7 @@ class _GroupBottomSheetState extends ConsumerState<_GroupBottomSheet> {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             side: BorderSide(
-                              color: isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE2E8F0),
+                              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
                             ),
                           ),
                           child: Text(
@@ -949,12 +949,12 @@ class _ActionBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: isPrimary
               ? color
-              : (isDark ? Colors.white.withOpacity(0.04) : Colors.grey[100]),
+              : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey[100]),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isPrimary
                 ? color
-                : (isDark ? Colors.white.withOpacity(0.08) : Colors.grey.withOpacity(0.12)),
+                : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.12)),
             width: 1,
           ),
         ),
@@ -992,9 +992,9 @@ class _ErrorTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.08),
+        color: Colors.red.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.withOpacity(0.15)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [

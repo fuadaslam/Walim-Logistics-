@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:walim_logistics/l10n/app_localizations.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import '../auth_notifier.dart';
+import '../forgot_password_screen.dart';
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});
 
@@ -38,7 +38,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Form(
       key: _formKey,
       child: Column(
@@ -59,12 +58,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 padding: const EdgeInsets.all(12),
                 child: Icon(Icons.alternate_email_rounded, 
                   size: 20, 
-                  color: AppColors.primary.withOpacity(0.7)
+                  color: AppColors.primary.withValues(alpha: 0.7)
                 ),
               ),
               fillColor: const Color(0xFFF8FAFC),
               hintStyle: TextStyle(
-                color: AppColors.textSecondary.withOpacity(0.6),
+                color: AppColors.textSecondary.withValues(alpha: 0.6),
                 fontSize: 14,
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -92,20 +91,20 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 padding: const EdgeInsets.all(12),
                 child: Icon(Icons.lock_outline_rounded, 
                   size: 20, 
-                  color: AppColors.primary.withOpacity(0.7)
+                  color: AppColors.primary.withValues(alpha: 0.7)
                 ),
               ),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                   size: 20,
-                  color: AppColors.textSecondary.withOpacity(0.5),
+                  color: AppColors.textSecondary.withValues(alpha: 0.5),
                 ),
                 onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
               ),
               fillColor: const Color(0xFFF8FAFC),
               hintStyle: TextStyle(
-                color: AppColors.textSecondary.withOpacity(0.6),
+                color: AppColors.textSecondary.withValues(alpha: 0.6),
                 fontSize: 14,
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -115,15 +114,31 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               return null;
             },
           ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                );
+              },
+              child: const Text(
+                'Forgot Password?',
+                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+          ),
           const SizedBox(height: 32),
-          
+
           // Login Button
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: AppColors.primary.withValues(alpha: 0.2),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),

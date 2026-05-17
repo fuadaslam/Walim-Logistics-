@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:walim_logistics/features/performance/data/performance_repository.dart';
 import 'package:walim_logistics/features/performance/presentation/performance_notifier.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
@@ -233,7 +232,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
         decoration: BoxDecoration(
           color: isDark ? AppColors.surfaceDark : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +263,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
                 _selectedRoleFilter = role;
                 _currentPage = 1;
               }),
-              selectedColor: AppColors.primary.withOpacity(0.15),
+              selectedColor: AppColors.primary.withValues(alpha: 0.15),
               checkmarkColor: AppColors.primary,
               labelStyle: GoogleFonts.outfit(
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -289,7 +288,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.01),
+                      color: Colors.black.withValues(alpha: 0.01),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -307,7 +306,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
                   decoration: InputDecoration(
                     hintText: 'Search staff by name or username...',
                     hintStyle: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 14),
-                    prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary.withOpacity(0.7), size: 20),
+                    prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary.withValues(alpha: 0.7), size: 20),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear_rounded, size: 18),
@@ -468,7 +467,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
         height: 36,
         decoration: BoxDecoration(
           color: enabled 
-              ? (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03))
+              ? (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03))
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
@@ -480,7 +479,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
           size: 18,
           color: enabled 
               ? (isDark ? Colors.white70 : AppColors.textPrimary) 
-              : AppColors.textSecondary.withOpacity(0.4),
+              : AppColors.textSecondary.withValues(alpha: 0.4),
         ),
       ),
     );
@@ -501,7 +500,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: isDark ? Colors.white10 : AppColors.divider),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10),
         ],
       ),
       child: Row(
@@ -511,7 +510,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
             height: 44,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+                colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -566,7 +565,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: color, size: 20),
@@ -593,7 +592,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.15)),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
@@ -748,6 +747,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
                       if (!formKey.currentState!.validate()) return;
                       final authProfile = ref.read(authProvider).profile;
                       if (authProfile == null) return;
+                      final messenger = ScaffoldMessenger.of(context);
                       setState(() => _isSaving = true);
                       try {
                         await ref.read(performanceRepositoryProvider).addPenaltyOrBonus(
@@ -757,7 +757,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
                               reason: reasonCtrl.text.trim(),
                               category: category,
                               issuedById: authProfile.id,
-                              issuedByName: authProfile.fullName ?? '',
+                              issuedByName: authProfile.fullName,
                               notes: notesCtrl.text.trim(),
                             );
                         ref.invalidate(allAdjustmentsProvider);
@@ -765,7 +765,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
                         ref.invalidate(supervisorLeaderboardProvider);
                         if (ctx.mounted) Navigator.pop(ctx);
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             SnackBar(
                               content: Text('${_capitalize(type)} added for $staffName'),
                               backgroundColor: type == 'bonus' ? Colors.green : Colors.red,
@@ -865,6 +865,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
                       if (!formKey.currentState!.validate()) return;
                       final authProfile = ref.read(authProvider).profile;
                       if (authProfile == null) return;
+                      final messenger = ScaffoldMessenger.of(context);
                       setState(() => _isSaving = true);
                       try {
                         await ref.read(performanceRepositoryProvider).setTarget(
@@ -877,7 +878,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
                         ref.invalidate(staffTargetsProvider(profileId));
                         if (ctx.mounted) Navigator.pop(ctx);
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             SnackBar(
                               content: Text('Target set for $staffName'),
                               backgroundColor: Colors.green,
@@ -921,7 +922,7 @@ class _AdminPerformanceScreenState extends ConsumerState<AdminPerformanceScreen>
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
+          color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? color : AppColors.divider,

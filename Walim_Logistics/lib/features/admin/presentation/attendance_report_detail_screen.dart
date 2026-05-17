@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
-import 'package:walim_logistics/features/supervisor/data/supervisor_repository.dart';
 import 'package:walim_logistics/features/supervisor/presentation/supervisor_notifier.dart';
 
 final reportDetailsProvider = FutureProvider.family.autoDispose<Map<String, dynamic>, String>((ref, reportId) async {
@@ -287,10 +286,10 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -376,9 +375,9 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -414,7 +413,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -433,7 +432,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,7 +498,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CircleAvatar(
-                      backgroundColor: badgeColor.withOpacity(0.1),
+                      backgroundColor: badgeColor.withValues(alpha: 0.1),
                       foregroundColor: badgeColor,
                       child: Icon(badgeIcon, size: 20),
                     ),
@@ -519,7 +518,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange.withOpacity(0.1),
+                                    color: Colors.orange.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -533,7 +532,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: Colors.blue.withOpacity(0.1),
+                                    color: Colors.blue.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -554,9 +553,9 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEF4444).withOpacity(0.05),
+                                color: const Color(0xFFEF4444).withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.1)),
+                                border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.1)),
                               ),
                               child: Row(
                                 children: [
@@ -577,9 +576,9 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.05),
+                                color: Colors.orange.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.orange.withOpacity(0.1)),
+                                border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
                               ),
                               child: Row(
                                 children: [
@@ -601,7 +600,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: badgeColor.withOpacity(0.1),
+                        color: badgeColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -625,7 +624,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -723,7 +722,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -751,7 +750,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
               ),
               child: Text(
                 notes,
@@ -770,9 +769,9 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFEF4444).withOpacity(0.04),
+                color: const Color(0xFFEF4444).withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.1)),
+                border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.1)),
               ),
               child: Text(
                 correction,
@@ -808,7 +807,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
                   decoration: BoxDecoration(
                     color: Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
                   ),
                   child: Row(
                     children: [
@@ -864,7 +863,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -892,8 +891,8 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFF10B981).withOpacity(0.2),
-                    disabledForegroundColor: Colors.white.withOpacity(0.5),
+                    disabledBackgroundColor: const Color(0xFF10B981).withValues(alpha: 0.2),
+                    disabledForegroundColor: Colors.white.withValues(alpha: 0.5),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -909,7 +908,7 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
                   label: Text('Request Correction', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFEF4444),
-                    side: BorderSide(color: isCorrection ? const Color(0xFFEF4444).withOpacity(0.2) : const Color(0xFFEF4444)),
+                    side: BorderSide(color: isCorrection ? const Color(0xFFEF4444).withValues(alpha: 0.2) : const Color(0xFFEF4444)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -950,9 +949,9 @@ class _AttendanceReportDetailScreenState extends ConsumerState<AttendanceReportD
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

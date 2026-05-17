@@ -114,14 +114,14 @@ class _ScheduleCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.4)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 4))
               ],
@@ -133,7 +133,7 @@ class _ScheduleCard extends StatelessWidget {
             height: 52,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+                colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -194,7 +194,7 @@ class _ScheduleCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -208,9 +208,9 @@ class _ScheduleCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.green.withOpacity(0.2)),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -305,7 +305,7 @@ class _AssignDialogState extends ConsumerState<_AssignDialog> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.withOpacity(0.4)),
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.4)),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -404,7 +404,7 @@ class _AssignDialogState extends ConsumerState<_AssignDialog> {
         padding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.withOpacity(0.4)),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.4)),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -493,18 +493,18 @@ class _DateSelector extends StatelessWidget {
                 color: isSelected
                     ? AppColors.primary
                     : (isDark
-                        ? Colors.white.withOpacity(0.05)
+                        ? Colors.white.withValues(alpha: 0.05)
                         : Colors.white),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected
                       ? AppColors.primary
-                      : Colors.grey.withOpacity(0.2),
+                      : Colors.grey.withValues(alpha: 0.2),
                   width: isSelected ? 2 : 1,
                 ),
                 boxShadow: isSelected ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   )
@@ -518,7 +518,7 @@ class _DateSelector extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0.5,
-                      color: isSelected ? Colors.white.withOpacity(0.8) : Colors.grey,
+                      color: isSelected ? Colors.white.withValues(alpha: 0.8) : Colors.grey,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -552,7 +552,7 @@ class _EmptySchedule extends StatelessWidget {
         child: Column(
           children: [
             Icon(Icons.assignment_ind_outlined,
-                size: 56, color: Colors.grey.withOpacity(0.4)),
+                size: 56, color: Colors.grey.withValues(alpha: 0.4)),
             const SizedBox(height: 16),
             Text(
               'No supervisors assigned for\n${DateFormat('d MMM yyyy').format(date)}',

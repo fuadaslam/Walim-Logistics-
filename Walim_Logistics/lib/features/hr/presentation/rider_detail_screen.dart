@@ -6,13 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:walim_logistics/shared/models/profile.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
-import 'package:walim_logistics/features/hr/presentation/asset_management_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/document_vault_screen.dart';
-import 'package:walim_logistics/features/incidents/presentation/incident_report_screen.dart';
 import 'package:walim_logistics/features/fleet/presentation/shift_assignment_screen.dart';
+import 'package:walim_logistics/features/chat/presentation/chat_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import 'package:walim_logistics/features/fleet/data/fleet_repository.dart';
-import 'package:walim_logistics/features/hr/data/hr_repository.dart';
 import 'package:walim_logistics/shared/models/assigned_asset.dart';
 
 import 'package:walim_logistics/features/admin/data/operations_repository.dart';
@@ -88,8 +86,23 @@ final _riderZoneByIdProvider = FutureProvider.autoDispose.family<Map<String, dyn
 
 class RiderDetailScreen extends ConsumerWidget {
   final UserProfile? profile;
-  
+
   const RiderDetailScreen({super.key, this.profile});
+
+  Future<void> _openWhatsApp(BuildContext context, String phone) async {
+    final digits = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final normalized = digits.startsWith('+') ? digits.substring(1) : digits;
+    final uri = Uri.parse('https://wa.me/$normalized');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('WhatsApp is not installed')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -277,8 +290,6 @@ class RiderDetailScreen extends ConsumerWidget {
     final isMobile = MediaQuery.of(context).size.width < 900;
     final name = currentProfile.fullName;
     final id = currentProfile.id;
-    final displayId = id.length > 8 ? id.substring(0, 8).toUpperCase() : id;
-    
     final avatar = Stack(
       alignment: Alignment.center,
       children: [
@@ -434,22 +445,40 @@ class RiderDetailScreen extends ConsumerWidget {
                 ),
               ),
             if (canEdit && !isOwnProfile) SizedBox(width: 12),
-            if (!isOwnProfile)
+            if (!isOwnProfile) ...[
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Messaging coming soon')));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => ChatScreen(otherUser: currentProfile)),
+                    );
                   },
                   icon: Icon(Icons.chat_bubble_outline_rounded, size: 14),
                   label: Text('Message', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
                     padding: EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ),
+              if (currentProfile.phoneNumber != null && currentProfile.phoneNumber!.isNotEmpty) ...[
+                SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: () => _openWhatsApp(context, currentProfile.phoneNumber!),
+                  icon: _WhatsAppIcon(size: 14),
+                  label: Text('WhatsApp', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Color(0xFF25D366),
+                    side: BorderSide(color: Color(0xFF25D366).withValues(alpha: 0.5)),
+                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ],
           ],
         )
       : Column(
@@ -478,21 +507,40 @@ class RiderDetailScreen extends ConsumerWidget {
                 ),
               ),
             if (canEdit && !isOwnProfile) SizedBox(height: 12),
-            if (!isOwnProfile)
+            if (!isOwnProfile) ...[
               OutlinedButton.icon(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Messaging coming soon')));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ChatScreen(otherUser: currentProfile)),
+                  );
                 },
                 icon: Icon(Icons.chat_bubble_outline_rounded, size: 18),
                 label: Text('Message'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   minimumSize: Size(0, 48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
               ),
+              if (currentProfile.phoneNumber != null && currentProfile.phoneNumber!.isNotEmpty) ...[
+                SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () => _openWhatsApp(context, currentProfile.phoneNumber!),
+                  icon: _WhatsAppIcon(size: 18),
+                  label: Text('WhatsApp'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Color(0xFF25D366),
+                    side: BorderSide(color: Color(0xFF25D366).withValues(alpha: 0.5)),
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    minimumSize: Size(0, 48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ],
+            ],
           ],
         );
 
@@ -1237,13 +1285,14 @@ class RiderDetailScreen extends ConsumerWidget {
     return PopupMenuButton<String>(
       initialValue: currentStatus,
       onSelected: (String status) async {
+        final messenger = ScaffoldMessenger.of(context);
         try {
           await ref.read(operationsRepositoryProvider).updateProfileStatus(profile.id, status);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Status updated to $status')));
+          messenger.showSnackBar(SnackBar(content: Text('Status updated to $status')));
           ref.invalidate(allStaffProvider);
           ref.invalidate(profileByIdProvider(profile.id));
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+          messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
         }
       },
       itemBuilder: (BuildContext context) {
@@ -1342,7 +1391,7 @@ class RiderDetailScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.bar_chart_rounded, size: 48, color: AppColors.textSecondary.withOpacity(0.5)),
+            Icon(Icons.bar_chart_rounded, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 12),
             Text(
               'Weekly Performance Visualization',
@@ -1353,6 +1402,33 @@ class RiderDetailScreen extends ConsumerWidget {
               style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WhatsAppIcon extends StatelessWidget {
+  final double size;
+  const _WhatsAppIcon({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size + 4,
+      height: size + 4,
+      decoration: BoxDecoration(
+        color: const Color(0xFF25D366),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        'W',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: size - 2,
+          fontWeight: FontWeight.bold,
+          height: 1,
         ),
       ),
     );

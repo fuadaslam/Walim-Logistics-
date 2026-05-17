@@ -79,7 +79,7 @@ class _AddPlatformDialogState extends ConsumerState<AddPlatformDialog> {
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded),
                   style: IconButton.styleFrom(
-                    backgroundColor: AppColors.divider.withOpacity(0.2),
+                    backgroundColor: AppColors.divider.withValues(alpha: 0.2),
                   ),
                 ),
               ],
@@ -139,7 +139,7 @@ class _AddPlatformDialogState extends ConsumerState<AddPlatformDialog> {
             hintText: hint,
             prefixIcon: Icon(icon, size: 20),
             filled: true,
-            fillColor: AppColors.divider.withOpacity(0.1),
+            fillColor: AppColors.divider.withValues(alpha: 0.1),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,

@@ -13,7 +13,6 @@ import 'package:walim_logistics/features/dashboard/presentation/providers/layout
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:walim_logistics/features/tracking/screens/rider_tracking_screen.dart';
-import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/my_performance_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/performance_calculation_screen.dart';
@@ -22,7 +21,6 @@ import 'package:walim_logistics/features/hr/presentation/staff_management_screen
 import 'package:walim_logistics/features/inspections/presentation/inspection_management_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/attendance_reports_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/vehicle_allocation_screen.dart';
-import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
 import 'package:walim_logistics/features/supervisor/presentation/shift_cluster_manager_screen.dart';
 
 class SupervisorDashboard extends ConsumerWidget {
@@ -284,6 +282,8 @@ class SupervisorDashboard extends ConsumerWidget {
       );
     }
 
+    final role = ref.watch(authProvider).profile?.role;
+
     // Specialized Supervisor Actions
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,13 +310,14 @@ class SupervisorDashboard extends ConsumerWidget {
               color: Colors.blue,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StaffManagementScreen(initialRole: 'Rider'))),
             ),
-            DashboardActionCard(
-              title: 'Live Rider Tracking',
-              subtitle: 'Monitor your group in real-time',
-              icon: Icons.my_location_rounded,
-              color: Colors.orange,
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RiderTrackingScreen())),
-            ),
+            if (role == 'Admin')
+              DashboardActionCard(
+                title: 'Live Rider Tracking',
+                subtitle: 'Monitor your group in real-time',
+                icon: Icons.my_location_rounded,
+                color: Colors.orange,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RiderTrackingScreen())),
+              ),
           ],
         ),
         const SizedBox(height: 32),

@@ -87,6 +87,24 @@ class DocumentNotifier extends StateNotifier<DocumentState> {
       state = state.copyWith(error: e.toString());
     }
   }
+
+  Future<void> requestRenewal(String id) async {
+    try {
+      await _repository.updateStatus(id, 'Pending Renewal');
+      await _load();
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  Future<void> approveRenewal(String id, DateTime newExpiry) async {
+    try {
+      await _repository.updateStatus(id, 'Valid', expiryDate: newExpiry);
+      await _load();
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
 }
 
 final documentProvider =

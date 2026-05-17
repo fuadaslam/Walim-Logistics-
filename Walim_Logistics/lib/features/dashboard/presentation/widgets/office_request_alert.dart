@@ -19,8 +19,9 @@ class OfficeRequestAlert extends ConsumerWidget {
 
         return Column(
           children: requests.map((request) {
-            final requesterName = request['profiles']['full_name'] ?? 'Management';
-            final requesterRole = (request['profiles']['roles'] as Map?)?['name']?.toString() ?? 'Admin';
+            final profile = request['profiles'] as Map?;
+            final requesterName = profile?['full_name'] ?? 'Management';
+            final requesterRole = (profile?['roles'] as Map?)?['name']?.toString() ?? 'Admin';
             
             return Container(
               margin: const EdgeInsets.only(bottom: 16),

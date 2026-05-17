@@ -123,7 +123,7 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded),
                   style: IconButton.styleFrom(
-                    backgroundColor: AppColors.divider.withOpacity(0.2),
+                    backgroundColor: AppColors.divider.withValues(alpha: 0.2),
                   ),
                 ),
               ],
@@ -171,9 +171,9 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: AppColors.divider.withOpacity(0.1),
+                color: AppColors.divider.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.divider.withOpacity(0.3)),
+                border: Border.all(color: AppColors.divider.withValues(alpha: 0.3)),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButtonFormField<String>(
@@ -234,7 +234,7 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
             hintText: hint,
             prefixIcon: Icon(icon, size: 20),
             filled: true,
-            fillColor: AppColors.divider.withOpacity(0.1),
+            fillColor: AppColors.divider.withValues(alpha: 0.1),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,

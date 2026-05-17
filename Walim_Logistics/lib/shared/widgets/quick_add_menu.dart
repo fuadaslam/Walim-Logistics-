@@ -8,6 +8,8 @@ import 'package:walim_logistics/features/admin/presentation/monitoring_providers
 import 'package:walim_logistics/shared/widgets/add_staff_dialog.dart';
 import 'package:walim_logistics/shared/widgets/add_asset_dialog.dart';
 import 'package:walim_logistics/shared/widgets/add_platform_dialog.dart';
+import 'package:walim_logistics/shared/widgets/upload_report_dialog.dart';
+import 'package:walim_logistics/features/reports/presentation/reports_notifier.dart';
 
 class QuickAddMenu extends ConsumerWidget {
   const QuickAddMenu({super.key});
@@ -96,6 +98,18 @@ class QuickAddMenu extends ConsumerWidget {
             backgroundColor: Colors.transparent,
             builder: (context) => const AddPlatformDialog(),
           ).then((_) => ref.invalidate(detailedPlatformsProvider)),
+        );
+      case DashboardTab.reports:
+        return _buildDirectAddButton(
+          context,
+          label: 'UPLOAD REPORT',
+          icon: Icons.cloud_upload_rounded,
+          onTap: () => showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const UploadReportDialog(),
+          ).then((_) => ref.read(reportsProvider.notifier).loadReports()),
         );
       default:
         return PopupMenuButton<String>(
@@ -240,7 +254,7 @@ class QuickAddMenu extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 20),

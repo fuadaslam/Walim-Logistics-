@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 
@@ -8,7 +7,7 @@ class HousingManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> _accommodations = [
+    final List<Map<String, dynamic>> accommodations = [
       {'name': 'Sakan Al-Malaz', 'location': 'Riyadh East', 'capacity': 40, 'occupied': 38, 'type': 'Rider Housing'},
       {'name': 'Batha Camp', 'location': 'Riyadh Central', 'capacity': 100, 'occupied': 85, 'type': 'Rider Housing'},
       {'name': 'Exit 28 Apartments', 'location': 'Riyadh West', 'capacity': 20, 'occupied': 12, 'type': 'Staff Housing'},
@@ -22,9 +21,9 @@ class HousingManagementScreen extends StatelessWidget {
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: _accommodations.length,
+          itemCount: accommodations.length,
           itemBuilder: (context, index) {
-            final s = _accommodations[index];
+            final s = accommodations[index];
             final occupancy = s['occupied'] / s['capacity'];
 
             return Container(

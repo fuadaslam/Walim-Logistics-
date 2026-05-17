@@ -86,7 +86,7 @@ class _AddAssetDialogState extends ConsumerState<AddAssetDialog> {
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded),
                   style: IconButton.styleFrom(
-                    backgroundColor: AppColors.divider.withOpacity(0.2),
+                    backgroundColor: AppColors.divider.withValues(alpha: 0.2),
                   ),
                 ),
               ],
@@ -113,10 +113,10 @@ class _AddAssetDialogState extends ConsumerState<AddAssetDialog> {
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary : AppColors.divider.withOpacity(0.1),
+                        color: isSelected ? AppColors.primary : AppColors.divider.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected ? AppColors.primary : AppColors.divider.withOpacity(0.3),
+                          color: isSelected ? AppColors.primary : AppColors.divider.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -214,7 +214,7 @@ class _AddAssetDialogState extends ConsumerState<AddAssetDialog> {
             hintText: hint,
             prefixIcon: Icon(icon, size: 20),
             filled: true,
-            fillColor: AppColors.divider.withOpacity(0.1),
+            fillColor: AppColors.divider.withValues(alpha: 0.1),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,

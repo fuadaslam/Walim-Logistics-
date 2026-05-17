@@ -170,17 +170,7 @@ class _DocumentVaultScreenState extends ConsumerState<DocumentVaultScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DocumentDetailScreen(
-          document: doc,
-          onUpdate: (updatedDoc) {
-            ref.read(documentProvider.notifier).upsertDocument(updatedDoc);
-          },
-          onDelete: () {
-            if (doc.status != 'Missing') {
-              ref.read(documentProvider.notifier).deleteDocument(doc.id);
-            }
-          },
-        ),
+        builder: (context) => DocumentDetailScreen(document: doc),
       ),
     );
   }

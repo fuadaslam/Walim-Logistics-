@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
@@ -45,7 +44,7 @@ class AuditLogsScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
               ),
               child: ListView.separated(
                 shrinkWrap: true,

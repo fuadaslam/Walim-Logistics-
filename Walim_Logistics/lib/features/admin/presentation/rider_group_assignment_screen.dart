@@ -166,7 +166,7 @@ class _RiderGroupAssignmentScreenState
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 16, color: color),
@@ -183,9 +183,9 @@ class _RiderGroupAssignmentScreenState
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.05),
+        color: Colors.grey.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: Center(
         child: Text('No riders in this group yet.',
@@ -198,12 +198,12 @@ class _RiderGroupAssignmentScreenState
       List<Map<String, dynamic>> members, bool isDark, String? leaderId) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
             color: isDark
-                ? Colors.white.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.2)),
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.2)),
       ),
       child: ListView.separated(
         shrinkWrap: true,
@@ -221,8 +221,8 @@ class _RiderGroupAssignmentScreenState
               children: [
                 CircleAvatar(
                   backgroundColor: isLeader
-                      ? Colors.amber.withOpacity(0.15)
-                      : AppColors.primary.withOpacity(0.1),
+                      ? Colors.amber.withValues(alpha: 0.15)
+                      : AppColors.primary.withValues(alpha: 0.1),
                   child: Text(
                     (profile?['full_name'] as String? ?? '?')[0].toUpperCase(),
                     style: TextStyle(
@@ -258,9 +258,9 @@ class _RiderGroupAssignmentScreenState
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.12),
+                      color: Colors.amber.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       'LEADER',
@@ -435,7 +435,7 @@ class _AvailableRiderTileState extends ConsumerState<_AvailableRiderTile> {
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: Colors.green.withOpacity(0.1),
+        backgroundColor: Colors.green.withValues(alpha: 0.1),
         child: Text(
           (widget.rider['full_name'] as String? ?? '?')[0].toUpperCase(),
           style: const TextStyle(

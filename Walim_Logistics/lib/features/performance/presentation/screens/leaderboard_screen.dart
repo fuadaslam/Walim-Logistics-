@@ -16,9 +16,7 @@ class LeaderboardScreen extends ConsumerWidget {
       subtitle: 'Top performers this month — riders and supervisors',
       showBackButton: true,
       activeItem: 'Performance',
-      children: [
-        _buildTabs(context, ref),
-      ],
+      body: _buildTabs(context, ref),
     );
   }
 
@@ -33,7 +31,7 @@ class LeaderboardScreen extends ConsumerWidget {
             width: 380,
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isDarkMode ? Colors.white.withOpacity(0.05) : AppColors.background,
+              color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : AppColors.background,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: isDarkMode ? Colors.white10 : AppColors.divider),
             ),
@@ -43,7 +41,7 @@ class LeaderboardScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -61,8 +59,7 @@ class LeaderboardScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 32),
-          SizedBox(
-            height: 700,
+          Expanded(
             child: TabBarView(
               children: [
                 _buildList(context, ref, isRider: true),
@@ -89,7 +86,7 @@ class LeaderboardScreen extends ConsumerWidget {
                 Icon(
                   Icons.leaderboard_rounded,
                   size: 64,
-                  color: AppColors.textSecondary.withOpacity(0.2),
+                  color: AppColors.textSecondary.withValues(alpha: 0.2),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -137,7 +134,6 @@ class LeaderboardScreen extends ConsumerWidget {
     final incScore = (entry['incidentScore'] as double? ?? 0);
     final bonus = (entry['bonusTotal'] as double? ?? 0);
     final penalty = (entry['penaltyTotal'] as double? ?? 0);
-    final net = entry['netAdjustment'] as double? ?? 0;
     final currencyFmt = NumberFormat.compactCurrency(symbol: '﷼ ', decimalDigits: 0);
 
     Color rankColor;
@@ -173,15 +169,15 @@ class LeaderboardScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: rank <= 3
-              ? rankColor.withOpacity(0.3)
+              ? rankColor.withValues(alpha: 0.3)
               : (isDarkMode ? Colors.white10 : AppColors.divider),
           width: rank <= 3 ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: rank <= 3
-                ? rankColor.withOpacity(0.08)
-                : Colors.black.withOpacity(0.03),
+                ? rankColor.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.03),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -200,7 +196,7 @@ class LeaderboardScreen extends ConsumerWidget {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: AppColors.textSecondary.withOpacity(0.1),
+                          color: AppColors.textSecondary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Center(
@@ -222,19 +218,29 @@ class LeaderboardScreen extends ConsumerWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+                    colors: [
+                      _getAvatarColor(name),
+                      _getAvatarColor(name).withValues(alpha: 0.7),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _getAvatarColor(name).withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Center(
                   child: Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: const TextStyle(
+                    _getInitials(name),
+                    style: GoogleFonts.outfit(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                      fontSize: 18,
                     ),
                   ),
                 ),
@@ -308,7 +314,7 @@ class LeaderboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -370,16 +376,33 @@ class LeaderboardScreen extends ConsumerWidget {
     final second = board.length > 1 ? board[1] : null;
     final third = board.length > 2 ? board[2] : null;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (second != null) _buildPodiumSpot(context, second, 2, 140),
-        const SizedBox(width: 12),
-        if (first != null) _buildPodiumSpot(context, first, 1, 180),
-        const SizedBox(width: 12),
-        if (third != null) _buildPodiumSpot(context, third, 3, 120),
-      ],
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 700),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark 
+              ? Colors.white.withValues(alpha: 0.02) 
+              : Colors.black.withValues(alpha: 0.01),
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? Colors.white.withValues(alpha: 0.05) 
+                : Colors.black.withValues(alpha: 0.02),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (second != null) _buildPodiumSpot(context, second, 2, 160),
+            const SizedBox(width: 16),
+            if (first != null) _buildPodiumSpot(context, first, 1, 210),
+            const SizedBox(width: 16),
+            if (third != null) _buildPodiumSpot(context, third, 3, 130),
+          ],
+        ),
+      ),
     );
   }
 
@@ -388,76 +411,276 @@ class LeaderboardScreen extends ConsumerWidget {
     final name = entry['name'] as String? ?? 'Unknown';
     final score = (entry['baseScore'] as double? ?? 0).round();
     
-    Color color;
-    if (rank == 1) color = const Color(0xFFFFD700);
-    else if (rank == 2) color = const Color(0xFFC0C0C0);
-    else color = const Color(0xFFCD7F32);
+    late Color color;
+    late List<Color> blockColors;
+    late double avatarSize;
+    
+    if (rank == 1) {
+      color = const Color(0xFFFFC107); // Golden
+      blockColors = [
+        const Color(0xFFFFE082), 
+        const Color(0xFFFFA000),
+      ];
+      avatarSize = 88;
+    } else if (rank == 2) {
+      color = const Color(0xFF9E9E9E); // Silver
+      blockColors = [
+        const Color(0xFFECEFF1),
+        const Color(0xFF78909C),
+      ];
+      avatarSize = 72;
+    } else {
+      color = const Color(0xFF8D6E63); // Bronze
+      blockColors = [
+        const Color(0xFFFFCCBC),
+        const Color(0xFFCA6A46),
+      ];
+      avatarSize = 64;
+    }
+
+    final initials = _getInitials(name);
 
     return Expanded(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: color, width: 3),
-              image: const DecorationImage(
-                image: NetworkImage('https://ui-avatars.com/api/?name=User&background=random'),
-                fit: BoxFit.cover,
+          Stack(
+            alignment: Alignment.bottomCenter,
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: avatarSize + 16,
+                height: avatarSize + 16,
+                alignment: Alignment.center,
+                child: Stack(
+                  alignment: Alignment.topCenter,
+                  clipBehavior: Clip.none,
+                  children: [
+                    if (rank == 1)
+                      Positioned(
+                        top: -6,
+                        child: Container(
+                          width: avatarSize,
+                          height: avatarSize,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFD54F).withValues(alpha: 0.35),
+                                blurRadius: 30,
+                                spreadRadius: 10,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    
+                    Container(
+                      width: avatarSize,
+                      height: avatarSize,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: blockColors,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: Colors.white,
+                          width: rank == 1 ? 4 : 3,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          initials,
+                          style: GoogleFonts.outfit(
+                            fontSize: rank == 1 ? 26 : 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            shadows: const [
+                              Shadow(
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    if (rank == 1)
+                      const Positioned(
+                        top: -32,
+                        child: Icon(
+                          Icons.emoji_events_rounded,
+                          color: Color(0xFFFFD54F),
+                          size: 36,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
+              
+              Positioned(
+                bottom: -8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '#$rank',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              name,
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold, 
+                fontSize: rank == 1 ? 16 : 14,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            name,
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
             ),
             child: Text(
               '$score pts',
-              style: GoogleFonts.outfit(color: color, fontWeight: FontWeight.w900, fontSize: 11),
+              style: GoogleFonts.outfit(
+                color: color, 
+                fontWeight: FontWeight.w900, 
+                fontSize: rank == 1 ? 13 : 11,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
+          
           Container(
             width: double.infinity,
             height: height,
+            margin: const EdgeInsets.symmetric(horizontal: 6),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [color.withOpacity(0.8), color.withOpacity(0.4)],
+                colors: [
+                  blockColors[0].withValues(alpha: 0.95),
+                  blockColors[1].withValues(alpha: 0.8),
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               boxShadow: [
-                BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, -4)),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                '#$rank',
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 32,
-                  shadows: [Shadow(color: Colors.black26, blurRadius: 4, offset: const Offset(0, 2))],
+                BoxShadow(
+                  color: color.withValues(alpha: 0.2), 
+                  blurRadius: 16, 
+                  offset: const Offset(0, -4),
                 ),
+              ],
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.4),
+                width: 1.5,
               ),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned(
+                  bottom: -15,
+                  child: Opacity(
+                    opacity: 0.15,
+                    child: Text(
+                      '$rank',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: height * 0.65,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+                Icon(
+                  rank == 1 
+                      ? Icons.military_tech_rounded 
+                      : (rank == 2 ? Icons.workspace_premium_rounded : Icons.stars_rounded),
+                  size: height * 0.3,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Color _getAvatarColor(String name) {
+    final colors = [
+      const Color(0xFF6366F1), // Indigo
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFF10B981), // Emerald
+      const Color(0xFFF59E0B), // Amber
+      const Color(0xFF3B82F6), // Blue
+      const Color(0xFF8B5CF6), // Violet
+      const Color(0xFFEF4444), // Red
+      const Color(0xFF06B6D4), // Cyan
+    ];
+    return colors[name.hashCode.abs() % colors.length];
+  }
+
+  String _getInitials(String name) {
+    if (name.trim().isEmpty) return '?';
+    final parts = name.trim().split(' ');
+    if (parts.length > 1) {
+      final first = parts[0].trim();
+      final second = parts[1].trim();
+      if (first.isNotEmpty && second.isNotEmpty) {
+        return '${first[0]}${second[0]}'.toUpperCase();
+      }
+    }
+    return name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : '?';
   }
 }

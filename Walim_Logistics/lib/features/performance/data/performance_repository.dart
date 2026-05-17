@@ -190,13 +190,13 @@ class PerformanceRepository {
       debugPrint('Error fetching weights: $e');
     }
 
-    // Fetch all profiles for this role
+    // Fetch all profiles for this role (all active status variants)
     List<dynamic> profiles = [];
     try {
       profiles = await _supabase
           .from('profiles')
           .select('id, full_name, role:roles(name)')
-          .eq('status', 'active');
+          .or('status.eq.active,status.eq.Active_Completed,status.eq.Active_Pending');
       profiles = profiles.where((p) {
         final role = p['role'];
         if (role is Map) return role['name'] == roleName;
@@ -311,7 +311,7 @@ class PerformanceRepository {
     final profiles = await _supabase
         .from('profiles')
         .select('id, full_name, role:roles(name)')
-        .eq('status', 'active');
+        .or('status.eq.active,status.eq.Active_Completed,status.eq.Active_Pending');
     return (profiles as List).where((p) {
       final role = p['role'];
       if (role is Map) return role['name'] == roleName;

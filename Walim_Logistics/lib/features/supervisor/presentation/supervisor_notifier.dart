@@ -74,6 +74,9 @@ class ShiftControlState {
   final bool nextSupervisorSosSubmitted;
   final Map<String, bool> verificationChecklist;
   final String handoverNotes;
+  final List<Map<String, dynamic>> groupIncidents;
+  final List<Map<String, dynamic>> groupLeaveRequests;
+  final List<Map<String, dynamic>> groupPendingRequests;
 
   const ShiftControlState({
     this.report,
@@ -94,6 +97,9 @@ class ShiftControlState {
       'issues': false,
     },
     this.handoverNotes = '',
+    this.groupIncidents = const [],
+    this.groupLeaveRequests = const [],
+    this.groupPendingRequests = const [],
   });
 
   String get reportStatus => report?['status'] as String? ?? 'DRAFT';
@@ -119,6 +125,9 @@ class ShiftControlState {
     bool? nextSupervisorSosSubmitted,
     Map<String, bool>? verificationChecklist,
     String? handoverNotes,
+    List<Map<String, dynamic>>? groupIncidents,
+    List<Map<String, dynamic>>? groupLeaveRequests,
+    List<Map<String, dynamic>>? groupPendingRequests,
   }) {
     return ShiftControlState(
       report: clearReport ? null : (report ?? this.report),
@@ -136,6 +145,9 @@ class ShiftControlState {
       verificationChecklist:
           verificationChecklist ?? this.verificationChecklist,
       handoverNotes: handoverNotes ?? this.handoverNotes,
+      groupIncidents: groupIncidents ?? this.groupIncidents,
+      groupLeaveRequests: groupLeaveRequests ?? this.groupLeaveRequests,
+      groupPendingRequests: groupPendingRequests ?? this.groupPendingRequests,
     );
   }
 }
@@ -275,10 +287,22 @@ class ShiftControlNotifier extends StateNotifier<ShiftControlState> {
       final items = await _buildAttendanceItems(report);
       final flags = await _loadFlags(report);
 
+      final riderIds =
+          items.map((i) => i.riderId).whereType<String>().toList();
+
+      final contextResults = await Future.wait([
+        _repo.fetchRiderIncidents(riderIds),
+        _repo.fetchRiderLeaveRequests(riderIds, state.selectedDate),
+        _repo.fetchRiderPendingRequests(riderIds),
+      ]);
+
       state = state.copyWith(
         report: report,
         attendanceItems: items,
         validationFlags: flags,
+        groupIncidents: contextResults[0],
+        groupLeaveRequests: contextResults[1],
+        groupPendingRequests: contextResults[2],
         loading: false,
         verificationChecklist: _initialChecklist,
         handoverNotes: report['handover_notes'] as String? ?? '',

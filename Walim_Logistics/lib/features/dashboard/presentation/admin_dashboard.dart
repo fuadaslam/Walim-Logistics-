@@ -15,8 +15,6 @@ import 'package:walim_logistics/features/hr/presentation/staff_management_screen
 import 'package:walim_logistics/features/admin/presentation/group_setup_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/shift_planner_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/supervisor_schedule_screen.dart';
-import 'package:walim_logistics/features/tracking/screens/rider_tracking_screen.dart';
-import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/attendance_reports_screen.dart';
 

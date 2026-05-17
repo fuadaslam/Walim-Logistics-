@@ -42,9 +42,6 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return DashboardScaffold(
       title: 'TICKET DETAILS',
       subtitle: 'Track and discuss your issue',
@@ -66,8 +63,6 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
   Widget _buildTicketSummary(BuildContext context) {
     final t = widget.ticket;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -198,8 +193,6 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }
 
   Widget _buildMessageInput(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(

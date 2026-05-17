@@ -55,7 +55,7 @@ class IncidentApprovalScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.check_circle_outline, size: 64, color: AppColors.textSecondary.withOpacity(0.5)),
+                          Icon(Icons.check_circle_outline, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.5)),
                           const SizedBox(height: 16),
                           Text(
                             'No pending approvals',
@@ -86,7 +86,7 @@ class IncidentApprovalScreen extends ConsumerWidget {
             ),
             if (updateState is AsyncLoading)
               Container(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 child: const Center(
                   child: Card(
                     child: Padding(
@@ -123,12 +123,12 @@ class _IncidentCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -158,7 +158,7 @@ class _IncidentCard extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       radius: 18,
-                      backgroundColor: AppColors.accent.withOpacity(0.1),
+                      backgroundColor: AppColors.accent.withValues(alpha: 0.1),
                       child: const Icon(Icons.person, size: 18, color: AppColors.accent),
                     ),
                     const SizedBox(width: 12),
@@ -263,7 +263,7 @@ class _IncidentCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

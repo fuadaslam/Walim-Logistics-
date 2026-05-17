@@ -49,5 +49,19 @@
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>This app needs access to location when open to track your route and delivery progress.</string>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>This app needs access to location when in the background to track your route and delivery progress.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Camera access is needed to photograph staff documents such as Iqama, license, and insurance cards.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Photo library access is needed to upload staff documents from your device.</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>This app may save document photos to your library.</string>
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>whatsapp</string>
+		</array>
 	</dict>
 </plist>

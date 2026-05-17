@@ -425,11 +425,12 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
+              final messenger = ScaffoldMessenger.of(context);
               try {
                 await ref.read(operationsRepositoryProvider).deleteProfile(profile.id);
                 ref.invalidate(allStaffProvider);
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                messenger.showSnackBar(SnackBar(content: Text(e.toString())));
               }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),

@@ -8,7 +8,6 @@ import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboar
 import 'package:walim_logistics/features/dashboard/presentation/widgets/dashboard_scaffold.dart';
 import 'package:walim_logistics/features/dashboard/presentation/capacity_planning_screen.dart';
 import 'package:walim_logistics/features/dashboard/presentation/vehicle_allocation_screen.dart';
-import 'package:walim_logistics/features/fleet/presentation/fleet_asset_registry_screen.dart';
 import 'package:walim_logistics/features/hr/presentation/staff_management_screen.dart';
 import 'package:walim_logistics/features/inspections/presentation/inspection_management_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/group_setup_screen.dart';
@@ -17,7 +16,6 @@ import 'package:walim_logistics/features/admin/presentation/supervisor_schedule_
 import 'package:walim_logistics/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/layout_provider.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
-import 'package:walim_logistics/features/tracking/screens/rider_tracking_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/admin_performance_screen.dart';
 import 'package:walim_logistics/features/performance/presentation/screens/leaderboard_screen.dart';
 import 'package:walim_logistics/features/admin/presentation/attendance_reports_screen.dart';
@@ -281,14 +279,6 @@ class OpsManagerDashboard extends ConsumerWidget {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VehicleAllocationScreen())),
             ),
             DashboardActionCard(
-              title: l10n.liveRiderTracking,
-              subtitle: 'Monitor all active riders',
-              icon: Icons.my_location_rounded,
-              color: Colors.green,
-              badge: 'LIVE',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RiderTrackingScreen())),
-            ),
-            DashboardActionCard(
               title: l10n.capacityPlanning,
               subtitle: 'Peak season forecasting',
               icon: Icons.calendar_today_outlined,
@@ -323,34 +313,6 @@ class OpsManagerDashboard extends ConsumerWidget {
               color: Colors.purple,
               badge: 'NEW',
               onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.reports),
-            ),
-            DashboardActionCard(
-              title: l10n.globalAssetView,
-              subtitle: 'Accountability for all equipment',
-              icon: Icons.inventory_2_outlined,
-              color: Colors.teal,
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FleetAssetRegistryScreen())),
-            ),
-            DashboardActionCard(
-              title: 'Rider Monitoring',
-              subtitle: 'Status, vehicle, and iqama details',
-              icon: Icons.motorcycle_rounded,
-              color: Colors.teal,
-              onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.riders),
-            ),
-            DashboardActionCard(
-              title: 'Supervisor Monitoring',
-              subtitle: 'Platforms and groups managed',
-              icon: Icons.supervisor_account_rounded,
-              color: Colors.blue,
-              onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.supervisors),
-            ),
-            DashboardActionCard(
-              title: 'Platform Monitoring',
-              subtitle: 'Shifts, allocations and supervisors',
-              icon: Icons.business_rounded,
-              color: Colors.indigo,
-              onTap: () => ref.read(navigationProvider.notifier).setTab(DashboardTab.platforms),
             ),
             DashboardActionCard(
               title: l10n.safetyInspections,

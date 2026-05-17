@@ -109,7 +109,7 @@ class _LiveRiderMapState extends ConsumerState<LiveRiderMap> {
                             color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10),
                             ],
                           ),
                           child: Column(
@@ -227,7 +227,7 @@ class _LiveRiderMapState extends ConsumerState<LiveRiderMap> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -245,7 +245,7 @@ class _LiveRiderMapState extends ConsumerState<LiveRiderMap> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.7),
+            color: Colors.black.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
@@ -269,7 +269,7 @@ class _LiveRiderMapState extends ConsumerState<LiveRiderMap> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -289,7 +289,7 @@ class _LiveRiderMapState extends ConsumerState<LiveRiderMap> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: noShadow ? null : [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10),
         ],
       ),
       child: Material(
@@ -324,7 +324,7 @@ class _LiveRiderMapState extends ConsumerState<LiveRiderMap> {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                   child: Text(
                     rider.fullName[0].toUpperCase(),
                     style: TextStyle(color: AppColors.primary, fontSize: 24, fontWeight: FontWeight.bold),

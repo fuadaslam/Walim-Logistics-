@@ -6,6 +6,7 @@ import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'reports_notifier.dart';
 import '../models/platform_report.dart';
+import 'package:walim_logistics/shared/widgets/upload_report_dialog.dart';
 
 class ReportsScreen extends ConsumerWidget {
   final bool showScaffold;
@@ -62,8 +63,15 @@ class ReportsScreen extends ConsumerWidget {
 
   Widget _buildStats(BuildContext context, ReportsState state, bool isAdminOrOps) {
     final uploadedCount = state.reports.length;
-    // For a real app, we'd calculate missing based on platforms * frequency
-    final missingCount = isAdminOrOps ? 3 : 0; 
+    // Platforms that have no upload for the currently selected date
+    final selectedDateStr = state.selectedDate.toIso8601String().split('T')[0];
+    final uploadedPlatformIds = state.reports
+        .where((r) => r.reportDate.toIso8601String().split('T')[0] == selectedDateStr)
+        .map((r) => r.platformId)
+        .toSet();
+    final missingCount = isAdminOrOps
+        ? state.platforms.where((p) => !uploadedPlatformIds.contains(p['id'] as String)).length
+        : 0;
 
     final color = Colors.grey.shade500;
     return Row(
@@ -92,7 +100,7 @@ class ReportsScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -244,155 +252,16 @@ class ReportsScreen extends ConsumerWidget {
   }
 
   void _showUploadDialog(BuildContext context, WidgetRef ref, ReportsState state) {
-    String? selectedPlatformId = state.selectedPlatformId ?? (state.platforms.length == 1 ? state.platforms.first['id'] as String : null);
-    ReportFrequency selectedFrequency = state.selectedFrequency;
-    DateTime selectedDate = state.selectedDate;
-    String fileName = '';
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Row(
-            children: [
-              const Icon(Icons.upload_file_rounded, color: AppColors.primary),
-              const SizedBox(width: 12),
-              Text('Upload Platform Excel', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('PLATFORM', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: selectedPlatformId,
-                  hint: const Text('Choose platform'),
-                  items: state.platforms.map((p) => DropdownMenuItem(
-                    value: p['id'] as String,
-                    child: Text(p['name'] as String),
-                  )).toList(),
-                  onChanged: (v) => setState(() => selectedPlatformId = v),
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Colors.grey.withOpacity(0.05),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text('REPORT FREQUENCY', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<ReportFrequency>(
-                  value: selectedFrequency,
-                  items: ReportFrequency.values.map((f) => DropdownMenuItem(
-                    value: f,
-                    child: Text(f.name.toUpperCase()),
-                  )).toList(),
-                  onChanged: (v) => setState(() => selectedFrequency = v!),
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Colors.grey.withOpacity(0.05),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text('REPORT DATE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () async {
-                    final d = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
-                    );
-                    if (d != null) setState(() => selectedDate = d);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.withOpacity(0.4)),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today_rounded, size: 18, color: Colors.grey),
-                        const SizedBox(width: 12),
-                        Text(DateFormat('yyyy-MM-dd').format(selectedDate)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text('FILE SELECTION', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.03),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.2), style: BorderStyle.solid),
-                  ),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.table_view_rounded, size: 48, color: Colors.green),
-                      const SizedBox(height: 12),
-                      Text(
-                        fileName.isEmpty ? 'Select Excel or CSV File' : fileName,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: fileName.isEmpty ? Colors.grey : AppColors.primary),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () => setState(() => fileName = 'platform_report_${DateFormat('yyyyMMdd').format(selectedDate)}.xlsx'),
-                        icon: const Icon(Icons.attach_file_rounded),
-                        label: const Text('Browse Files'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppColors.primary,
-                          elevation: 0,
-                          side: const BorderSide(color: AppColors.primary),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context), 
-              child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
-            ),
-            ElevatedButton(
-              onPressed: (selectedPlatformId == null || fileName.isEmpty) ? null : () {
-                ref.read(reportsProvider.notifier).uploadReport(
-                  fileName: fileName,
-                  fileType: 'xlsx',
-                  fileUrl: 'mock_url',
-                  reportDate: selectedDate,
-                  frequency: selectedFrequency,
-                  platformId: selectedPlatformId!,
-                );
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Upload Report'),
-            ),
-          ],
-        ),
-      ),
-    );
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const UploadReportDialog(),
+    ).then((success) {
+      if (success == true) {
+        ref.read(reportsProvider.notifier).loadReports();
+      }
+    });
   }
 }
 
@@ -415,16 +284,16 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color),
@@ -433,7 +302,7 @@ class _StatCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: GoogleFonts.outfit(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6))),
+                Text(title, style: GoogleFonts.outfit(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6))),
                 Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
               ],
             ),
@@ -506,7 +375,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(

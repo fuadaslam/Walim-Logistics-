@@ -76,7 +76,6 @@ class MyPerformanceScreen extends ConsumerWidget {
   }
 
   Widget _buildScoreCard(BuildContext context, Map<String, dynamic> perf) {
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final baseScore = (perf['baseScore'] as double? ?? 0).round();
     final attScore = (perf['attendanceScore'] as double? ?? 0);
     final incScore = (perf['incidentScore'] as double? ?? 0);
@@ -102,14 +101,14 @@ class MyPerformanceScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -162,9 +161,9 @@ class MyPerformanceScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                       decoration: BoxDecoration(
-                        color: scoreColor.withOpacity(0.2),
+                        color: scoreColor.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: scoreColor.withOpacity(0.4)),
+                        border: Border.all(color: scoreColor.withValues(alpha: 0.4)),
                       ),
                       child: Text(
                         scoreLabel,
@@ -215,9 +214,9 @@ class MyPerformanceScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         text,
@@ -258,7 +257,7 @@ class MyPerformanceScreen extends ConsumerWidget {
             child: LinearProgressIndicator(
               value: pct,
               minHeight: 6,
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
@@ -301,7 +300,7 @@ class MyPerformanceScreen extends ConsumerWidget {
         border: Border.all(color: isDarkMode ? Colors.white10 : AppColors.divider),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
           ),
         ],
@@ -311,7 +310,7 @@ class MyPerformanceScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: metricColor.withOpacity(0.1),
+              color: metricColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(metricIcon, color: metricColor, size: 20),
@@ -326,7 +325,7 @@ class MyPerformanceScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
             decoration: BoxDecoration(
-              color: metricColor.withOpacity(0.1),
+              color: metricColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -360,7 +359,7 @@ class MyPerformanceScreen extends ConsumerWidget {
         color: isDarkMode ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: color.withOpacity(isDarkMode ? 0.2 : 0.15),
+          color: color.withValues(alpha: isDarkMode ? 0.2 : 0.15),
         ),
       ),
       child: Row(
@@ -368,7 +367,7 @@ class MyPerformanceScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(

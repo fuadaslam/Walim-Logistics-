@@ -5,7 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:walim_logistics/core/theme/app_theme.dart';
 import 'package:walim_logistics/core/theme/theme_provider.dart';
-import 'package:walim_logistics/features/notifications/presentation/notification_settings_screen.dart';
+import 'package:walim_logistics/features/notifications/presentation/notifications_notifier.dart';
+import 'package:walim_logistics/features/notifications/presentation/notifications_screen.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/l10n/app_localizations.dart';
 import 'package:walim_logistics/features/dashboard/presentation/providers/navigation_provider.dart';
@@ -33,6 +34,7 @@ class DashboardScaffold extends ConsumerStatefulWidget {
   final ValueChanged<String>? onSearchChanged;
   final String? searchHint;
   final List<Widget>? headerActions;
+  final bool? showBottomNavigationBar;
 
   const DashboardScaffold({
     super.key,
@@ -49,6 +51,7 @@ class DashboardScaffold extends ConsumerStatefulWidget {
     this.onSearchChanged,
     this.searchHint,
     this.headerActions,
+    this.showBottomNavigationBar,
   });
 
   @override
@@ -139,12 +142,12 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
         return Container(
           margin: const EdgeInsets.only(top: 8),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDark.withOpacity(0.95) : Colors.white.withOpacity(0.95),
+            color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.3)),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 30,
                 offset: const Offset(0, 10),
               ),
@@ -174,7 +177,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
                     itemCount: results.length,
-                    separatorBuilder: (v, i) => Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.3)),
+                    separatorBuilder: (v, i) => Divider(height: 1, color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
                     itemBuilder: (context, index) {
                       final item = results[index];
                       return ListTile(
@@ -182,7 +185,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                         title: Text(item.title, style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
                         subtitle: Text(item.subtitle, style: GoogleFonts.outfit(fontSize: 12)),
                         onTap: () => _handleSearchResultTap(item),
-                        hoverColor: AppColors.primary.withOpacity(0.05),
+                        hoverColor: AppColors.primary.withValues(alpha: 0.05),
                       );
                     },
                   ),
@@ -208,10 +211,15 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     _removeSearchOverlay();
     
     if (result.type == SearchResultType.screen && result.route != null) {
+      final role = ref.read(authProvider).profile?.role ?? 'Rider';
       // Handle navigation
       switch (result.route) {
         case 'Live GPS': _navigateToTab(DashboardTab.liveOps); break;
-        case 'Live Rider': _navigateToTab(DashboardTab.liveRider); break;
+        case 'Live Rider': 
+          if (role == 'Admin') {
+            _navigateToTab(DashboardTab.liveRider);
+          }
+          break;
         case 'HR': _navigateToTab(DashboardTab.hr); break;
         case 'Vehicles': _navigateToTab(DashboardTab.vehicles); break;
         case 'Assets': _navigateToTab(DashboardTab.assets); break;
@@ -275,6 +283,8 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     final authState = ref.watch(authProvider);
     final isSidebarCollapsed = navState.isSidebarCollapsed;
 
+    final showBottomNav = !isDesktop && (widget.showBottomNavigationBar ?? !(widget.showBackButton || widget.onBack != null));
+
     return Shortcuts(
       shortcuts: {
         LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyK): const _SearchIntent(),
@@ -332,7 +342,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
               ),
             ],
           ),
-          bottomNavigationBar: !isDesktop && !(widget.showBackButton || widget.onBack != null) 
+          bottomNavigationBar: showBottomNav
               ? _buildBottomNavigationBar(context, authState, navState) 
               : null,
           floatingActionButton: widget.floatingActionButton ?? 
@@ -351,9 +361,6 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final role = authState.profile?.role ?? 'Rider';
-    final navNotifier = ref.read(navigationProvider.notifier);
-
-
     final l10n = AppLocalizations.of(context)!;
 
     // Define items based on role (similar logic to sidebar)
@@ -377,7 +384,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
     }
 
     // 1.1 Live Rider (High Priority for Ops roles)
-    if ((role == 'Admin' || role == 'Supervisor' || role == 'Operations Manager') && items.length < 5) {
+    if (role == 'Admin' && items.length < 5) {
       items.add(_BottomNavItem(
         icon: Icons.motorcycle_rounded,
         label: l10n.riders,
@@ -618,14 +625,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           : null,
       actions: [
         ...?widget.actions,
-        IconButton(
-          padding: const EdgeInsets.all(8),
-          constraints: const BoxConstraints(),
-          icon: Icon(Icons.notifications_none_rounded, color: theme.textTheme.bodyLarge?.color, size: 22),
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()));
-          },
-        ),
+        _buildNotificationBell(context),
         IconButton(
           padding: const EdgeInsets.all(8),
           constraints: const BoxConstraints(),
@@ -648,11 +648,11 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
       duration: const Duration(milliseconds: 300),
       width: isSidebarCollapsed ? 80 : 280,
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withOpacity(0.95),
+        color: Theme.of(context).cardColor.withValues(alpha: 0.95),
         border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 1.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 30,
             offset: const Offset(4, 0),
           ),
@@ -728,7 +728,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: isActive ? [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           )
@@ -767,8 +767,8 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
       height: 80,
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 32),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor.withOpacity(0.8),
-        border: Border(bottom: BorderSide(color: theme.dividerColor.withOpacity(0.5))),
+        color: theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
+        border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.5))),
       ),
       child: Row(
 
@@ -806,7 +806,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.outfit(
                       fontSize: 12,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -823,15 +823,15 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.03),
+                  color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: theme.dividerColor.withOpacity(0.3)),
+                  border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
   
                 child: Row(
                   children: [
-                    Icon(Icons.search_rounded, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), size: 20),
+                    Icon(Icons.search_rounded, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6), size: 20),
                     const SizedBox(width: 12),
                     Expanded(
                       child: TextField(
@@ -847,7 +847,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                         decoration: InputDecoration(
                           hintText: widget.searchHint ?? 'Search inventory, staff or screens (Cmd+K)',
                           hintStyle: GoogleFonts.outfit(
-                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                             fontSize: 14,
                           ),
   
@@ -860,19 +860,19 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                     Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: theme.dividerColor.withOpacity(0.2),
+                      color: theme.dividerColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.keyboard_command_key_rounded, size: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6)),
+                        Icon(Icons.keyboard_command_key_rounded, size: 12, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
                         const SizedBox(width: 4),
                         Text(
                           'K',
                           style: GoogleFonts.outfit(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -939,9 +939,9 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.03),
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.dividerColor.withOpacity(0.3)),
+                border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -969,9 +969,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           // 3. Icons
           Row(
             children: [
-              _buildHeaderIcon(Icons.notifications_outlined, 'Notifications', () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()));
-              }),
+              _buildNotificationBellDesktop(context),
               const SizedBox(width: 8),
               _buildHeaderIcon(
                 isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined, 
@@ -986,7 +984,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           ),
           
           const SizedBox(width: 24),
-          Container(height: 32, width: 1.5, color: theme.dividerColor.withOpacity(0.5)),
+          Container(height: 32, width: 1.5, color: theme.dividerColor.withValues(alpha: 0.5)),
           const SizedBox(width: 24),
 
 
@@ -1031,13 +1029,13 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
         child: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.02),
+            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.02),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             icon, 
             size: 20, 
-            color: theme.textTheme.bodyLarge?.color?.withOpacity(0.8),
+            color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.8),
           ),
 
         ),
@@ -1052,7 +1050,6 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
                            widget.activeItem == 'Supervisors';
 
     final role = authState.profile?.role ?? 'Rider';
-    final navNotifier = ref.read(navigationProvider.notifier);
 
     if (isSidebarCollapsed) {
       return Theme(
@@ -1206,7 +1203,7 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
             onTap: () => _navigateToTab(DashboardTab.liveOps),
           ),
 
-        if (role == 'Admin' || role == 'Supervisor' || role == 'Operations Manager')
+        if (role == 'Admin')
           _buildSidebarItem(
             context, 
             Icons.motorcycle_rounded, 
@@ -1356,11 +1353,11 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 2),
         ),
         child: CircleAvatar(
           radius: 18,
-          backgroundColor: AppColors.primary.withOpacity(0.1),
+          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
           child: Text(
             initials,
             style: GoogleFonts.outfit(
@@ -1371,6 +1368,86 @@ class _DashboardScaffoldState extends ConsumerState<DashboardScaffold> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildNotificationBell(BuildContext context) {
+    final unread = ref.watch(unreadNotificationCountProvider);
+    final theme = Theme.of(context);
+    return Stack(
+      children: [
+        IconButton(
+          padding: const EdgeInsets.all(8),
+          constraints: const BoxConstraints(),
+          icon: Icon(
+            unread > 0
+                ? Icons.notifications_rounded
+                : Icons.notifications_none_rounded,
+            color: theme.textTheme.bodyLarge?.color,
+            size: 22,
+          ),
+          onPressed: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+          },
+        ),
+        if (unread > 0)
+          Positioned(
+            right: 4,
+            top: 4,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration:
+                  const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+              constraints:
+                  const BoxConstraints(minWidth: 16, minHeight: 16),
+              child: Text(
+                unread > 99 ? '99+' : '$unread',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildNotificationBellDesktop(BuildContext context) {
+    final unread = ref.watch(unreadNotificationCountProvider);
+    return Stack(
+      children: [
+        _buildHeaderIcon(
+          unread > 0
+              ? Icons.notifications_rounded
+              : Icons.notifications_outlined,
+          'Notifications',
+          () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+        ),
+        if (unread > 0)
+          Positioned(
+            right: 2,
+            top: 2,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration:
+                  const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+              constraints:
+                  const BoxConstraints(minWidth: 14, minHeight: 14),
+              child: Text(
+                '$unread',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

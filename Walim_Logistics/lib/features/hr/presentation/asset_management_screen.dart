@@ -144,7 +144,7 @@ class _AssetManagementScreenState extends State<AssetManagementScreen> {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white10 : theme.dividerColor.withOpacity(0.5)),
+        border: Border.all(color: isDark ? Colors.white10 : theme.dividerColor.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -159,10 +159,10 @@ class _AssetManagementScreenState extends State<AssetManagementScreen> {
               style: GoogleFonts.outfit(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Search staff name, role, or asset serial...',
-                hintStyle: GoogleFonts.outfit(color: isDark ? Colors.white38 : AppColors.textSecondary.withOpacity(0.6)),
+                hintStyle: GoogleFonts.outfit(color: isDark ? Colors.white38 : AppColors.textSecondary.withValues(alpha: 0.6)),
                 prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
                 filled: true,
-                fillColor: isDark ? Colors.white.withOpacity(0.02) : AppColors.background.withOpacity(0.5),
+                fillColor: isDark ? Colors.white.withValues(alpha: 0.02) : AppColors.background.withValues(alpha: 0.5),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -175,7 +175,7 @@ class _AssetManagementScreenState extends State<AssetManagementScreen> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
-                    color: AppColors.primary.withOpacity(0.4),
+                    color: AppColors.primary.withValues(alpha: 0.4),
                     width: 1.5,
                   ),
                 ),
@@ -208,12 +208,12 @@ class _AssetManagementScreenState extends State<AssetManagementScreen> {
                     }
                   },
                   selectedColor: chipColor,
-                  backgroundColor: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.02),
+                  backgroundColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.02),
                   checkmarkColor: Colors.white,
                   side: BorderSide(
                     color: isSelected 
                         ? Colors.transparent 
-                        : (isDark ? Colors.white10 : theme.dividerColor.withOpacity(0.5)),
+                        : (isDark ? Colors.white10 : theme.dividerColor.withValues(alpha: 0.5)),
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -233,7 +233,7 @@ class _AssetManagementScreenState extends State<AssetManagementScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_off_rounded, size: 48, color: AppColors.primary.withOpacity(0.4)),
+              Icon(Icons.search_off_rounded, size: 48, color: AppColors.primary.withValues(alpha: 0.4)),
               const SizedBox(height: 16),
               Text(
                 'No staff or assets match your criteria',
@@ -306,15 +306,15 @@ class _HoverableStatCardState extends State<_HoverableStatCard> {
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: _isHovered 
-                  ? widget.color.withOpacity(0.5) 
-                  : (isDark ? Colors.white10 : theme.dividerColor.withOpacity(0.5)),
+                  ? widget.color.withValues(alpha: 0.5) 
+                  : (isDark ? Colors.white10 : theme.dividerColor.withValues(alpha: 0.5)),
               width: _isHovered ? 1.5 : 1.0,
             ),
             boxShadow: [
               BoxShadow(
                 color: _isHovered 
-                    ? widget.color.withOpacity(isDark ? 0.15 : 0.08) 
-                    : Colors.black.withOpacity(0.01),
+                    ? widget.color.withValues(alpha: isDark ? 0.15 : 0.08) 
+                    : Colors.black.withValues(alpha: 0.01),
                 blurRadius: _isHovered ? 20 : 10,
                 offset: Offset(0, _isHovered ? 10 : 4),
               ),
@@ -329,7 +329,7 @@ class _HoverableStatCardState extends State<_HoverableStatCard> {
                   gradient: LinearGradient(
                     colors: _isHovered 
                         ? widget.gradientColors 
-                        : [widget.color.withOpacity(0.12), widget.color.withOpacity(0.06)],
+                        : [widget.color.withValues(alpha: 0.12), widget.color.withValues(alpha: 0.06)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -382,7 +382,7 @@ class _HoverableStatCardState extends State<_HoverableStatCard> {
                     Text(
                       widget.subtext, 
                       style: GoogleFonts.outfit(
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5), 
+                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5), 
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
@@ -471,15 +471,15 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: _isHovered 
-                ? roleColor.withOpacity(0.4) 
-                : (isDark ? Colors.white10 : theme.dividerColor.withOpacity(0.5)),
+                ? roleColor.withValues(alpha: 0.4) 
+                : (isDark ? Colors.white10 : theme.dividerColor.withValues(alpha: 0.5)),
             width: _isHovered ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
               color: _isHovered 
-                  ? roleColor.withOpacity(isDark ? 0.08 : 0.04) 
-                  : Colors.black.withOpacity(0.01),
+                  ? roleColor.withValues(alpha: isDark ? 0.08 : 0.04) 
+                  : Colors.black.withValues(alpha: 0.01),
               blurRadius: _isHovered ? 24 : 12,
               offset: Offset(0, _isHovered ? 8 : 4),
             ),
@@ -492,7 +492,7 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
               onTap: _toggleExpanded,
               borderRadius: BorderRadius.circular(24),
               hoverColor: Colors.transparent,
-              splashColor: roleColor.withOpacity(0.05),
+              splashColor: roleColor.withValues(alpha: 0.05),
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Row(
@@ -554,9 +554,9 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                             decoration: BoxDecoration(
-                              color: roleColor.withOpacity(0.08),
+                              color: roleColor.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: roleColor.withOpacity(0.15)),
+                              border: Border.all(color: roleColor.withValues(alpha: 0.15)),
                             ),
                             child: Text(
                               staff['role'].toUpperCase(), 
@@ -583,9 +583,9 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: isDark ? Colors.white.withOpacity(0.04) : AppColors.background,
+                                  color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.background,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: isDark ? Colors.white10 : theme.dividerColor.withOpacity(0.5)),
+                                  border: Border.all(color: isDark ? Colors.white10 : theme.dividerColor.withValues(alpha: 0.5)),
                                 ),
                                 child: Icon(
                                   _getAssetIconData(asset['type']),
@@ -602,7 +602,7 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -628,7 +628,7 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.02),
+                          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.02),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -652,7 +652,7 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Divider(height: 1, color: isDark ? Colors.white10 : theme.dividerColor.withOpacity(0.5)),
+                          child: Divider(height: 1, color: isDark ? Colors.white10 : theme.dividerColor.withValues(alpha: 0.5)),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(20),
@@ -667,7 +667,7 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                                     style: GoogleFonts.outfit(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w900,
-                                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                                       letterSpacing: 1.0,
                                     ),
                                   ),
@@ -771,9 +771,9 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.02) : AppColors.background.withOpacity(0.5),
+        color: isDark ? Colors.white.withValues(alpha: 0.02) : AppColors.background.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.04) : theme.dividerColor.withOpacity(0.3)),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.04) : theme.dividerColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -782,12 +782,12 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [iconGrad[0].withOpacity(0.12), iconGrad[1].withOpacity(0.04)],
+                colors: [iconGrad[0].withValues(alpha: 0.12), iconGrad[1].withValues(alpha: 0.04)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: iconColor.withOpacity(0.2)),
+              border: Border.all(color: iconColor.withValues(alpha: 0.2)),
             ),
             child: Icon(_getAssetIconData(type), size: 18, color: iconColor),
           ),
@@ -813,7 +813,7 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.08),
+                        color: statusColor.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -834,7 +834,7 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(
                     fontSize: 11, 
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -842,7 +842,7 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                   date,
                   style: GoogleFonts.outfit(
                     fontSize: 9,
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -876,9 +876,9 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+                    color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: isDark ? Colors.white10 : theme.dividerColor.withOpacity(0.5)),
+                    border: Border.all(color: isDark ? Colors.white10 : theme.dividerColor.withValues(alpha: 0.5)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -892,7 +892,7 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.copy_rounded, size: 10, color: AppColors.primary.withOpacity(0.6)),
+                      Icon(Icons.copy_rounded, size: 10, color: AppColors.primary.withValues(alpha: 0.6)),
                     ],
                   ),
                 ),
@@ -944,7 +944,7 @@ class _StaffAssetCardState extends State<_StaffAssetCard> with SingleTickerProvi
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.3),
+                    color: Colors.grey.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

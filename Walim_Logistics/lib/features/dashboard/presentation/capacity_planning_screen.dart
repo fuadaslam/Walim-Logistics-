@@ -90,10 +90,10 @@ class CapacityPlanningScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.05) : AppColors.divider.withOpacity(0.5)),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.divider.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 30,
             offset: const Offset(0, 15),
           ),
@@ -129,7 +129,7 @@ class CapacityPlanningScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -166,7 +166,7 @@ class CapacityPlanningScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Divider(height: 1, color: (isDark ? Colors.white : AppColors.divider).withOpacity(0.1)),
+          Divider(height: 1, color: (isDark ? Colors.white : AppColors.divider).withValues(alpha: 0.1)),
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -197,7 +197,7 @@ class CapacityPlanningScreen extends ConsumerWidget {
                 gradient: LinearGradient(
                   colors: [
                     isPeak ? AppColors.primary : color,
-                    isPeak ? AppColors.primaryLight : color.withOpacity(0.6),
+                    isPeak ? AppColors.primaryLight : color.withValues(alpha: 0.6),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -205,7 +205,7 @@ class CapacityPlanningScreen extends ConsumerWidget {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 boxShadow: isPeak ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   )
@@ -273,7 +273,7 @@ class CapacityPlanningScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -298,7 +298,7 @@ class CapacityPlanningScreen extends ConsumerWidget {
                   'Predicted peak in December requires 120 new riders. Start your recruitment campaign today to meet the demand.',
                   style: GoogleFonts.outfit(
                     fontSize: 16,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontWeight: FontWeight.w500,
                   ),
                 ),

@@ -12,9 +12,6 @@ class PlatformsListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final platformsAsync = ref.watch(detailedPlatformsProvider);
     final searchQuery = ref.watch(platformSearchQueryProvider).toLowerCase();
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return platformsAsync.when(
       data: (platforms) {
         final filteredPlatforms = platforms.where((plat) {

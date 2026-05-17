@@ -84,7 +84,7 @@ class _ShiftClusterManagerScreenState extends ConsumerState<ShiftClusterManagerS
                           point: cluster.center,
                           radius: 1000,
                           useRadiusInMeter: true,
-                          color: cluster.color.withOpacity(0.3),
+                          color: cluster.color.withValues(alpha: 0.3),
                           borderColor: cluster.color,
                           borderStrokeWidth: 2,
                         );
@@ -222,7 +222,7 @@ class _ClusterMarker extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: cluster.color.withOpacity(0.4),
+            color: cluster.color.withValues(alpha: 0.4),
             blurRadius: 10,
             spreadRadius: 2,
           ),
@@ -252,11 +252,11 @@ class _MapControlPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
           ),
         ],
@@ -338,7 +338,7 @@ class _ClusterDetailCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -352,7 +352,7 @@ class _ClusterDetailCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: cluster.color.withOpacity(0.1),
+                  color: cluster.color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.grid_view_rounded, color: cluster.color),

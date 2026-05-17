@@ -11,6 +11,7 @@ class HRStats {
   final int totalStaff;
   final int pendingLeaves;
   final int complianceAlerts;
+  final int activeStaffRate;
   final bool isLoading;
   final String? error;
 
@@ -18,6 +19,7 @@ class HRStats {
     this.totalStaff = 0,
     this.pendingLeaves = 0,
     this.complianceAlerts = 0,
+    this.activeStaffRate = 0,
     this.isLoading = false,
     this.error,
   });
@@ -26,6 +28,7 @@ class HRStats {
     int? totalStaff,
     int? pendingLeaves,
     int? complianceAlerts,
+    int? activeStaffRate,
     bool? isLoading,
     String? error,
   }) {
@@ -33,6 +36,7 @@ class HRStats {
       totalStaff: totalStaff ?? this.totalStaff,
       pendingLeaves: pendingLeaves ?? this.pendingLeaves,
       complianceAlerts: complianceAlerts ?? this.complianceAlerts,
+      activeStaffRate: activeStaffRate ?? this.activeStaffRate,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -54,6 +58,7 @@ class HRStatsNotifier extends StateNotifier<HRStats> {
         totalStaff: stats['totalStaff'] as int? ?? 0,
         pendingLeaves: stats['pendingLeaves'] as int? ?? 0,
         complianceAlerts: stats['complianceAlerts'] as int? ?? 0,
+        activeStaffRate: stats['activeStaffRate'] as int? ?? 0,
         isLoading: false,
       );
     } catch (e) {

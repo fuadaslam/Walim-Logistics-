@@ -18,12 +18,21 @@ class HRRepository {
           .select('id')
           .lte('expiry_date', thirtyDaysLater.toIso8601String().split('T')[0])
           .gte('expiry_date', now.toIso8601String().split('T')[0]),
+      _supabase
+          .from('profiles')
+          .select('id')
+          .or('status.eq.active,status.eq.Active_Completed,status.eq.Active_Pending'),
     ]);
 
+    final totalStaff = (results[0] as List).length;
+    final activeStaff = (results[3] as List).length;
+    final activeStaffRate = totalStaff > 0 ? (activeStaff / totalStaff * 100).toInt() : 0;
+
     return {
-      'totalStaff': (results[0] as List).length,
+      'totalStaff': totalStaff,
       'pendingLeaves': (results[1] as List).length,
       'complianceAlerts': (results[2] as List).length,
+      'activeStaffRate': activeStaffRate,
     };
   }
 
@@ -137,9 +146,10 @@ class HRRepository {
 
   Future<List<AssignedAsset>> getAssetsForProfile(String profileId) async {
     final res = await _supabase
-        .from('profile_active_assets')
-        .select()
+        .from('asset_assignments')
+        .select('*, assets(id, name, category, serial_number, status)')
         .eq('profile_id', profileId)
+        .filter('returned_at', 'is', null)
         .order('assigned_at', ascending: false);
     return (res as List).map((e) => AssignedAsset.fromJson(e as Map<String, dynamic>)).toList();
   }

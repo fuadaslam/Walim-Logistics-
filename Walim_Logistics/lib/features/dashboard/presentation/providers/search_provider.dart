@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:walim_logistics/features/hr/presentation/hr_notifier.dart';
 import 'package:walim_logistics/features/auth/presentation/auth_notifier.dart';
 import 'package:walim_logistics/features/tracking/services/tracking_provider.dart';
-import 'package:walim_logistics/features/tracking/models/vehicle.dart';
 
 enum SearchResultType {
   rider,
@@ -148,6 +147,9 @@ class SearchNotifier extends StateNotifier<SearchState> {
     ];
 
     for (final s in screens) {
+      if (s['route'] == 'Live Rider' && currentUserRole != 'Admin') {
+        continue;
+      }
       if (s['title']!.toLowerCase().contains(q)) {
         results.add(SearchResult(
           title: s['title']!,

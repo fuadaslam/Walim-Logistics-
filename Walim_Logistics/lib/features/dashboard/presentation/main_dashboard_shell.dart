@@ -57,6 +57,7 @@ class MainDashboardShell extends ConsumerWidget {
       headerActions: config.headerActions,
       showBackButton: config.showBackButton,
       onBack: config.onBack,
+      showBottomNavigationBar: true,
     );
   }
 
@@ -87,6 +88,9 @@ class MainDashboardShell extends ConsumerWidget {
           ),
         );
       case DashboardTab.liveRider:
+        if (role != 'Admin') {
+          return _getDashboardConfig(role, l10n);
+        }
         return _TabConfig(
           title: l10n.liveRiderTracking.toUpperCase(),
           subtitle: 'Real-time positioning of all active riders',
@@ -339,7 +343,7 @@ class MainDashboardShell extends ConsumerWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: dotColor.withOpacity(0.4),
+                color: dotColor.withValues(alpha: 0.4),
                 blurRadius: 4,
                 spreadRadius: 1,
               ),

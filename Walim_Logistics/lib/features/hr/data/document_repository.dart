@@ -45,6 +45,18 @@ class DocumentRepository {
     await _supabase.from('documents').delete().eq('id', id);
   }
 
+  Future<void> updateStatus(String id, String status,
+      {DateTime? expiryDate}) async {
+    final data = <String, dynamic>{
+      'status': status,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+    if (expiryDate != null) {
+      data['expiry_date'] = expiryDate.toIso8601String().split('T')[0];
+    }
+    await _supabase.from('documents').update(data).eq('id', id);
+  }
+
   Future<DateTime?> getDocumentExpiry(String profileId, String type) async {
     try {
       final response = await _supabase

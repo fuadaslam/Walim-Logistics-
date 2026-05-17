@@ -322,13 +322,13 @@ class _StatusStepper extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: isError
-            ? Colors.red.withOpacity(0.06)
-            : AppColors.primary.withOpacity(0.05),
+            ? Colors.red.withValues(alpha: 0.06)
+            : AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isError
-              ? Colors.red.withOpacity(0.2)
-              : AppColors.primary.withOpacity(0.15),
+              ? Colors.red.withValues(alpha: 0.2)
+              : AppColors.primary.withValues(alpha: 0.15),
         ),
       ),
       child: Row(
@@ -362,11 +362,11 @@ class _StatusStepper extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: (isActive || isDone)
-                      ? stepColor.withOpacity(0.15)
+                      ? stepColor.withValues(alpha: 0.15)
                       : Colors.transparent,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: stepColor.withOpacity(isActive ? 1 : 0.4),
+                    color: stepColor.withValues(alpha: isActive ? 1 : 0.4),
                     width: isActive ? 2 : 1,
                   ),
                 ),
@@ -488,7 +488,7 @@ class _SOSSectionState extends ConsumerState<_SOSSection> {
                   children: [
                     Icon(Icons.people_outline_rounded,
                         size: 40,
-                        color: Colors.grey.withOpacity(0.5)),
+                        color: Colors.grey.withValues(alpha: 0.5)),
                     const SizedBox(height: 12),
                     Text(
                       'No riders planned for this shift.\nAdd riders manually using the button below.',
@@ -612,10 +612,12 @@ class _SOSSectionState extends ConsumerState<_SOSSection> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
-
         const SizedBox(height: 12),
-        
+
+        // Shift context — incidents, leave, pending requests
+        _ShiftContextPanel(isDark: widget.isDark),
+        const SizedBox(height: 12),
+
         // Handover Verification Checklist
         _Card(
           isDark: widget.isDark,
@@ -768,7 +770,7 @@ class _RiderRow extends StatelessWidget {
               // Avatar
               CircleAvatar(
                 radius: 18,
-                backgroundColor: statusColor.withOpacity(0.12),
+                backgroundColor: statusColor.withValues(alpha: 0.12),
                 child: Text(
                   item.riderName.isNotEmpty
                       ? item.riderName[0].toUpperCase()
@@ -853,7 +855,7 @@ class _RiderRow extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -881,7 +883,7 @@ class _RiderRow extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Absence reason (required)',
                   hintStyle: GoogleFonts.outfit(
-                      fontSize: 13, color: Colors.red.withOpacity(0.7)),
+                      fontSize: 13, color: Colors.red.withValues(alpha: 0.7)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: Colors.red),
@@ -969,6 +971,8 @@ class _EOSSection extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
 
+        // Shift context — incidents, leave, pending requests
+        _ShiftContextPanel(isDark: isDark),
         const SizedBox(height: 12),
 
         // EOS Verification
@@ -1025,13 +1029,13 @@ class _EOSSection extends ConsumerWidget {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: state.nextSupervisorSosSubmitted
-                      ? Colors.green.withOpacity(0.08)
-                      : Colors.amber.withOpacity(0.08),
+                      ? Colors.green.withValues(alpha: 0.08)
+                      : Colors.amber.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: state.nextSupervisorSosSubmitted
-                        ? Colors.green.withOpacity(0.3)
-                        : Colors.amber.withOpacity(0.3),
+                        ? Colors.green.withValues(alpha: 0.3)
+                        : Colors.amber.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -1259,13 +1263,13 @@ class _UploadSectionState extends ConsumerState<_UploadSection> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.primary.withOpacity(0.15)
+              ? AppColors.primary.withValues(alpha: 0.15)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected
                 ? AppColors.primary
-                : Colors.grey.withOpacity(0.4),
+                : Colors.grey.withValues(alpha: 0.4),
           ),
         ),
         child: Text(
@@ -1370,8 +1374,8 @@ class _CorrectionSection extends ConsumerWidget {
         // Error summary
         _Card(
           isDark: isDark,
-          borderColor: Colors.red.withOpacity(0.4),
-          backgroundColor: Colors.red.withOpacity(0.04),
+          borderColor: Colors.red.withValues(alpha: 0.4),
+          backgroundColor: Colors.red.withValues(alpha: 0.04),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1421,9 +1425,10 @@ class _CorrectionSection extends ConsumerWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
                         await notifier
                             .saveCorrectionNotes(controller.text);
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           const SnackBar(
                               content: Text('Notes saved.')),
                         );
@@ -1509,7 +1514,7 @@ class _FlagRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
+              color: Colors.red.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(iconData, size: 14, color: Colors.red),
@@ -1538,6 +1543,282 @@ class _FlagRow extends StatelessWidget {
   }
 
   String _formatFlagType(String t) => t.replaceAll('_', ' ');
+}
+
+// ---------------------------------------------------------------------------
+// Shift Context Panel — incidents, leaves on date, pending requests
+// ---------------------------------------------------------------------------
+
+class _ShiftContextPanel extends ConsumerWidget {
+  final bool isDark;
+  const _ShiftContextPanel({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(shiftControlProvider);
+    final incidents = state.groupIncidents;
+    final leaves = state.groupLeaveRequests;
+    final pending = state.groupPendingRequests;
+
+    if (incidents.isEmpty && leaves.isEmpty && pending.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return _Card(
+      isDark: isDark,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(
+            icon: Icons.dashboard_customize_rounded,
+            label: 'Shift Context',
+            isDark: isDark,
+          ),
+          const SizedBox(height: 8),
+          if (incidents.isNotEmpty)
+            _ContextTile(
+              icon: Icons.warning_amber_rounded,
+              color: Colors.red,
+              label: 'Active Incidents',
+              count: incidents.length,
+              children: incidents
+                  .map((t) => _IncidentRow(ticket: t))
+                  .toList(),
+            ),
+          if (leaves.isNotEmpty)
+            _ContextTile(
+              icon: Icons.event_busy_rounded,
+              color: Colors.orange,
+              label: 'On Leave Today',
+              count: leaves.length,
+              children: leaves
+                  .map((r) => _LeaveRow(request: r))
+                  .toList(),
+            ),
+          if (pending.isNotEmpty)
+            _ContextTile(
+              icon: Icons.pending_actions_rounded,
+              color: AppColors.primary,
+              label: 'Pending Requests',
+              count: pending.length,
+              children: pending
+                  .map((r) => _RequestRow(request: r))
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContextTile extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final int count;
+  final List<Widget> children;
+
+  const _ContextTile({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.count,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        title: Row(
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: color),
+              ),
+            ),
+          ],
+        ),
+        children: children,
+      ),
+    );
+  }
+}
+
+class _IncidentRow extends StatelessWidget {
+  final Map<String, dynamic> ticket;
+  const _IncidentRow({required this.ticket});
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = ticket['profiles'] as Map<String, dynamic>?;
+    final riderName =
+        profile?['full_name'] as String? ?? 'Unknown Rider';
+    final type = ticket['type'] as String? ?? 'other';
+    final subject = ticket['subject'] as String? ?? '';
+    final priority = ticket['priority'] as String? ?? 'normal';
+    final priorityColor = priority == 'high'
+        ? Colors.red
+        : priority == 'normal'
+            ? Colors.orange
+            : Colors.grey;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(width: 4),
+          Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(top: 5),
+            decoration: BoxDecoration(
+                color: priorityColor, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  subject,
+                  style: GoogleFonts.outfit(
+                      fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  '$riderName · ${_formatType(type)} · $priority priority',
+                  style: GoogleFonts.outfit(
+                      fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatType(String t) =>
+      t.replaceAll('_', ' ').split(' ').map((w) {
+        if (w.isEmpty) return w;
+        return w[0].toUpperCase() + w.substring(1);
+      }).join(' ');
+}
+
+class _LeaveRow extends StatelessWidget {
+  final Map<String, dynamic> request;
+  const _LeaveRow({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = request['profiles'] as Map<String, dynamic>?;
+    final riderName =
+        profile?['full_name'] as String? ?? 'Unknown Rider';
+    final start = request['start_date'] as String? ?? '';
+    final end = request['end_date'] as String?;
+    final dateRange = end != null && end != start ? '$start → $end' : start;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: Row(
+        children: [
+          const SizedBox(width: 4),
+          const Icon(Icons.person_off_rounded,
+              size: 14, color: Colors.orange),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  riderName,
+                  style: GoogleFonts.outfit(
+                      fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  dateRange,
+                  style: GoogleFonts.outfit(
+                      fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RequestRow extends StatelessWidget {
+  final Map<String, dynamic> request;
+  const _RequestRow({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = request['profiles'] as Map<String, dynamic>?;
+    final riderName =
+        profile?['full_name'] as String? ?? 'Unknown Rider';
+    final type = request['type'] as String? ?? '';
+    final subject = request['subject'] as String? ?? '';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(width: 4),
+          const Icon(Icons.assignment_rounded,
+              size: 14, color: AppColors.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  subject,
+                  style: GoogleFonts.outfit(
+                      fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  '$riderName · $type',
+                  style: GoogleFonts.outfit(
+                      fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1645,15 +1926,15 @@ class _ApprovedSection extends ConsumerWidget {
 
     return _Card(
       isDark: isDark,
-      borderColor: Colors.green.withOpacity(0.4),
-      backgroundColor: Colors.green.withOpacity(0.04),
+      borderColor: Colors.green.withValues(alpha: 0.4),
+      backgroundColor: Colors.green.withValues(alpha: 0.04),
       child: Column(
         children: [
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.12),
+              color: Colors.green.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.check_circle_rounded,
@@ -1727,7 +2008,7 @@ class _EmptyState extends StatelessWidget {
           child: Column(
             children: [
               Icon(Icons.assignment_outlined,
-                  size: 56, color: Colors.grey.withOpacity(0.4)),
+                  size: 56, color: Colors.grey.withValues(alpha: 0.4)),
               const SizedBox(height: 16),
               Text(
                 'Select a platform and group,\nthen tap "Load / Create Report".',
@@ -1767,15 +2048,15 @@ class _Card extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: backgroundColor ??
-            (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
+            (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: borderColor ?? theme.dividerColor.withOpacity(0.4)),
+            color: borderColor ?? theme.dividerColor.withValues(alpha: 0.4)),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 )
@@ -1807,7 +2088,7 @@ class _SectionHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 16, color: color),
@@ -1841,9 +2122,9 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1877,7 +2158,7 @@ class _MiniTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -1899,9 +2180,9 @@ class _ErrorBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.08),
+        color: Colors.red.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.red.withOpacity(0.3)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [

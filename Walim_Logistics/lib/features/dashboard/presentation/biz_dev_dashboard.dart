@@ -251,7 +251,7 @@ class BizDevDashboard extends ConsumerWidget {
           const SizedBox(height: 12),
           LinearProgressIndicator(
             value: marginScore,
-            backgroundColor: color.withOpacity(0.1),
+            backgroundColor: color.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 8,
             borderRadius: BorderRadius.circular(4),

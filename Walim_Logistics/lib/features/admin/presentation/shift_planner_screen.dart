@@ -202,9 +202,9 @@ class _ShiftPlannerScreenState extends ConsumerState<ShiftPlannerScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.08),
+              color: Colors.green.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.withOpacity(0.3)),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -255,7 +255,7 @@ class _ShiftPlannerScreenState extends ConsumerState<ShiftPlannerScreen> {
                       leading: CircleAvatar(
                         radius: 16,
                         backgroundColor:
-                            AppColors.primary.withOpacity(0.1),
+                            AppColors.primary.withValues(alpha: 0.1),
                         child: Text(
                           (profile?['full_name'] as String? ?? '?')[0]
                               .toUpperCase(),
@@ -476,7 +476,7 @@ class _ShiftPlannerScreenState extends ConsumerState<ShiftPlannerScreen> {
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 16, color: color),
@@ -495,15 +495,15 @@ class _ShiftPlannerScreenState extends ConsumerState<ShiftPlannerScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border:
-            Border.all(color: theme.dividerColor.withOpacity(0.4)),
+            Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2))
               ],

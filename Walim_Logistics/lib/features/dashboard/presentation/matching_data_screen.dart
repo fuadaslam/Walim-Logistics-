@@ -88,13 +88,13 @@ class _MatchingDataScreenState extends ConsumerState<MatchingDataScreen> {
                       Container(
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.05),
+                          color: AppColors.primary.withValues(alpha: 0.05),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.account_tree_outlined,
                           size: 64,
-                          color: AppColors.primary.withOpacity(0.5),
+                          color: AppColors.primary.withValues(alpha: 0.5),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -176,7 +176,7 @@ class _MatchingDataScreenState extends ConsumerState<MatchingDataScreen> {
                 children: [
                   Icon(Icons.receipt_long_outlined,
                       size: 48,
-                      color: AppColors.textSecondary.withOpacity(0.3)),
+                      color: AppColors.textSecondary.withValues(alpha: 0.3)),
                   const SizedBox(height: 16),
                   Text(
                     'No reconciliation data for $_selectedPlatformName yet.',
@@ -227,12 +227,12 @@ class _MatchingDataScreenState extends ConsumerState<MatchingDataScreen> {
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: hasDiscrepancy ? Colors.orange.withOpacity(0.3) : AppColors.divider.withOpacity(0.5),
+              color: hasDiscrepancy ? Colors.orange.withValues(alpha: 0.3) : AppColors.divider.withValues(alpha: 0.5),
               width: hasDiscrepancy ? 1.5 : 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -246,7 +246,7 @@ class _MatchingDataScreenState extends ConsumerState<MatchingDataScreen> {
                   children: [
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                       child: Text(name[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
                     ),
                     const SizedBox(width: 16),
@@ -287,7 +287,7 @@ class _MatchingDataScreenState extends ConsumerState<MatchingDataScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.05),
+                      color: Colors.orange.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -339,7 +339,7 @@ class _MatchingDataScreenState extends ConsumerState<MatchingDataScreen> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, color: color, size: 20),
@@ -390,7 +390,7 @@ class _MatchingDataScreenState extends ConsumerState<MatchingDataScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -405,9 +405,9 @@ class _MatchingDataScreenState extends ConsumerState<MatchingDataScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.05),
+        color: AppColors.error.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.error.withOpacity(0.2)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
